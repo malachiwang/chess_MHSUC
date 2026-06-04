@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Data
+data/
+*.pgn
+*.pgn.zst
+*.parquet
+*.duckdb
+*.csv
+
+# Environment
+.env
+
+# macOS
+.DS_Store
