@@ -11,6 +11,15 @@ data/
 *.parquet
 *.duckdb
 *.csv
+*.sqlite
+*.db
+
+# Model artifacts
+*.joblib
+*.pkl
+*.pt
+*.pth
+*.onnx
 
 # Environment
 .env

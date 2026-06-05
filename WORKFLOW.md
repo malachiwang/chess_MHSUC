@@ -225,6 +225,13 @@ reports/phase_reports/phase_1_1a_lichess_source_audit.md
 reports/phase_reports/phase_2_1b_pgn_parser_implementation.md
 ```
 
+Post-implementation reports are a required output of their implementation ticket. They are not separate tickets. After completing implementation, Claude must:
+
+1. Save the report as a `.md` file in `reports/phase_reports/`.
+2. Summarize the report in the chat response.
+
+Do not create standalone report tickets unless explicitly requested.
+
 ## 12. Dependency changes
 
 Dependency additions require explanation.

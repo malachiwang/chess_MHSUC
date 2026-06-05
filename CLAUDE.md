@@ -154,26 +154,34 @@ Mandatory audit areas:
 An audit should include:
 
 ```text
-1. Goal
-2. Relevant files
-3. Current behavior
-4. Proposed changes
-5. Risks
-6. Verification plan
+1. Summary
+2. Files inspected
+3. Current behavior / observed structure
+4. Important findings
+5. Risks / ambiguities
+6. Recommended implementation plan
 7. Files expected to change
+8. Verification plan
 ```
 
 ## 7. Implementation report requirement
 
-After implementation, Claude must produce a concise report:
+After implementation, Claude must produce a concise report.
+
+Report location: save to `reports/phase_reports/` as a `.md` file named after the ticket (e.g., `phase_1_1b_source_scanner_implementation.md`). Also summarize in chat.
+
+Do not create standalone report tickets. Post-implementation reports are required outputs of implementation tickets, not separate work items.
+
+Report format:
 
 ```text
 1. Files changed
 2. Summary of behavior added/changed
 3. Assumptions made
 4. Tests or checks run
-5. Known risks / limitations
-6. Suggested next step
+5. Results of tests/checks
+6. Known risks / limitations
+7. Suggested next step
 ```
 
 For data/modeling changes, include:

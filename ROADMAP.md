@@ -19,43 +19,51 @@ Final aspiration: every-ply human outcome prediction under constraints
 
 Goal: establish project rules, structure, and safety before data work.
 
-### Ticket 0.1A — Governance Audit
+### Ticket 0.1A — Project Initialization + Lichess Source Format Audit
 
-Audit the needed governance docs, project scope, data policy, Claude behavior rules, and workflow conventions.
-
-Required report:
+Audit scope:
 
 ```text
-Scope choices
-Open ambiguities
-Recommended governance doc set
-Data safety requirements
-Workflow requirements
-```
-
-### Ticket 0.1B — Governance Implementation
-
-Create/update:
-
-```text
-README.md
-PROJECT_CHARTER.md
-ROADMAP.md
-WORKFLOW.md
-DATA_POLICY.md
-CLAUDE.md
-PIPELINE_OVERVIEW.md
-EXPERIMENT_LOG.md
-MODEL_CARD.md
+Governance consistency audit
+Repo structure audit
+Environment assumptions audit
+Lichess source format assumptions audit
+Data safety audit
 ```
 
 Required report:
 
 ```text
-Files created/modified
-Key policies encoded
-Remaining setup tasks
+Files inspected
+Governance consistency findings
+Repo structure findings
+Environment / dependency findings
+Lichess source format findings
+Data safety findings
+Recommended changes for 0.1B
+Risks / assumptions
+Whether 0.1B is safe to begin
 ```
+
+Status: complete. See `reports/phase_reports/phase_0_1b_project_initialization_implementation.md`.
+
+### Ticket 0.1B — Project Initialization + Lichess Source Documentation Implementation
+
+Implementation scope:
+
+```text
+Rename reports/notes/ to reports/phase_reports/
+Strengthen .gitignore (add *.sqlite, *.db, *.joblib, *.pkl, *.pt, *.pth, *.onnx)
+Unify audit report format between CLAUDE.md and WORKFLOW.md
+Add explicit report-location and no-standalone-report-tickets rules
+Repurpose MANIFEST.md as a stable project manifest
+Update ROADMAP.md Ticket 0.1 descriptions
+Add Lichess parser-format assumptions to PIPELINE_OVERVIEW.md
+```
+
+Required report: `reports/phase_reports/phase_0_1b_project_initialization_implementation.md`
+
+Status: complete.
 
 ### Ticket 0.2A — Environment Audit
 

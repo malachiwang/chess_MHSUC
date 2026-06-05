@@ -389,7 +389,55 @@ Use only after:
 - GBM results justify a sequence approach,
 - compute requirements are understood.
 
-## 16. Deliverables by maturity level
+## 16. Lichess PGN format assumptions
+
+The following format details are assumed based on known Lichess PGN conventions. They must be verified against real sample data during Ticket 1.1A (source availability audit) and documented precisely during Ticket 2.1A (PGN schema audit). Do not write a parser that assumes these without testing them.
+
+**Clock annotations**
+
+Clock times are expected to appear as move-comment annotations in the form:
+
+```text
+{ [%clk H:MM:SS] }
+```
+
+The exact format (hours always present, precision, edge cases near zero) must be verified on real examples and tested explicitly.
+
+**Eval annotations**
+
+Eval values are expected to appear as move-comment annotations in the form:
+
+```text
+{ [%eval 0.47] }    # centipawn-like decimal, White-pov
+{ [%eval #3] }      # forced mate in 3 for side to move
+{ [%eval #-2] }     # opponent has forced mate in 2
+```
+
+Sign convention (positive = White advantage) must be verified and confirmed in parser tests. Mate notation must be handled as a distinct case from numeric evals.
+
+**Variant header**
+
+Standard chess games may omit the `Variant` header entirely. The filter for standard games must not require `Variant "Standard"` to be present; it should accept games where `Variant` is absent or explicitly `"Standard"`.
+
+**UTCDate / UTCTime headers**
+
+Lichess PGN files include `UTCDate` and `UTCTime` headers. These are not currently used as features, but should be inspected during schema audits. They are relevant if time-based train/validation/test splits are considered in later phases.
+
+**WhiteRatingDiff / BlackRatingDiff headers**
+
+These headers record the rating-point change after the game. They are not a default feature but should be noted during schema audits. They may be useful for identifying provisional-rating games if filtering is needed.
+
+**Streaming `.pgn.zst` archives**
+
+Lichess monthly archives are distributed as `.pgn.zst` (Zstandard-compressed PGN). The `zstandard` Python library supports streaming decompression. This must be verified on a real sample before the parser is committed. Do not assume full decompression to disk is required or safe given file sizes.
+
+**Eval availability is not universal**
+
+`%eval` annotations are only present for games where a user requested computer analysis or where Lichess automatically analyzed the game. A significant fraction of `10+0` games will have no eval. The actual availability rate must be measured during Ticket 1.1A. All claims made using eval-annotated subsets must acknowledge this selection bias.
+
+---
+
+## 17. Deliverables by maturity level
 
 ### Smoke-test deliverable
 
