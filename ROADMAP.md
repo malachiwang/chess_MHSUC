@@ -67,33 +67,35 @@ Status: complete.
 
 ### Ticket 0.2A — Environment Audit
 
-Verify local Python environment and required tools.
-
-Check:
+Audit scope:
 
 ```text
-Python version
-virtual environment
-installed packages
-Stockfish availability
-zstd availability
-repo structure
-.gitignore behavior
+Python executable and version
+Virtual environment status
+All required package availability in .venv vs. ambient shell
+System tool availability: Stockfish, zstd CLI, brew
+Repo dependency-file status (requirements.txt, pyproject.toml, Makefile, .python-version)
+Recommendation for 0.2B
+Risk assessment
 ```
 
-### Ticket 0.2B — Environment Implementation
+Status: complete.
 
-Add minimal environment setup support if needed.
+### Ticket 0.2B — Environment Documentation Implementation
 
-Possible files:
+Implementation scope:
 
 ```text
-requirements.txt
-pyproject.toml
-Makefile
+Create requirements.txt (curated direct dependencies, >= version pins)
+Create .python-version (3.13.11)
+Add Setup section to README.md (venv creation, activation, install, verification)
+Update ROADMAP.md Ticket 0.2 descriptions
+Update MANIFEST.md to include requirements.txt and .python-version
 ```
 
-Only add what is useful.
+Required report: `reports/phase_reports/phase_0_2b_environment_documentation_implementation.md`
+
+Status: complete.
 
 ## Phase 1: Lichess source and 10+0 availability
 

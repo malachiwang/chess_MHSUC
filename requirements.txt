@@ -1,0 +1,31 @@
+# chess-MHSUC initial pipeline dependencies
+#
+# Install into the project virtual environment:
+#   python3.13 -m venv .venv
+#   source .venv/bin/activate
+#   python -m pip install --upgrade pip
+#   python -m pip install -r requirements.txt
+#
+# Version pins use >= against the versions verified locally (Python 3.13.11, macOS, Apple Silicon).
+# Tighten pins if exact reproduction is needed; relax if install conflicts arise.
+#
+# Note on python-chess: pinned against the pip package version (1.999).
+# The chess.__version__ attribute may report a different string; this is a known
+# internal quirk of the package and does not indicate a broken install.
+#
+# Intentionally excluded:
+#   xgboost    -- Phase 6+ only (GBM selection audit required first)
+#   lightgbm   -- Phase 6+ only
+#   torch      -- Phase 10+ only (neural sequence models deferred)
+
+python-chess>=1.999
+polars>=1.41.2
+pandas>=3.0.3
+duckdb>=1.5.3
+scikit-learn>=1.9.0
+matplotlib>=3.10.9
+pyarrow>=24.0.0
+zstandard>=0.25.0
+tqdm>=4.67.3
+jupyter>=1.1.1
+pytest

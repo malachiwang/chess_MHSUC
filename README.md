@@ -110,6 +110,45 @@ audit -> implementation -> post-implementation report -> local verification -> c
 
 Parser, cleaning, label extraction, train/test splitting, and evaluation changes require special caution because bugs there can silently poison all downstream results.
 
+## Setup
+
+This project uses a local Python virtual environment. Do not use the system Python or a conda base environment for project commands — those environments have different package sets and are missing required dependencies.
+
+```bash
+# Create the virtual environment (Python 3.13 required)
+python3.13 -m venv .venv
+
+# Activate it
+source .venv/bin/activate
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install project dependencies
+python -m pip install -r requirements.txt
+```
+
+Verify the environment after installation:
+
+```python
+python - <<'PY'
+import chess
+import polars
+import duckdb
+import sklearn
+import zstandard
+print("environment ok")
+PY
+```
+
+The `.venv` directory is ignored by Git. Do not commit it. See `requirements.txt` for the documented dependency list and `.python-version` for the target Python version.
+
+Stockfish and the `zstd` CLI are system tools, not Python packages. Install them via Homebrew if not already present:
+
+```bash
+brew install stockfish zstd
+```
+
 ## External references
 
 - Lichess open database: https://database.lichess.org/

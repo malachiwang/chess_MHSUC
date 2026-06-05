@@ -39,6 +39,8 @@ chess-MHSUC/
   EXPERIMENT_LOG.md
   MODEL_CARD.md
   MANIFEST.md
+  requirements.txt          # curated direct Python dependencies
+  .python-version           # target Python version (3.13.11)
 
   data/                     # local only; ignored by Git entirely
     raw/lichess/            # immutable raw Lichess PGN archives
@@ -61,6 +63,7 @@ chess-MHSUC/
 
 - Source code (`src/`, `tests/`)
 - Governance documents (all files listed in Section 1)
+- `requirements.txt` and `.python-version`
 - Markdown reports (`reports/phase_reports/`)
 - Small figures (`reports/figures/`)
 - Tiny synthetic PGN fixtures (`tests/fixtures/`) — not real game data
