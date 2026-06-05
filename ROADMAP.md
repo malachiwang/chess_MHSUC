@@ -133,6 +133,8 @@ field observations
 recommendation for parser scope
 ```
 
+Status: complete. See `reports/phase_reports/phase_1_1a_lichess_source_availability_audit.md`.
+
 ### Ticket 1.1B — Source Scanner Implementation
 
 Implement a capped source scanner that can stream PGN data and summarize header/annotation availability.
@@ -141,7 +143,8 @@ Expected files:
 
 ```text
 src/chess_mhsuc/source_scan.py
-tests/test_source_scan.py if practical
+tests/conftest.py
+tests/test_source_scan.py
 reports/phase_reports/phase_1_1b_source_scanner_implementation.md
 ```
 
@@ -150,6 +153,19 @@ Out of scope:
 ```text
 full model-ready dataset generation
 large downloads without explicit permission
+```
+
+Status: complete. See `reports/phase_reports/phase_1_1b_source_scanner_implementation.md`.
+
+Key findings from 50k-game scan of 2024-09 archive:
+
+```text
+600+0 rate:     9.85% of games
+clock rate:     99.65% of 600+0 games have %clk
+eval rate:      15.2% of basic_pass games have %eval  ← critical constraint
+result dist:    1-0 48.9% / 0-1 46.6% / draw 4.5%
+time forfeit:   11.3% of basic_pass terminations
+elo range:      ~450–2680, mean ~1532
 ```
 
 ## Phase 2: PGN parsing and schema
