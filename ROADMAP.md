@@ -174,49 +174,36 @@ Goal: extract reliable game-level and selected position-level records.
 
 ### Ticket 2.1A — PGN Schema Audit
 
-Inspect real sampled games and define schemas for:
+Status: complete. Audit conducted via sampled real game inspection and
+source-scan findings from Ticket 1.1B.
 
-```text
-game metadata
-position/checkpoint rows
-skip reasons
-```
-
-Required report:
-
-```text
-header fields
-comment fields
-clock format
-eval format
-termination values
-schema recommendation
-risks
-```
+Key decisions recorded:
+- Eval policy: Option C (nullable). eval_cp/eval_mate are None when absent.
+  has_eval boolean on every ply row.
+- Checkpoint definition: after Black's Nth full move = ply 2N (1-indexed).
+  Checkpoints: move_10 (ply 20), move_20 (ply 40), move_30 (ply 60),
+  move_40 (ply 80), last (final ply of game).
+- Mate eval sign: White POV, requires side_to_move_next context.
+  +N = White has mate in N. -N = Black has mate in N.
+- Low-time flags deferred to feature engineering (Phase 3).
+- Rejection priority: wrong_time_control → variant_or_nonstandard →
+  missing_or_invalid_elo → missing_or_invalid_result → missing_clock.
 
 ### Ticket 2.1B — PGN Parser Implementation
 
-Implement parser functions for:
+Status: complete. See `reports/phase_reports/phase_2_1b_pgn_schema_parser_implementation.md`.
+
+Implemented:
 
 ```text
-headers
-result labels
-time control
-ratings
-termination
-clock annotations
-eval annotations
-selected checkpoints
+src/chess_mhsuc/schemas.py       GameRecord, PlyRecord, PositionRecord + constants
+src/chess_mhsuc/parse_pgn.py     full single-game parser
+tests/fixtures/tiny_clock_eval_game.pgn  82-ply synthetic legal fixture
+tests/test_parse_pgn.py          110 tests, all passing
 ```
 
-Expected files:
-
-```text
-src/chess_mhsuc/parse_pgn.py
-src/chess_mhsuc/schemas.py
-tests/test_parse_pgn.py
-tests/fixtures/tiny_clock_eval_game.pgn
-```
+Test results: 129 total (19 source_scan + 110 parse_pgn), all passed.
+Python 3.13.11, pytest-9.0.3.
 
 ### Ticket 2.2A — Parser Validation Audit
 

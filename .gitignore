@@ -8,6 +8,9 @@ __pycache__/
 data/
 *.pgn
 *.pgn.zst
+
+# Exception: tiny synthetic PGN fixtures for parser tests are allowed
+!tests/fixtures/*.pgn
 *.parquet
 *.duckdb
 *.csv
