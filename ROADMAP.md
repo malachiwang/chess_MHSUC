@@ -243,31 +243,41 @@ Goal: produce a clean model-ready checkpoint dataset.
 
 ### Ticket 3.1A — Cleaning and Labeling Audit
 
-Define filters and label behavior.
+Status: complete (chat audit only — no files produced).
 
-Must answer:
+Audit inspected the 2024-09 25k interim dataset (2,467 game records, 8,528
+position rows). Key decisions recorded:
 
-```text
-What qualifies as valid 10+0?
-What labels are emitted?
-How are draws handled?
-How are missing clocks handled?
-How are missing evals handled?
-How are terminations tracked?
-Are usernames dropped?
-```
+- Game-level filters: `accepted_basic == True AND termination != "Abandoned"`
+- Time forfeit games (11.5%) RETAINED — central to research question
+- Missing eval RETAINED — eval_cp nullable by design
+- No new label columns in v1 — result_class already present from parser
+- No feature engineering in cleaning step
+- Clock anomalies (7 rows with clock_s > 600) retained for now
+- "Last" checkpoint duplication (83 games) retained — caller's responsibility
 
 ### Ticket 3.1B — Cleaning and Labeling Implementation
 
-Implement cleaning and label extraction.
+Status: complete. See `reports/phase_reports/phase_3_1b_cleaning_rules_implementation.md`.
 
-Expected files:
+Implemented:
 
 ```text
-src/chess_mhsuc/cleaning.py
-src/chess_mhsuc/labels.py
-tests/test_cleaning.py
-tests/test_labels.py
+src/chess_mhsuc/cleaning.py     pure cleaning functions + CLI
+tests/test_cleaning.py          30 tests, all passing
+```
+
+Test results: 193 total (19 source_scan + 110 parse_pgn + 34 run_parser + 30 cleaning), all passed.
+Python 3.13.11, pytest-9.0.3.
+
+Real-data run executed on 2024-09 25k interim dataset. All 8 validation checks passed.
+
+```text
+Raw game rows:        2,467
+Clean game rows:      2,460   (5 rejected + 2 accepted-abandoned excluded)
+Retained time forfeit:  283   (11.5%)
+Broad position rows:  8,528
+Eval position rows:   1,168   (13.7% eval coverage)
 ```
 
 ### Ticket 3.2A — Feature Engineering Audit
