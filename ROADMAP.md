@@ -207,21 +207,35 @@ Python 3.13.11, pytest-9.0.3.
 
 ### Ticket 2.2A — Parser Validation Audit
 
-Run parser on a capped real sample and summarize:
+Status: complete (chat audit only — no files produced).
+
+Audit produced the streaming architecture and safety design used in 2.2B:
+- urllib.request + zstandard streaming (no full decompression to disk)
+- TC pre-filter before ply extraction (~90% of raw games skipped cheaply)
+- Per-game exception handling with error_log
+- Explicit Parquet schemas to prevent Null-type inference
+- 11 post-run validation checks (username cols, game_id uniqueness, eval sentinel, etc.)
+- max-games required (no unbounded default); max-accepted optional secondary cap
+
+### Ticket 2.2B — Parser Validation + Capped Real-Data Loading Implementation
+
+Status: complete. See `reports/phase_reports/phase_2_2b_parser_validation_implementation.md`.
+
+Implemented:
 
 ```text
-parsed games
-skipped games
-skip reasons
-missing fields
-checkpoint extraction success
+src/chess_mhsuc/run_parser.py     streaming CLI parser (zstd URL → Parquet + JSON)
+tests/test_run_parser.py          34 tests, all passing
 ```
 
-### Ticket 2.2B — Parser Hardening Implementation
+Test results: 163 total (19 source_scan + 110 parse_pgn + 34 run_parser), all passed.
+Python 3.13.11, pytest-9.0.3.
 
-Fix parser issues identified in validation.
+Real-data validation run executed (25k raw games, 2024-09 archive). All 11 validation
+checks passed after one targeted fix: `n_plies_positive` scoped to accepted_basic rows
+only (rejected abandoned games legitimately have n_plies=0). No parser logic changed.
 
-No broad feature expansion unless explicitly included.
+No broad feature expansion included.
 
 ## Phase 3: Cleaning, labeling, and features
 
