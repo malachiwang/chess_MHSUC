@@ -282,25 +282,41 @@ Eval position rows:   1,168   (13.7% eval coverage)
 
 ### Ticket 3.2A — Feature Engineering Audit
 
-Define first feature set:
+Status: complete (chat audit only — no files produced).
 
-```text
-rating features
-clock features
-phase features
-eval features
-termination features
-```
+Audit defined v1 feature policy:
+- Leakage: result_class, termination, n_plies_total, white/black_rating_diff forbidden as model inputs
+- Rating features: white_elo, black_elo, elo_diff, avg_elo
+- Clock features: raw + capped (÷600 fracs) + low-time flags (60/30/10s) + clock_anomaly
+- Eval features: eval_cp_clipped (±1000 clip), is_mate_eval, eval_mate_abs, eval_white_winning
+- Position features: move_number, phase, selected_position_type, checkpoint_index, phase_index
+- Caution columns: is_last_checkpoint, side_to_move_next, white_to_move_next, duplicate_ply_checkpoint
+- Slice columns: is_time_forfeit, termination, has_eval, game_id
+- Labels: result_class, white_result_numeric
 
 ### Ticket 3.2B — Feature Engineering Implementation
 
-Implement feature generation.
+Status: complete. See `reports/phase_reports/phase_3_2b_feature_engineering_implementation.md`.
 
-Expected files:
+Implemented:
 
 ```text
-src/chess_mhsuc/features.py
-tests/test_features.py
+src/chess_mhsuc/features.py     pure feature functions + CLI (40-column output)
+tests/test_features.py          84 tests, all passing
+```
+
+Test results: 277 total (19 source_scan + 110 parse_pgn + 34 run_parser + 30 cleaning + 84 features), all passed.
+Python 3.13.11, pytest-9.0.3.
+
+Real-data run on 2024-09 25k cleaned dataset. All 19 validation checks passed.
+
+```text
+Broad input rows:   8,528  →  broad output rows: 8,528  (no rows dropped)
+Eval input rows:    1,168  →  eval output rows:  1,168  (no rows dropped)
+Columns:            19 input → 40 output (23 added, 2 dropped: ply, n_plies_total)
+Clock anomalies:        7 rows flagged by clock_anomaly=True
+Duplicate ply:        166 rows flagged by duplicate_ply_checkpoint=True (83 games × 2 rows)
+Eval coverage:       13.7% of broad positions
 ```
 
 ## Phase 4: Data assessment
