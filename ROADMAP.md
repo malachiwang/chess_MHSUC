@@ -325,33 +325,77 @@ Goal: verify dataset quality before modeling.
 
 ### Ticket 4.1A — Dataset Assessment Audit
 
-Define required dataset quality checks.
+Status: complete (chat audit only — no files produced).
 
-Must include:
-
-```text
-row counts
-game counts
-missing values
-rating distribution
-result distribution
-termination distribution
-clock distribution
-eval distribution
-checkpoint distribution
-```
+Audit inspected the 2024-09 25k feature tables (8,528 broad rows, 1,168 eval rows).
+Key findings recorded: target distribution confirmed (WW 46.7%, BW 47.4%, DRAW 5.8%),
+eval coverage 13.7%, low-time flags show strong result asymmetry, leakage safety confirmed,
+eval subset has mild avg_elo selection bias (+20 Elo vs broad).
 
 ### Ticket 4.1B — Dataset Assessment Implementation
 
-Implement a reproducible dataset assessment script/notebook.
+Status: complete. See `reports/phase_reports/phase_4_1b_feature_dataset_assessment.md`.
 
-Expected files:
+Implemented:
 
 ```text
-src/chess_mhsuc/assess_dataset.py
-notebooks/01_dataset_assessment.ipynb optional
-reports/phase_reports/phase_4_1b_dataset_assessment.md
+src/chess_mhsuc/assess_dataset.py     13 pure functions + CLI (assessment + Markdown + JSON)
+tests/test_assess_dataset.py          45 tests, all passing
 ```
+
+Test results: 322 total (277 prior + 45 assess_dataset), all passed.
+Python 3.13.11, pytest-9.0.3.
+
+Real-data run on 2024-09 25k feature tables. All 8 baseline readiness checks passed.
+
+```text
+Broad rows:      8,528  |  Unique games: 2,323
+Eval rows:       1,168  |  Unique games:   365
+Result dist:     WHITE_WIN 46.73%  /  BLACK_WIN 47.44%  /  DRAW 5.83%
+Eval coverage:  13.7%
+avg_elo bias:   +20 Elo in eval vs broad
+Leakage:        SAFE (both tables)
+```
+
+### Ticket 4.2A — Dataset Version Metadata Audit
+
+Status: complete (chat audit only — no files produced).
+
+Audit inspected all four per-stage metadata JSON files (parser, cleaning, features, assessment).
+Key decisions recorded: canonical dataset_id = `lichess_ten_zero_2024_09_25k_v1`;
+parser version_tag drift documented (metadata records "v1", canonical is "2024_09_25k_v1");
+assessment test_count placeholder documented; manifest schema defined (17 functions A–Q).
+
+### Ticket 4.2B — Dataset Version Metadata Implementation
+
+Status: complete. See `reports/phase_reports/phase_4_2b_dataset_version_metadata_implementation.md`.
+
+Implemented:
+
+```text
+src/chess_mhsuc/dataset_version.py     17 pure functions + CLI (JSON manifest + dataset card + report)
+tests/test_dataset_version.py          87 tests, all passing
+```
+
+Test results: 409 total (322 prior + 87 dataset_version), all passed.
+Python 3.13.11, pytest-9.0.3.
+
+Real-data CLI run on 2024-09 25k pipeline artifacts. All 11 artifacts found.
+
+```text
+dataset_id:     lichess_ten_zero_2024_09_25k_v1
+broad_rows:     8,528  |  eval_rows: 1,168
+artifacts:      11/11 found, all SHA256-hashed
+leakage_safe:   True  |  baseline_readiness: True
+git commit:     70b5f7367d19 (pipeline code state)
+```
+
+Output artifacts (committed):
+- `reports/phase_reports/dataset_card_lichess_ten_zero_2024_09_25k_v1.md`
+- `reports/phase_reports/phase_4_2b_dataset_version_metadata_implementation.md`
+
+Output artifacts (local-only, gitignored):
+- `data/processed/dataset_version_lichess_ten_zero_2024_09_25k_v1.json`
 
 ## Phase 5: Baseline modeling
 
@@ -375,26 +419,41 @@ Mandatory warning:
 No row-level split across positions from the same game.
 ```
 
-### Ticket 5.1B — Baseline Modeling Implementation
+Status: **complete** (chat audit, 2026-06-07).
 
-Implement baselines:
+Split policy defined: 70/15/15, game_id-level, stratified on result_class, seed 42.
+Primary training view: primary_numbered (exclude selected_position_type == "last").
+Feature sets FS-A through FS-G defined. Baselines B0–B5 planned (DummyClassifier ×2,
+LogisticRegression ×4). Primary metrics: log_loss + macro_F1 + per-class P/R/F1.
+Eval table inherits broad split assignments via game_id join; no separate eval split.
 
-```text
-majority/prior baseline
-rating-only
- eval-only
- eval + rating
- eval + rating + clocks
- eval + rating + clocks + phase
-```
+### Ticket 5.1B — Modeling Split + Baseline Plan Implementation
 
-Expected files:
+Create `splits.py` with game_id-level split assignments and modeling plan JSON.
 
 ```text
-src/chess_mhsuc/modeling.py
-src/chess_mhsuc/evaluate.py
-reports/phase_reports/phase_5_1b_baseline_modeling.md
+split unit: game_id (never row-level)
+ratio: 70/15/15, seed 42, stratified by result_class
+broad split: train=1,626 / val=348 / test=349 games (2,323 total)
+eval split: train=256 / val=56 / test=53 games (365 total, inherits broad)
+primary view rows: train=4,344 / val=931 / test=930 (numbered checkpoints only)
+DRAW broad: train=77 / val=16 / test=17 games
+baselines planned: B0 (DummyClassifier most_frequent), B1 (prior),
+  B2 (LR rating-only), B3 (LR rating+clock+position),
+  B4 (LR eval-only, exploratory), B5 (LR full, exploratory)
+label mapping: BLACK_WIN=0, DRAW=1, WHITE_WIN=2 (fixed)
 ```
+
+Status: **complete** (2026-06-07). 92 new tests. 501 total passing.
+
+Files created:
+- `src/chess_mhsuc/splits.py` — 16 functions + CLI
+- `tests/test_splits.py` — 92 tests
+- `reports/phase_reports/phase_5_1b_modeling_split_baseline_plan_implementation.md`
+
+Local-only (gitignored):
+- `data/processed/splits_2024_09_25k_v1.json`
+- `data/processed/modeling_plan_2024_09_25k_v1.json`
 
 ## Phase 6: GBM modeling
 
