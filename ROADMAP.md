@@ -576,51 +576,50 @@ data/processed/gbm_results_2024_09_25k_v1.json
 data/processed/gbm_predictions_2024_09_25k_v1.parquet
 ```
 
-### Ticket 6.2A — Calibration Audit
+### Ticket 6.2A — GBM Evaluation Slice Audit
 
-Define calibration method and reporting.
+Audit GBM and baseline artifacts to determine which slice diagnostics are
+feasible on the existing dataset. Determine what can be computed from the
+existing predictions Parquet without retraining.
 
-Consider:
+Status: complete. Five feasible slices identified: phase, move_number,
+is_time_forfeit, has_eval, avg_elo bucket (via feature join). G2 confirmed
+as primary broad GBM. G4 identified as near-prior/degenerate. G6 identified
+as complete memorisation. Audit report in chat only (no files created).
 
-```text
-calibration curve
-Brier score
-CalibratedClassifierCV
-holdout calibration
-```
+### Ticket 6.2B — GBM Evaluation Implementation
 
-### Ticket 6.2B — Calibration Implementation
+Implement `gbm_evaluation.py` (18 functions A–R + CLI): load GBM/baseline
+results, compute slice accuracy, confidence bucket diagnostic, avg_elo join,
+and render a durable Markdown evaluation report.
 
-Add calibration assessment and optional calibrated model.
+Status: complete. See `reports/gbm_evaluation_2024_09_25k_v1.md` and
+`reports/phase_reports/phase_6_2b_gbm_evaluation_implementation.md`.
 
-## Phase 7: Subgroup analysis
+Key results:
+- G2 val log_loss=1.2326 — does NOT beat B3 (0.8527)
+- G1/G2 train/val gap >+1.0 — severe overfit
+- G4 near-prior (max_prob mean≈0.476) — diagnostic only, not a winner
+- G6 train_ll≈0.004 — complete memorisation of 645 eval training rows
+- All broad GBMs predict 0 DRAW on validation
 
-Goal: test the actual research hypothesis across constraints.
+Local artifacts (gitignored): none new (reuses 6.1B artifacts).
 
-### Ticket 7.1A — Rating/Phase/Clock Subgroup Audit
+## Phase 7 — Calibration
 
-Define subgroup bins:
+### Ticket 7.1A — Calibration Audit
+ML | D2 | CAUTIOUS
 
-```text
-rating buckets
-phase buckets
-clock pressure buckets
-eval buckets
-termination categories
-```
+### Ticket 7.1B — Calibration Implementation
+ML | D2 | IMPLEMENTATION
+Requires post-implementation report.
 
-### Ticket 7.1B — Subgroup Analysis Implementation
+### Ticket 7.2A — Probability Interpretation Audit
+REPORTING/ML | D1 | CAUTIOUS
 
-Produce subgroup reports and figures.
-
-Questions:
-
-```text
-Does clock pressure improve prediction most in late game?
-Does rating matter differently by phase?
-Do lower-rated players degrade more under low time?
-Does eval conversion differ by rating bucket?
-```
+### Ticket 7.2B — Probability Interpretation Report Implementation
+REPORTING/ML | D1 | IMPLEMENTATION
+Requires post-implementation report.
 
 ## Phase 8: Fixed-depth Stockfish validation
 
