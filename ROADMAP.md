@@ -455,6 +455,42 @@ Local-only (gitignored):
 - `data/processed/splits_2024_09_25k_v1.json`
 - `data/processed/modeling_plan_2024_09_25k_v1.json`
 
+### Ticket 5.2A — Baseline Model Audit
+
+Define exact preprocessing, label encoding, class imbalance policy, metrics,
+and baseline training plan before implementation.
+
+Status: **complete** (2026-06-07). Chat-only audit.
+
+Key decisions: strip `multi_class` from LR params (sklearn 1.8 breaking change);
+`SimpleImputer(fill_value=0)` for `eval_mate_abs` (93.6% null); B3-balanced added
+as diagnostic; `zero_division=0` for per-class metrics.
+
+### Ticket 5.2B — Baseline Model Implementation
+
+Train B0–B5 + B3-balanced baselines on primary_numbered view. No GBM, no calibration.
+
+```text
+B0: DummyClassifier most_frequent | broad | val acc=0.4758 | val log_loss=18.89
+B1: DummyClassifier prior         | broad | val acc=0.4758 | val log_loss=0.8853
+B2: LR rating-only (FS-B)         | broad | val acc=0.5124 | val log_loss=0.8740
+B3: LR rating+clock (FS-E)        | broad | val acc=0.5381 | val log_loss=0.8527
+B3-balanced: LR FS-E balanced     | broad | val acc=0.4393 | val log_loss=1.0623
+B4: LR eval-only (FS-F)           | eval  | val acc=0.5918 | val log_loss=0.7833 (exploratory)
+B5: LR full (FS-G)                | eval  | val acc=0.6190 | val log_loss=0.8598 (exploratory)
+```
+
+Status: **complete** (2026-06-07). 90 new tests. 591 total passing.
+
+Files created:
+- `src/chess_mhsuc/baselines.py` — 17 functions (A–Q) + CLI
+- `tests/test_baselines.py` — 90 tests
+- `reports/phase_reports/phase_5_2b_baseline_modeling_implementation.md`
+
+Local-only (gitignored):
+- `data/processed/baseline_results_2024_09_25k_v1.json`
+- `data/processed/baseline_predictions_2024_09_25k_v1.parquet`
+
 ## Phase 6: GBM modeling
 
 Goal: train the first serious nonlinear tabular model.
