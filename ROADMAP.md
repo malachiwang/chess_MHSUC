@@ -495,7 +495,7 @@ Local-only (gitignored):
 
 Goal: train the first serious nonlinear tabular model.
 
-### Ticket 6.1A — GBM Selection Audit
+### Ticket 6.1A — GBM Model Choice Audit
 
 Compare:
 
@@ -518,7 +518,9 @@ Start with scikit-learn HistGradientBoostingClassifier for lowest dependency fri
 Move to XGBoost if performance/control needs justify it.
 ```
 
-### Ticket 6.1B — GBM Implementation
+Status: complete. HistGradientBoostingClassifier selected. No new dependencies.
+
+### Ticket 6.1B — First GBM Implementation
 
 Train first GBM model on the verified dataset.
 
@@ -529,6 +531,15 @@ same split as baselines
 same metrics
 ablation comparison
 feature importance or permutation importance if feasible
+```
+
+Status: complete. G1–G6 trained (HistGBM). Best broad: G2 val log_loss=1.2326. Best eval (expl): G5 val log_loss=1.1854.
+
+Local artifacts (gitignored):
+
+```text
+data/processed/gbm_results_2024_09_25k_v1.json
+data/processed/gbm_predictions_2024_09_25k_v1.parquet
 ```
 
 ### Ticket 6.2A — Calibration Audit
