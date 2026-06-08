@@ -491,6 +491,40 @@ Local-only (gitignored):
 - `data/processed/baseline_results_2024_09_25k_v1.json`
 - `data/processed/baseline_predictions_2024_09_25k_v1.parquet`
 
+### Ticket 5.3A — Baseline Evaluation Audit
+
+Audit the baseline results JSON and reporting structure before writing the
+evaluation report. No files created.
+
+Status: **complete** (2026-06-08). Audit-only. No files changed.
+
+Findings:
+- `payload["baselines"]` is a dict keyed by baseline_id (not a list).
+- B0 (most_frequent DummyClassifier) excluded from primary comparison table.
+- Signal decomposition: B1 prior (0.8853) → B2 (0.8740, Δ−0.011) → B3 (0.8527, Δ−0.021).
+- All broad unweighted LR models predict 0 DRAW rows.
+- Eval test acc spike (B4=0.7071) is small-sample artifact.
+- `feature_columns_dropped` key NOT present in baseline results (GBM-only hotfix).
+
+### Ticket 5.3B — Baseline Evaluation Report Implementation
+
+Create `baseline_evaluation.py` (17 functions A–Q) and associated tests +
+Markdown report. Render evaluation report from the baseline results JSON.
+
+Status: **complete** (2026-06-08). 106 new tests. 826 total passing.
+
+Files created:
+- `src/chess_mhsuc/baseline_evaluation.py` — 17 functions (A–Q) + CLI
+- `tests/test_baseline_evaluation.py` — 106 tests
+- `reports/baseline_evaluation_2024_09_25k_v1.md` (committed)
+- `reports/phase_reports/phase_5_3b_baseline_evaluation_implementation.md`
+- `EXPERIMENT_LOG.md` — EXP-001 added
+
+Key report findings:
+- Best broad primary baseline: B3 (FS-E) val log_loss=0.8527
+- Full B1→B3 signal: Δ−0.0326 log_loss units
+- No broad baseline below 0.85 — this is the Phase 6 floor
+
 ## Phase 6: GBM modeling
 
 Goal: train the first serious nonlinear tabular model.
