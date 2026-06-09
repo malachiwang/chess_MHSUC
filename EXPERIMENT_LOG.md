@@ -228,3 +228,80 @@ Known limitations:
 Next step:
 Phase 6.3A — Feature Importance Audit. Note: importances from the overfit G2
 may not be reliable. Phase 7 Calibration and Phase 8 Scaling also needed.
+
+---
+
+## EXP-003 — Phase 6.3B G2 Permutation Feature Importance Diagnostic
+
+Experiment ID: EXP-003
+Date: 2026-06-08
+Owner: Malachi Wang
+Status: complete
+
+Question:
+Which G2 features show positive permutation importance on the validation set?
+Are clock and position features genuinely useful to G2 or overfit artifacts?
+
+Dataset:
+- Source: Lichess 10+0 (600+0) games, 2024-09 extract
+- Broad primary_numbered view: train=4344 / val=931 rows
+- Eval source: Stockfish (embedded in Lichess PGN comments)
+- Label: result_class (BLACK_WIN / DRAW / WHITE_WIN)
+
+Features:
+- FS-E: Rating + clock + position (20 numeric cols after string drop)
+- String categoricals dropped: selected_position_type, phase
+- 20 features used: white_elo, black_elo, elo_diff, avg_elo, clock features (13),
+  move_number, checkpoint_index, phase_index
+
+Split:
+- Importance scored on validation split only (931 rows)
+- Test split not used
+- Split unit: game_id, seed=42
+
+Models:
+- G2 retrained in memory using identical GBM_PARAMS (max_iter=300, lr=0.05,
+  max_leaf_nodes=31, min_samples_leaf=20, l2_reg=0.1, random_state=42)
+- No model artifact saved
+
+Metrics:
+- sklearn permutation_importance with scoring='neg_log_loss'
+- n_repeats=10, random_state=42
+- delta_log_loss = -importances_mean (positive = predictive, negative = overfit)
+
+Results:
+G2 retrained val log_loss: 1.2369 (6.3B deterministic retrain).
+Stored Phase 6.1B G2 val log_loss: 1.2326. Difference: +0.0043 — small
+reconstruction drift between saved Phase 6.1B metrics and in-memory 6.3B retrain.
+Accepted and documented; qualitative findings identical.
+
+Permutation importance (top/bottom, deterministic 6.3B CLI values):
+- avg_elo:      +0.0410 — positive diagnostic signal
+- white_elo:    +0.0169 — positive diagnostic signal
+- clock_diff_s: −0.0481 — negative overfit artifact (most negative)
+- 18 of 20 features: near-zero or negative
+
+Interpretation:
+Rating signal (white_elo, avg_elo) survives overfit well enough to show positive
+importance on validation. G2 placed the largest learned weight on clock-difference
+patterns that do not generalize (clock_diff_s: −0.048). All position and most clock
+features show near-zero or negative importance — overfit signatures, not evidence
+these variables are irrelevant to chess outcomes.
+
+The four rating features (white_elo, black_elo, elo_diff, avg_elo) are correlated;
+permutation distributes signal unpredictably across them. Interpret as a group:
+rating signal is robustly present in G2.
+
+Known limitations:
+- G2 is overfit (val log_loss 1.2369 >> B3 0.853). Importances reflect the overfit
+  model's learned function, not the true predictive value of features.
+- Permutation importance is not causal explanation.
+- Clock/position negative importance means G2 failed to generalize them — not that
+  they are unimportant to chess outcomes.
+- Results are pilot-scale only (931 val rows, 4344 train rows).
+- No calibration performed.
+- No SHAP. No new dependencies.
+
+Next step:
+Phase 7 Calibration or Phase 8 Scaling. Feature importance from a better-fit
+model on more data will be more informative for constraint analysis.

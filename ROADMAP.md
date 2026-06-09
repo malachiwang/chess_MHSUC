@@ -605,6 +605,41 @@ Key results:
 
 Local artifacts (gitignored): none new (reuses 6.1B artifacts).
 
+### Ticket 6.3A — Feature Importance Audit
+
+Audit-only. Inspect HistGBM for native `feature_importances_` availability,
+permutation importance feasibility, model artifact availability, feature columns
+for G1–G6, scoring metric choice, and report language constraints.
+
+Status: complete. Audit report in chat only (no files created).
+
+Key findings:
+- HistGradientBoostingClassifier in sklearn 1.9.0 does NOT expose `feature_importances_`
+- `sklearn.inspection.permutation_importance` available; no new dependency needed
+- G2 retrainable deterministically from local data artifacts (~4 seconds)
+- Only white_elo (+0.029) and avg_elo (+0.029) show positive importance
+- 15 of 20 features show negative importance — overfit artifacts, not uselessness
+- clock_diff_s is most negative (≈−0.048): G2 overfit clock patterns
+
+### Ticket 6.3B — Feature Importance Implementation
+
+Implement `gbm_feature_importance.py` (16 functions A–P + CLI): retrain G2 in
+memory, compute validation-set permutation importance, and render a caveated
+12-section Markdown diagnostic report. No model artifacts saved, no calibration,
+no SHAP, no new dependencies.
+
+Status: complete. See `reports/gbm_feature_importance_2024_09_25k_v1.md` and
+`reports/phase_reports/phase_6_3b_feature_importance_implementation.md`.
+
+Key results:
+- G2 retrained val log_loss: 1.2369 (consistent with Phase 6.1B)
+- Positive signal: white_elo (+0.0169), avg_elo (+0.0410)
+- Near-zero / negative: all clock and position features
+- clock_diff_s most negative (−0.0481): largest overfit artifact
+- Report explicitly frames all results as overfit diagnostics, not final rankings
+
+Local artifacts (gitignored): none (G2 retrained in memory only).
+
 ## Phase 7 — Calibration
 
 ### Ticket 7.1A — Calibration Audit
