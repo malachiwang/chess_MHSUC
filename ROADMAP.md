@@ -645,9 +645,29 @@ Local artifacts (gitignored): none (G2 retrained in memory only).
 ### Ticket 7.1A — Calibration Audit
 ML | D2 | CAUTIOUS
 
+Status: complete (audit-only; no files created). Key findings:
+- B3 ECE OvR: BLACK_WIN=0.026, DRAW=0.001, WHITE_WIN=0.033 — reasonably calibrated
+- G2 ECE OvR: BLACK_WIN=0.234, DRAW=0.061, WHITE_WIN=0.203 — severely overconfident
+- G2 [0.9,1.0] confidence bucket: mean_conf=0.949, acc=0.594, gap=+0.355
+- DRAW sparsity (~59/931 val rows, 6.3%): DRAW ECE not informative
+- G4 excluded (near-prior); G5/G6 excluded (eval-gated/memorization)
+
 ### Ticket 7.1B — Calibration Implementation
 ML | D2 | IMPLEMENTATION
 Requires post-implementation report.
+
+Status: complete. See `reports/calibration_2024_09_25k_v1.md` and
+`reports/phase_reports/phase_7_1b_calibration_implementation.md`.
+
+Key results (val split, 931 rows):
+- B1 ECE OvR: BLACK_WIN=0.002, DRAW=0.001, WHITE_WIN=0.004 (prior — degenerate)
+- B3 ECE OvR: BLACK_WIN=0.026, DRAW=0.001, WHITE_WIN=0.033 — best calibrated
+- G2 ECE OvR: BLACK_WIN=0.234, DRAW=0.061, WHITE_WIN=0.203 — severely overconfident
+- B3 classwise Brier: BLACK_WIN=0.239, DRAW=0.059, WHITE_WIN=0.236
+- G2 classwise Brier: BLACK_WIN=0.313, DRAW=0.068, WHITE_WIN=0.301
+- No post-hoc calibrators fitted. Diagnostics only.
+
+Local artifacts (gitignored): none.
 
 ### Ticket 7.2A — Probability Interpretation Audit
 REPORTING/ML | D1 | CAUTIOUS

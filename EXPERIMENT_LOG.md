@@ -305,3 +305,80 @@ Known limitations:
 Next step:
 Phase 7 Calibration or Phase 8 Scaling. Feature importance from a better-fit
 model on more data will be more informative for constraint analysis.
+
+---
+
+## EXP-004 — Phase 7.1B Calibration Diagnostics (B1, B3, G2)
+
+Experiment ID: EXP-004
+Date: 2026-06-08
+Owner: Malachi Wang
+Status: complete
+
+Question:
+How well-calibrated are B1, B3, and G2 on the validation split? What are
+the OvR reliability gaps, ECE, and classwise Brier scores for each model?
+
+Dataset:
+- Source: Lichess 10+0 (600+0) games, 2024-09 extract
+- Time control: 10+0
+- Split: validation only (931 rows, broad primary_numbered view)
+- Eval source: Stockfish (embedded in Lichess PGN comments)
+- Label: result_class (BLACK_WIN / DRAW / WHITE_WIN)
+- Class distribution: BLACK_WIN=443 (47.6%), DRAW=59 (6.3%), WHITE_WIN=429 (46.1%)
+
+Features:
+- Calibration assessed on model probability outputs; no feature access needed.
+- B1 uses FS-A (prior); B3 uses FS-E (18 cols); G2 uses FS-E (20 numeric cols).
+
+Split:
+- Split unit: game_id
+- Assessment on validation split only; test split not used.
+
+Models:
+- B1: DummyClassifier(strategy='prior')
+- B3: LogisticRegression on FS-E
+- G2: HistGradientBoostingClassifier on FS-E (primary_numbered view)
+- G4 excluded: near-prior (max_prob mean ≈ 0.476) — deceptively calibrated
+- G5/G6 excluded: eval-gated / memorization
+
+Metrics:
+Primary: ECE (OvR, 5-bin uniform). Secondary: classwise Brier (OvR),
+top-label confidence-accuracy table (10-bin uniform).
+
+Results:
+ECE OvR (val):
+- B1:  BLACK_WIN=0.0023, DRAW=0.0012, WHITE_WIN=0.0035
+- B3:  BLACK_WIN=0.0260, DRAW=0.0009, WHITE_WIN=0.0327
+- G2:  BLACK_WIN=0.2338, DRAW=0.0608, WHITE_WIN=0.2034
+
+Classwise Brier OvR (val):
+- B1:  BLACK_WIN=0.2494, DRAW=0.0594, WHITE_WIN=0.2485
+- B3:  BLACK_WIN=0.2388, DRAW=0.0589, WHITE_WIN=0.2362
+- G2:  BLACK_WIN=0.3125, DRAW=0.0681, WHITE_WIN=0.3012
+
+G2 top-label confidence-accuracy (val, selected bins):
+- [0.50, 0.60): n=185, acc=0.432, conf=0.549, gap=+0.116
+- [0.70, 0.80): n=171, acc=0.491, conf=0.751, gap=+0.260
+- [0.80, 0.90): n=193, acc=0.497, conf=0.851, gap=+0.353
+- [0.90, 1.00): n=175, acc=0.594, conf=0.949, gap=+0.355
+
+Interpretation:
+B3 is reasonably calibrated on BLACK_WIN and WHITE_WIN (ECE ≈ 0.03).
+G2 is severely overconfident (ECE ≈ 0.20–0.23): the GBM memorized training
+patterns that produce high-confidence predictions without corresponding accuracy.
+DRAW ECE is small for all models but reflects near-zero predictions on a sparse
+class, not genuine calibration. No post-hoc calibrators were fitted.
+
+Known limitations:
+- DRAW class sparsity (59/931 val rows, 6.3%): DRAW OvR calibration metrics
+  dominated by near-zero predictions — not informative.
+- 5 reliability bins may have sparse counts, especially for extreme bins.
+- No calibration applied; diagnostics only.
+- No plots produced.
+- Pilot scale only (931 val rows).
+
+Next step:
+Phase 7.2 Probability Interpretation or Phase 8 Scaling. A post-hoc calibration
+experiment (Platt/isotonic) may be warranted after model improvement in Phase 8.
+
