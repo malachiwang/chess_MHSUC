@@ -672,9 +672,29 @@ Local artifacts (gitignored): none.
 ### Ticket 7.2A — Probability Interpretation Audit
 REPORTING/ML | D1 | CAUTIOUS
 
+Status: complete (audit-only; no files created). Key findings:
+- B3 is the only currently usable model for cautious descriptive probability claims
+- G2 is overfit (gap=+1.069) and overconfident (ECE≈0.20–0.23); probabilities not usable
+- B1's low ECE is a prior-only trap; predicts constant class frequencies
+- DRAW probability unreliable for all models (6.3% sparsity, 59/931 val rows)
+- Guardrail categories defined: Allowed, Cautious, Forbidden claims
+- No constraint-effect claims established; requires Phase 8 + Phase 9
+
 ### Ticket 7.2B — Probability Interpretation Report Implementation
 REPORTING/ML | D1 | IMPLEMENTATION
 Requires post-implementation report.
+
+Status: complete. See `reports/probability_interpretation_2024_09_25k_v1.md` and
+`reports/phase_reports/phase_7_2b_probability_interpretation_implementation.md`.
+
+Key outputs:
+- probability_interpretation.py (12 functions A–L + CLI)
+- 73 tests in test_probability_interpretation.py; 1123 total tests passing
+- 14-section guardrails report generated from real artifacts
+- Allowed/Cautious/Forbidden claims matrix codified
+- Explicit prohibition on G2 probability interpretation, DRAW claims, causal claims
+
+Local artifacts (gitignored): none.
 
 ## Phase 8: Fixed-depth Stockfish validation
 

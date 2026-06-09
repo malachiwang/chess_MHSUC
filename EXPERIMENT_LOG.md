@@ -382,3 +382,69 @@ Next step:
 Phase 7.2 Probability Interpretation or Phase 8 Scaling. A post-hoc calibration
 experiment (Platt/isotonic) may be warranted after model improvement in Phase 8.
 
+---
+
+## EXP-005 — Phase 7.2B Probability Interpretation Guardrails (B1, B3, G2)
+
+Experiment ID: EXP-005
+Date: 2026-06-09
+Owner: Malachi Wang
+Status: complete
+
+Question:
+What do the current model probabilities (B1, B3, G2) mean? Which models are
+safe to use for descriptive probability claims, which require caution, and
+which are forbidden for interpretation? What guardrails apply before constraint
+or subgroup claims can be made?
+
+Dataset:
+- Source: Lichess 10+0 (600+0) games, 2024-09 extract
+- Time control: 10+0
+- Split: validation only (931 rows, broad primary_numbered view)
+- Eval source: Stockfish (embedded in Lichess PGN comments)
+- Label: result_class (BLACK_WIN / DRAW / WHITE_WIN)
+- Class distribution: BLACK_WIN=443 (47.6%), DRAW=59 (6.3%), WHITE_WIN=429 (46.1%)
+
+Features:
+- Calibration and log-loss metrics assessed from existing artifacts.
+- No new feature computation or model training.
+
+Split:
+- Assessment on validation split only; test split not used.
+
+Models assessed:
+- B1: DummyClassifier(strategy='prior') — appears calibrated, degenerate
+- B3: LogisticRegression on FS-E — safest broad model, cautiously usable
+- G2: HistGradientBoostingClassifier on FS-E — severely overfit, not usable
+
+Metrics:
+- val log_loss: B1=0.8853, B3=0.8527, G2=1.2326
+- G2 train log_loss: 0.1636; overfit gap: +1.0690
+- ECE OvR: B3 BW=0.026, WW=0.033; G2 BW=0.234, WW=0.203
+- G2 [0.9,1.0] high-conf bucket: n=175, acc=0.594, conf=0.949, gap=+0.355
+
+Results:
+Probability interpretation guardrails established:
+- ALLOWED (with caveats): B3 BLACK_WIN / WHITE_WIN as pilot-scale descriptive estimates
+- CAUTIOUS: B3 for dataset distribution descriptions; B3 DRAW excluded (sparsity)
+- FORBIDDEN: G2 probability claims; B1 as informative; causal-effect claims;
+  constraint-effect claims (require Phase 8/9); test-split revealed results
+
+Interpretation:
+B3 is the only currently usable model for cautious descriptive claims about
+outcome probabilities. G2 is severely overfit and overconfident. B1's low ECE
+is a prior-only trap. DRAW probability (all models) is unreliable at this
+class frequency (6.3%). No constraint-effect conclusions are established;
+Phase 8 (Scaling) is required before any cross-stratum comparisons.
+
+Known limitations:
+- Pilot scale only (931 val rows).
+- No post-hoc calibrators; B3 ECE reflects raw LR probabilities.
+- DRAW class too sparse for reliable probability estimates.
+- Correlational findings only; no causal design.
+- Guardrails are conservative by design; may be relaxed after Phase 8.
+
+Next step:
+Phase 8 (Scaling: larger dataset, better model) before constraint-effect claims.
+Post-hoc calibration (Phase 7.3) deferred until model quality improves.
+
