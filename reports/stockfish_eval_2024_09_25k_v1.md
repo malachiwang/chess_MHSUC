@@ -21,9 +21,16 @@ This artifact provides local fixed-depth Stockfish evaluations (6,205 positions 
 ## 3. Engine and Depth
 
 - Engine: Stockfish 18
-- Depth: 12 (fixed)
+- Depth: 12 (fixed) for all searched positions
 - `chess.engine.SimpleEngine` via python-chess 1.11.2
 - No time limit; deterministic at fixed depth
+
+**Erratum (8.2A audit finding):** 27 of the 6,205 rows have `sf_depth=0`, not 12.
+These are terminal positions where no search is possible: 26 with checkmate already
+on the board (`sf_eval_mate=0`, `sf_eval_cp=∓10000`) and 1 stalemate (`sf_eval_cp=0`).
+This is expected engine behavior, not an evaluation failure — terminal positions
+cannot be searched. These rows are legitimate population members. Depth breakdown:
+6,178 rows at depth 12; 27 terminal rows at depth 0.
 
 ## 4. Output Artifact
 

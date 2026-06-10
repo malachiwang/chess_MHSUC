@@ -756,9 +756,26 @@ See `reports/phase_reports/phase_8_1b_fixed_depth_stockfish_evaluation_implement
 
 Define comparison approach.
 
+Status: complete (audit delivered inline in chat on 2026-06-10). Verified the 8.1B
+artifact (found the sf_depth=0 terminal-row erratum), selected the
+(game_id, selected_position_type) join key, designed feature sets FS-H–K and
+models E1/E3/E4/E5, and recommended a logistic-only implementation reusing
+bootstrap_ci.py public functions.
+
 ### Ticket 8.2B — Existing-vs-Fixed Eval Comparison Implementation
 
 Report whether model conclusions hold under fixed-depth evals.
+(Implementation includes eval-conditioned ablation per the 8.2A audit.)
+
+Status: complete. `eval_conditioned_modeling.py` + 77 tests (1,378 total passing).
+E1/E3/E4/E5 logistic models trained on the broad primary view with the 8.1B
+sf_eval artifact. All E-models beat all baselines on val log_loss; best E5=0.7310
+vs B3=0.8527 (paired delta −0.1217, CI excludes zero). Key comparison E3→E4
+(clock after eval + rating): delta −0.0138, CI [−0.0266, −0.0002] excludes zero
+(barely — re-examine at Phase 9 scale). EXP-008 added. 8.1B sf_depth erratum
+applied to both 8.1B reports.
+
+See `reports/phase_reports/phase_8_2b_existing_vs_fixed_eval_comparison_implementation.md`.
 
 ## Phase 9: Scale-up
 

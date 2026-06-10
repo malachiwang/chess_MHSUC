@@ -579,3 +579,68 @@ Known limitations:
 Next step:
 Phase 8.2 — Existing-vs-fixed eval comparison audit and eval-conditioned modeling.
 
+
+---
+
+## EXP-008 — Phase 8.2B Eval-Conditioned Modeling / Ablation
+
+Experiment ID: EXP-008
+Date: 2026-06-10
+Owner: Malachi Wang
+Status: complete
+
+Question:
+After controlling for objective position strength via fixed-depth Stockfish
+eval, do human/context features (rating, clock, checkpoint/phase) still add
+predictive signal for empirical human game outcomes?
+
+Dataset:
+- dataset_id: lichess_ten_zero_2024_09_25k_v1
+- version_tag: 2024_09_25k_v1
+- Stockfish artifact: data/processed/sf_eval_broad_2024_09_25k_v1.parquet
+  (8.1B; Stockfish 18, depth=12, 6,205 primary_numbered positions)
+- Broad primary view: train=4,344 / val=931 / test=930 rows
+- Join: (game_id, selected_position_type), 0 orphans
+
+Models (all LogisticRegression max_iter=1000 lbfgs; no GBMs):
+- E1 (FS-H): sf_eval_cp_clipped + sf_is_mate_eval only
+- E3 (FS-I): rating (FS-B) + eval block
+- E4 (FS-J): rating + clock (FS-C) + eval block
+- E5 (FS-K): full B3 human context (FS-E) + eval block
+- References: B1/B2/B3 loaded from committed baseline artifacts (not retrained)
+
+Primary validation metrics (log_loss / accuracy / macro_f1 / Brier):
+- E1: 0.7581 / 0.6520 / 0.4489 / 0.4515
+- E3: 0.7500 / 0.6584 / 0.4533 / 0.4467
+- E4: 0.7362 / 0.6617 / 0.4555 / 0.4363
+- E5: 0.7310 / 0.6563 / 0.4518 / 0.4356  (best E; B3 reference = 0.8527)
+
+Key pairwise game-level bootstrap deltas (1,000 replicates, seed=42;
+delta = LL(B) - LL(A), negative = B improved):
+- E3 -> E4 (KEY: clock after eval + rating): -0.0138 [-0.0266, -0.0002]
+  EXCLUDES ZERO — clock adds resolvable predictive signal, but the upper
+  bound is extremely close to zero; fragile at pilot scale.
+- E1 -> E3 (rating after eval): -0.0081 [-0.0223, +0.0042] contains zero.
+- E4 -> E5 (context after clock): -0.0052 [-0.0147, +0.0042] contains zero.
+- B3 -> E1 (eval alone vs champion): -0.0946 [-0.1355, -0.0477] excludes zero.
+- B3 -> E5 (champion vs best E): -0.1217 [-0.1565, -0.0828] excludes zero —
+  best eval-conditioned model clearly improves on B3.
+
+Caveats:
+- All findings are predictive associations, not causal effects.
+- Stockfish depth=12 eval is objective position context, not ground truth.
+- Late checkpoints are increasingly decided; per-checkpoint slices reported
+  (E5 val log_loss: move_10=0.794 → move_40=0.639). Degradation curves NOT
+  established.
+- DRAW directional only (59/931 val rows). DRAW is not solved.
+- 27 terminal sf_depth=0 rows (0.4%) are mechanically decided.
+- Test split untouched for selection (metrics recorded only).
+
+Artifacts (gitignored):
+- data/processed/eval_conditioned_results_2024_09_25k_v1.json
+- data/processed/eval_conditioned_predictions_2024_09_25k_v1.parquet (24,820 rows)
+Committed report: reports/eval_conditioned_modeling_2024_09_25k_v1.md
+
+Next step:
+Phase 9 (scale-up) audit — re-examine the fragile E3->E4 clock finding and
+the E-model advantage at larger N before any constraint-effect claims.

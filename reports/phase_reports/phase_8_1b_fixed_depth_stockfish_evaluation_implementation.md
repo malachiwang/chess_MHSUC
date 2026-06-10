@@ -186,7 +186,14 @@ Full run completed successfully. Results:
 | sf_eval_available=True | 6,205 (100%) |
 | fen_hash non-null | 6,205/6,205 |
 | game_id/ply unique | True |
-| sf_depth=12 uniform | True |
+| sf_depth=12 (searched positions) | 6,178 rows |
+| sf_depth=0 (terminal positions, see erratum) | 27 rows |
+
+**Erratum (found by 8.2A audit):** sf_depth is not uniformly 12. 27 rows are terminal
+positions where no search is possible: 26 with checkmate already on the board
+(`sf_eval_mate=0`) and 1 stalemate (`sf_eval_cp=0`). This is expected engine behavior
+for terminal positions, not an evaluation failure. These rows remain legitimate
+population members.
 
 **Bucket distribution:**
 
