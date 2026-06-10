@@ -735,22 +735,20 @@ Goal: check whether conclusions depend on existing Lichess eval selection bias.
 
 ### Ticket 8.1A — Stockfish Validation Audit
 
-Define:
+Status: complete. See `reports/phase_reports/phase_8_1b_fixed_depth_stockfish_evaluation_implementation.md`
+(audit findings reported inline in chat on 2026-06-10; no separate 8.1A phase report file).
 
-```text
-sample size
-positions per game
-depth/node limit
-runtime estimate
-output schema
-risk controls
-```
+Findings: Stockfish 18 at /opt/homebrew/bin/stockfish; python-chess 1.11.2 available; FEN
+reconstruction via PGN re-parse confirmed feasible; 6,205 primary_numbered positions; depth=12
+recommended (~4min runtime); no new dependencies needed.
 
 ### Ticket 8.1B — Stockfish Evaluation Implementation
 
-Evaluate sampled selected positions locally.
+Status: code-complete. `stockfish_eval.py` + 75 tests. Dry-run passed (10 positions, FEN
+reconstruction OK, URL stream found all target games). Full 6,205-position eval pending
+explicit approval; full artifact not yet generated.
 
-Do not run massive evaluation without explicit permission.
+See `reports/phase_reports/phase_8_1b_fixed_depth_stockfish_evaluation_implementation.md`.
 
 ### Ticket 8.2A — Existing-vs-Fixed Eval Comparison Audit
 
