@@ -247,7 +247,27 @@ whether a current dependency already covers it
 
 Malachi runs installation commands unless explicitly granting Claude permission.
 
-## 13. Escalation rule
+## 13. Holdout / test-split policy
+
+The validation split is the working model-selection and evaluation surface.
+The test split is not for routine iteration.
+
+Rules:
+
+- **Validation split:** use freely for model comparison, hyperparameter choices, and
+  diagnostic reports. Validation metrics may be cited in phase reports and experiment log.
+- **Test split:** opened at most once per major modeling version or dataset version.
+  Any test exposure must be documented in EXPERIMENT_LOG with the date and ticket.
+- Historical pilot reports (Phase 5.2B, 6.1B) already exposed some test metrics
+  under a "not used for model selection" disclaimer. Those results stand as historical
+  records and should not be deleted, but they should not be used for future model selection.
+- Future model training CLIs should not print test metrics in standard stdout output.
+  If a CLI prints test metrics by default, that behavior is a future refactor target.
+- The test set remains a valid final holdout only if we stop routinely making decisions
+  based on its values. Treat test like a sealed envelope: open it once to report a
+  conclusion, not once per experiment.
+
+## 14. Escalation rule
 
 If a task becomes too broad, split it.
 

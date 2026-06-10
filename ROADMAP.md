@@ -696,6 +696,39 @@ Key outputs:
 
 Local artifacts (gitignored): none.
 
+## Phase 7 Pre-Phase-8 Hardening
+
+### Ticket 7.3A — Modeling Hygiene Hardening Audit
+
+ML/INFRA | D2 | CAUTIOUS
+
+Status: complete.
+
+Summary: Audited pre-Phase-8 modeling hygiene issues: missing clustered uncertainty
+estimates, unfair unstopped GBM comparison (sklearn `early_stopping='auto'` does not
+activate below 10,000 samples), undocumented short-game exclusion (137 games with n_plies
+< 20), test-holdout exposure, leakage hardening gaps, roadmap/log drift (Phase 8 called
+"Scaling" in EXP-002–005; EXP-001 filter statement incorrect), and v1-specific hardcoded
+report constants.
+
+### Ticket 7.3B — Modeling Hygiene Hardening Implementation
+
+ML/INFRA | D2 | IMPLEMENTATION
+
+Status: complete. See `reports/phase_reports/phase_7_3b_modeling_hygiene_hardening.md`.
+
+Summary: Implemented game-level cluster bootstrap CIs (1,000 replicates, val only),
+fair early-stopped G2b diagnostic GBM (early_stopping=True, validation_fraction=0.15),
+short-game population documentation and accounting test, holdout/test-split policy
+(WORKFLOW.md §14), permuted-label anti-leakage test, prediction/split and primary-view
+consistency checks, roadmap/experiment-log corrections, and v1-constant warning comments.
+
+Key findings:
+- G2b val log_loss and comparison to G2 and B3: see EXP-006 and bootstrap report.
+- Bootstrap CIs confirm whether B2→B3 delta (Δ−0.021 log_loss) is statistically resolvable.
+- Short-game exclusion documented: 137 games (n_plies 1–19), not a parser bug, population
+  definition is games reaching ply ≥ 20 / move 10.
+
 ## Phase 8: Fixed-depth Stockfish validation
 
 Goal: check whether conclusions depend on existing Lichess eval selection bias.
@@ -805,8 +838,15 @@ professor email draft
 
 ## Completed tickets
 
-```text
-None yet beyond initial repository setup.
-```
+Phases 0–7 and pre-Phase-8 hardening complete:
+
+- Phase 0: Governance and setup (0.1A/B, 0.2A/B)
+- Phase 1: Lichess source and 10+0 availability (1.1A/B)
+- Phase 2: PGN parsing and schema (2.1A/B, 2.2A/B)
+- Phase 3: Cleaning, labeling, and features (3.1A/B, 3.2A/B)
+- Phase 4: Data assessment (4.1A/B, 4.2A/B)
+- Phase 5: Baseline modeling (5.1A/B, 5.2A/B, 5.3A/B)
+- Phase 6: GBM modeling (6.1A/B, 6.2A/B, 6.3A/B)
+- Phase 7: Calibration and probability interpretation (7.1A/B, 7.2A/B, 7.3A/B)
 
 Update this section after each stable commit.

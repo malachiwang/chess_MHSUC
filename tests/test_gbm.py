@@ -349,6 +349,25 @@ class TestBuildGbmModel:
         m = build_gbm_model("G1", self._entry(class_weight="balanced"))
         assert m.class_weight == "balanced"
 
+    def test_g2b_entry_enables_early_stopping(self):
+        entry = {"model_id": "G2b", "feature_set_id": "FS-E",
+                 "table": "broad", "exploratory": False, "diagnostic": True,
+                 "class_weight": None,
+                 "early_stopping": True, "validation_fraction": 0.15,
+                 "n_iter_no_change": 10}
+        m = build_gbm_model("G2b", entry)
+        assert m.early_stopping is True
+        assert m.validation_fraction == 0.15
+        assert m.n_iter_no_change == 10
+
+    def test_g2_entry_no_early_stopping_key_uses_default(self):
+        entry = {"model_id": "G2", "feature_set_id": "FS-E",
+                 "table": "broad", "exploratory": False, "diagnostic": False,
+                 "class_weight": None}
+        m = build_gbm_model("G2", entry)
+        # sklearn default early_stopping is 'auto'; no override applied
+        assert m.early_stopping == "auto"
+
 
 # ===========================================================================
 # E. build_gbm_registry
@@ -405,8 +424,31 @@ class TestBuildGbmRegistry:
         for mid, entry in reg.items():
             assert entry["model_id"] == mid
 
-    def test_exactly_six_entries(self):
-        assert len(build_gbm_registry()) == 6
+    def test_exactly_seven_entries(self):
+        # G1-G6 + G2b (Ticket 7.3B fair-comparison diagnostic)
+        assert len(build_gbm_registry()) == 7
+
+    def test_g2b_in_registry(self):
+        reg = build_gbm_registry()
+        assert "G2b" in reg
+
+    def test_g2b_feature_set(self):
+        reg = build_gbm_registry()
+        assert reg["G2b"]["feature_set_id"] == "FS-E"
+
+    def test_g2b_is_diagnostic(self):
+        reg = build_gbm_registry()
+        assert reg["G2b"]["diagnostic"] is True
+
+    def test_g2b_has_early_stopping(self):
+        reg = build_gbm_registry()
+        assert reg["G2b"]["early_stopping"] is True
+        assert reg["G2b"]["validation_fraction"] == 0.15
+        assert reg["G2b"]["n_iter_no_change"] == 10
+
+    def test_g2_no_early_stopping_key(self):
+        reg = build_gbm_registry()
+        assert "early_stopping" not in reg["G2"]
 
 
 # ===========================================================================
@@ -624,10 +666,11 @@ class TestRunAllGbm:
         _, pred_df = self._run()
         assert "baseline_id" not in pred_df.columns
 
-    def test_predictions_has_six_model_ids(self):
+    def test_predictions_has_seven_model_ids(self):
+        # G1-G6 + G2b (Ticket 7.3B)
         _, pred_df = self._run()
         model_ids = set(pred_df["model_id"].unique().to_list())
-        assert model_ids == {"G1", "G2", "G3", "G4", "G5", "G6"}
+        assert model_ids == {"G1", "G2", "G3", "G4", "G5", "G6", "G2b"}
 
     def test_all_results_have_metrics(self):
         results, _ = self._run()

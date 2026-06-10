@@ -76,6 +76,14 @@ _GBM_REGISTRY: list[dict] = [
      "exploratory": True, "diagnostic": False, "class_weight": None},
     {"model_id": "G6", "feature_set_id": "FS-G", "table": "eval",
      "exploratory": True, "diagnostic": False, "class_weight": None},
+    # G2b: fair comparison for G2 with proper early stopping.
+    # G2 used early_stopping='auto' which does NOT activate for n_samples < 10,000
+    # (threshold is 10,000; pilot train set has 4,344 rows). G2b explicitly enables
+    # early stopping so iteration count is chosen by held-out val performance.
+    # See Ticket 7.3A/7.3B audit for detail.
+    {"model_id": "G2b", "feature_set_id": "FS-E", "table": "broad",
+     "exploratory": False, "diagnostic": True, "class_weight": None,
+     "early_stopping": True, "validation_fraction": 0.15, "n_iter_no_change": 10},
 ]
 
 
@@ -157,8 +165,16 @@ def build_gbm_model(model_id: str, entry: dict) -> HistGradientBoostingClassifie
     Build HistGradientBoostingClassifier for one GBM model entry.
 
     Uses fixed GBM_PARAMS. Applies class_weight if specified in entry.
+    Optional entry keys early_stopping, validation_fraction, n_iter_no_change
+    override the default (no early stopping) when present.
     """
     params = build_gbm_params(class_weight=entry.get("class_weight"))
+    if "early_stopping" in entry:
+        params["early_stopping"] = entry["early_stopping"]
+    if "validation_fraction" in entry:
+        params["validation_fraction"] = entry["validation_fraction"]
+    if "n_iter_no_change" in entry:
+        params["n_iter_no_change"] = entry["n_iter_no_change"]
     return HistGradientBoostingClassifier(**params)
 
 
@@ -314,6 +330,9 @@ def train_one_gbm(
             )
 
     params_used = build_gbm_params(class_weight=entry.get("class_weight"))
+    for es_key in ("early_stopping", "validation_fraction", "n_iter_no_change"):
+        if es_key in entry:
+            params_used[es_key] = entry[es_key]
 
     result = {
         "model_id": model_id,
@@ -351,14 +370,19 @@ def run_all_gbm(
     eval_df: pl.DataFrame,
     assignments: dict[str, str],
     modeling_plan: dict,
+    model_ids: list[str] | None = None,
 ) -> tuple[dict, pl.DataFrame]:
     """
-    Train all GBM models and return (results_by_id, all_predictions_df).
+    Train GBM models and return (results_by_id, all_predictions_df).
 
     results_by_id: {model_id: result_dict | {"error": str}}
     all_predictions_df: concatenated per-row predictions for all models.
+
+    If model_ids is provided, only those models are trained (subset filter).
     """
     registry = build_gbm_registry()
+    if model_ids is not None:
+        registry = {mid: entry for mid, entry in registry.items() if mid in model_ids}
     fs_data = modeling_plan["feature_sets"]
     if isinstance(fs_data, dict):
         feature_sets_lookup: dict[str, list[str]] = {
@@ -428,18 +452,20 @@ def save_gbm_outputs(
     predictions_df: pl.DataFrame,
     output_dir: str | Path,
     version_tag: str,
+    output_prefix: str = "gbm",
 ) -> dict[str, str]:
     """
-    Save gbm_results_{tag}.json and gbm_predictions_{tag}.parquet.
+    Save {prefix}_results_{tag}.json and {prefix}_predictions_{tag}.parquet.
 
     Both files are gitignored (in data/processed/).
     Returns dict with output file paths.
+    output_prefix defaults to "gbm"; pass e.g. "gbm_hygiene" for hygiene runs.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    results_path = output_dir / f"gbm_results_{version_tag}.json"
-    predictions_path = output_dir / f"gbm_predictions_{version_tag}.parquet"
+    results_path = output_dir / f"{output_prefix}_results_{version_tag}.json"
+    predictions_path = output_dir / f"{output_prefix}_predictions_{version_tag}.parquet"
 
     with open(results_path, "w", encoding="utf-8") as f:
         json.dump(results_payload, f, indent=2)
@@ -753,10 +779,26 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--report-output-dir", required=True)
     parser.add_argument("--version-tag", required=True)
+    parser.add_argument(
+        "--model-ids", default=None,
+        help="Comma-separated list of model IDs to train (default: all). "
+             "Example: --model-ids G2b"
+    )
+    parser.add_argument(
+        "--output-prefix", default="gbm",
+        help="Filename prefix for output artifacts (default: 'gbm'). "
+             "Use 'gbm_hygiene' for hygiene/diagnostic runs."
+    )
 
     args = parser.parse_args(argv)
 
+    model_ids_filter: list[str] | None = None
+    if args.model_ids:
+        model_ids_filter = [mid.strip() for mid in args.model_ids.split(",")]
+
     print(f"dataset_id={args.dataset_id}  version={args.version_tag}")
+    if model_ids_filter:
+        print(f"Model filter: {model_ids_filter}")
 
     broad_df = pl.read_parquet(args.feature_broad)
     eval_df = pl.read_parquet(args.feature_eval)
@@ -773,7 +815,8 @@ def main(argv: list[str] | None = None) -> int:
 
     print("\nTraining GBM models...")
     gbm_results, predictions_df = run_all_gbm(
-        broad_df, eval_df, assignments, modeling_plan
+        broad_df, eval_df, assignments, modeling_plan,
+        model_ids=model_ids_filter,
     )
 
     results_payload = build_gbm_results_payload(
@@ -788,19 +831,27 @@ def main(argv: list[str] | None = None) -> int:
         results_payload, predictions_df,
         output_dir=args.output_dir,
         version_tag=args.version_tag,
+        output_prefix=args.output_prefix,
     )
 
     print_gbm_summary(results_payload)
     print(f"Saved results:     {output_paths['results_json']}")
     print(f"Saved predictions: {output_paths['predictions_parquet']}")
 
-    report_md = render_gbm_report(results_payload, output_paths)
-    report_dir = Path(args.report_output_dir)
-    report_dir.mkdir(parents=True, exist_ok=True)
-    report_path = report_dir / "phase_6_1b_gbm_implementation.md"
-    with open(report_path, "w", encoding="utf-8") as f:
-        f.write(report_md)
-    print(f"Saved report:      {report_path}")
+    # Only write the Phase 6 implementation report for the canonical "gbm" run.
+    # Hygiene/diagnostic runs (--output-prefix != "gbm") skip it to avoid
+    # overwriting the committed Phase 6.1B report with partial results.
+    if args.output_prefix == "gbm":
+        report_md = render_gbm_report(results_payload, output_paths)
+        report_dir = Path(args.report_output_dir)
+        report_dir.mkdir(parents=True, exist_ok=True)
+        report_path = report_dir / "phase_6_1b_gbm_implementation.md"
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write(report_md)
+        print(f"Saved report:      {report_path}")
+    else:
+        print(f"  [gbm] Skipping phase report (output_prefix={args.output_prefix!r}; "
+              "not overwriting phase_6_1b_gbm_implementation.md)")
 
     return 0
 

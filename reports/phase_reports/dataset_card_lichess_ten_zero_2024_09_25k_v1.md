@@ -210,6 +210,18 @@ result_class and white_result_numeric are target labels and must never be model 
 
 **C8.** All data artifacts are local-only and gitignored. Regenerate from source using the reproduction commands in this document.
 
+**C9 — Modeling population definition (Ticket 7.3B):** The modeling population is **Lichess 10+0 clean games that reached the first selected checkpoint (ply ≥ 20 / move 10)**. Of 2,460 clean game records, 137 games (5.6%) have `n_plies < 20` and produce no feature-position rows. These 137 games are excluded from `feature_positions_broad` by design — it is not possible to compute a move_10 checkpoint for a game that ended before move 10. This is a population-definition conditioning, not a parser bug.
+
+Excluded-game breakdown (137 games, n_plies 1–19):
+
+| result_class | n | termination |
+|---|---|---|
+| WHITE_WIN | 78 | Normal: 67, Time forfeit: 11 |
+| BLACK_WIN | 57 | Normal: 45, Time forfeit: 12 |
+| DRAW | 2 | Normal: 2 |
+
+Note: 23 of the 137 excluded games are time forfeits before move 10 — "extreme-early collapse" events. These are outside the modeled population, which is defined as games that survived to at least the opening checkpoint. The model does not attempt to predict outcomes for games resolved in fewer than 10 moves.
+
 ---
 
 ## 10. Reproduction Commands

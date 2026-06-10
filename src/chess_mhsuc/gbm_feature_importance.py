@@ -60,6 +60,10 @@ _ABLATION_MODEL_IDS: list[str] = ["G1", "G2", "G3", "G4"]
 # These differ from 6.3A audit scratch values but preserve the same qualitative
 # finding: rating features are positive, clock_diff_s is the strongest negative
 # overfit artifact.
+# WARNING (Ticket 7.3B): These constants are hardcoded for the v1 pilot dataset
+# (lichess_ten_zero_2024_09_25k_v1). They must be re-derived and updated if the
+# dataset version, feature set, or GBM_PARAMS change. Do not copy them to a new
+# dataset version without re-running the CLI and updating these values.
 _EXPECTED_WHITE_ELO: float = 0.0169
 _EXPECTED_AVG_ELO: float = 0.0410
 _EXPECTED_CLOCK_DIFF: float = -0.0481

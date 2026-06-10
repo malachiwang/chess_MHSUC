@@ -55,6 +55,12 @@ _PROB_COL_MAP: dict[str, str] = {
 # GBM primary view name for filtering (matches gbm.py primary_numbered view)
 _GBM_PRIMARY_VIEW: str = "primary_numbered"
 
+# WARNING (Ticket 7.3B): The metric values cited in the rendered report prose
+# (val log_loss 1.2326 for G2, 0.8527 for B3, ECE values) are hardcoded for the
+# v1 pilot dataset (lichess_ten_zero_2024_09_25k_v1). If the dataset version,
+# feature set, or model parameters change, re-run the calibration CLI and update
+# the prose strings in render_calibration_report (around lines 595, 690, 707).
+
 
 # ---------------------------------------------------------------------------
 # A. get_class_order

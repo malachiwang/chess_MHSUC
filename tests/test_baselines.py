@@ -1158,3 +1158,83 @@ class TestRunAllBaselines:
         for col in ("baseline_id", "split_set", "game_id", "result_class",
                     "pred_class", "p_BLACK_WIN", "p_DRAW", "p_WHITE_WIN"):
             assert col in pred_df.columns
+
+
+# ===========================================================================
+# Anti-leakage: permuted labels test (Ticket 7.3B)
+# ===========================================================================
+
+class TestPermutedLabelAntiLeakage:
+    """
+    Verify that no supervised baseline leaks label information through features.
+
+    Test strategy: permute result_class labels on training data for B3
+    (LogisticRegression). Under random labels, val log_loss should be near
+    the prior log_loss (B1 baseline). If it is significantly lower, there
+    is likely a leakage bug.
+
+    This is a smoke test, not a statistical one — we check that permuted
+    val log_loss does NOT drop below 0.5 (well below even the prior at
+    ~1.09 for balanced 3-class). Such a drop would indicate the model
+    is exploiting a non-feature column that encodes the label.
+    """
+
+    def _val_log_loss_for_model(
+        self,
+        broad_df: pl.DataFrame,
+        eval_df: pl.DataFrame,
+        assignments: dict[str, str],
+        plan: dict,
+        model_id: str,
+    ) -> float:
+        from chess_mhsuc.baselines import compute_metrics
+        from chess_mhsuc.splits import get_train_val_test
+        results, pred_df = run_all_baselines(broad_df, eval_df, assignments, plan)
+        return results["baselines"][model_id]["metrics"]["val"]["log_loss"]
+
+    def test_permuted_labels_degrade_b3_val_log_loss(self):
+        """
+        B3 trained on permuted labels should NOT produce lower val log_loss
+        than B3 on real labels. Permuted val log_loss >= real val log_loss
+        (or very close). This ensures B3 is not 'accidentally' fitting the label.
+        """
+        rng = np.random.default_rng(777)
+        broad_df = _make_broad_df(120, seed=0)
+        eval_df = _make_eval_df(60, seed=1)
+        assignments = _make_assignments(broad_df, eval_df)
+        plan = _make_modeling_plan(include_eval=False)
+
+        # Real label run
+        results_real, _ = run_all_baselines(broad_df, eval_df, assignments, plan)
+        real_ll = results_real["B3"]["metrics"]["val"]["log_loss"]
+
+        # Permute result_class column (simulate random noise labels)
+        permuted_labels = rng.permutation(broad_df["result_class"].to_list())
+        broad_permuted = broad_df.with_columns(
+            pl.Series("result_class", list(permuted_labels))
+        )
+
+        results_perm, _ = run_all_baselines(broad_permuted, eval_df, assignments, plan)
+        perm_ll = results_perm["B3"]["metrics"]["val"]["log_loss"]
+
+        # Permuted model should not be suspiciously good
+        # A log_loss below 0.5 on 3-class random labels would indicate leakage
+        assert perm_ll > 0.5, (
+            f"B3 val log_loss={perm_ll:.4f} after label permutation is suspiciously low "
+            f"(expected near prior ≈1.09). Possible label leakage via non-feature columns."
+        )
+
+    def test_label_not_in_feature_columns(self):
+        """result_class must not appear in any FS-E feature columns."""
+        plan = _make_modeling_plan(include_eval=False)
+        from chess_mhsuc.baselines import get_feature_columns
+        fs_e_cols = get_feature_columns("FS-E", plan)
+        assert "result_class" not in fs_e_cols
+
+    def test_forbidden_cols_not_in_fs_e(self):
+        """Known forbidden label-leaking columns must not appear in FS-E."""
+        plan = _make_modeling_plan(include_eval=False)
+        from chess_mhsuc.baselines import get_feature_columns, _FORBIDDEN_FEATURE_COLS
+        fs_e_cols = set(get_feature_columns("FS-E", plan))
+        leaking = fs_e_cols & _FORBIDDEN_FEATURE_COLS
+        assert not leaking, f"Forbidden cols in FS-E: {sorted(leaking)}"

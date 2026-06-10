@@ -22,6 +22,12 @@ import sys
 from pathlib import Path
 from typing import Any
 
+# WARNING (Ticket 7.3B): Any metric values that appear as prose strings in
+# render_* functions below are calibrated to the v1 pilot dataset
+# (lichess_ten_zero_2024_09_25k_v1). The tables are dynamically generated from
+# the JSON artifact, but any hard-coded commentary on specific values (e.g.,
+# "B3 log_loss = 0.8527") must be re-verified if the dataset or features change.
+
 
 # ---------------------------------------------------------------------------
 # A. load_baseline_results

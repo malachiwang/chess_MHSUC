@@ -67,7 +67,7 @@ Dataset:
 - Source: Lichess 10+0 (600+0) games, 2024-09 extract
 - Time control: 10+0
 - Scan/sample size: ~25k games scanned
-- Filters: Stockfish-annotated positions; broad subset ≥ 1 eval position
+- Filters: games reaching first selected checkpoint (ply ≥ 20 / move 10); no eval filter on broad subset
 - Number of games (broad): 2460 clean games; train=1626 / val=348 / test=349
 - Number of rows/positions (broad primary_numbered view): 6205
 - Eval source: Stockfish (embedded in Lichess PGN comments)
@@ -126,6 +126,14 @@ Known limitations:
 - No hyperparameter tuning performed on LR models.
 - No calibration assessed.
 - Eval and broad baselines are not directly comparable (selection bias ~+20 Elo).
+
+**Erratum (Ticket 7.3B, 2026-06-10):** The "Filters" line above originally read
+"Stockfish-annotated positions; broad subset ≥ 1 eval position" — this was incorrect.
+The broad modeling population (B1–B3) has no eval requirement. The actual filter is:
+clean Lichess 10+0 games that reached the first selected checkpoint (ply ≥ 20 / move 10).
+2,460 clean games produced 2,323 broad feature games (137 games with n_plies < 20 excluded
+as they did not reach the first checkpoint). The eval-annotated subset (13.7% of broad rows)
+was used only for exploratory B4/B5 baselines, not for B1–B3.
 
 Next step:
 Phase 6 GBM (HistGradientBoostingClassifier) experiments targeting B3 val
@@ -227,7 +235,7 @@ Known limitations:
 
 Next step:
 Phase 6.3A — Feature Importance Audit. Note: importances from the overfit G2
-may not be reliable. Phase 7 Calibration and Phase 8 Scaling also needed.
+may not be reliable. Phase 7 Calibration and Phase 8 Stockfish/eval validation also needed.
 
 ---
 
@@ -303,8 +311,8 @@ Known limitations:
 - No SHAP. No new dependencies.
 
 Next step:
-Phase 7 Calibration or Phase 8 Scaling. Feature importance from a better-fit
-model on more data will be more informative for constraint analysis.
+Phase 7 Calibration or Phase 8 Stockfish/eval validation. Feature importance from
+a better-fit model on more data will be more informative for constraint analysis.
 
 ---
 
@@ -379,8 +387,9 @@ Known limitations:
 - Pilot scale only (931 val rows).
 
 Next step:
-Phase 7.2 Probability Interpretation or Phase 8 Scaling. A post-hoc calibration
-experiment (Platt/isotonic) may be warranted after model improvement in Phase 8.
+Phase 7.2 Probability Interpretation or Phase 8 Stockfish/eval validation. A
+post-hoc calibration experiment (Platt/isotonic) may be warranted after model
+improvement in Phase 8.
 
 ---
 
@@ -445,6 +454,64 @@ Known limitations:
 - Guardrails are conservative by design; may be relaxed after Phase 8.
 
 Next step:
-Phase 8 (Scaling: larger dataset, better model) before constraint-effect claims.
+Phase 8 (Stockfish/eval-conditioned modeling) before constraint-effect claims.
 Post-hoc calibration (Phase 7.3) deferred until model quality improves.
+
+---
+
+## EXP-006 — Phase 7.3B Modeling Hygiene Hardening
+
+Experiment ID: EXP-006
+Date: 2026-06-10
+Owner: Malachi Wang
+Status: complete
+
+Question:
+What documentation, infrastructure, and model-comparison gaps exist before Phase 8?
+Specifically: (1) are there unfair model comparisons due to missing early stopping?
+(2) are there undocumented population exclusions? (3) is the test split protected?
+(4) are there leakage risks in the test suite? (5) has roadmap/log drift accumulated?
+
+Dataset:
+- Source: Lichess 10+0 (600+0) games, 2024-09 extract (same pilot, no new data)
+- Validation split: 931 rows (broad primary_numbered view)
+- No new data acquisition or dataset version.
+
+Models added:
+- G2b: HistGradientBoostingClassifier on FS-E, same as G2 but with
+  early_stopping=True, validation_fraction=0.15, n_iter_no_change=10.
+  This is a fair comparison: G2 ran 300 unstopped iterations on 4,344 training
+  rows because sklearn early_stopping='auto' does not activate below 10,000 samples.
+
+Metrics (G2b val, primary_numbered):
+- See gbm_hygiene_results_2024_09_25k_v1.json for G2b val log_loss and n_iter_actual.
+- G2b expected to use fewer iterations and produce better-calibrated probabilities
+  than G2 at this sample size.
+
+Infrastructure changes:
+- bootstrap_ci.py: game-level cluster bootstrap (1,000 replicates, seed=42)
+  for val log_loss CIs on B1, B3, G2, G2b. Resamples game_ids, not rows.
+- WORKFLOW.md §13: formal holdout/test-split policy documented.
+- dataset_card: C9 caveat documenting 137 excluded short games (n_plies < 20).
+- EXPERIMENT_LOG: EXP-001 filter erratum corrected; Phase 8 naming drift fixed (EXP-002–005).
+- ROADMAP.md: Phase 7.3 hardening section added; completed tickets stanza updated.
+- v1 report module warning comments: gbm_feature_importance.py, calibration.py,
+  baseline_evaluation.py each note hardcoded v1 metrics that require re-derivation
+  if dataset or model parameters change.
+- test_data_integrity.py: population accounting test + prediction/split consistency checks.
+- test_baselines.py: permuted-label anti-leakage test.
+- test_gbm.py: G2b-specific tests.
+
+Known limitations:
+- G2b still uses the same small pilot dataset; expect similar overfit signature.
+- Bootstrap CIs on 931 val rows are wide; precise interval endpoints should not
+  be over-interpreted at this sample size.
+- Short-game exclusion (137 games) is a population-definition choice, not a bug;
+  any future dataset version should document whether this exclusion still applies.
+- Holdout policy is documented but historically-exposed test metrics (Phases 5.2B,
+  6.1B) stand as records and were not used for model selection decisions.
+
+Next step:
+Phase 8 (Stockfish/eval-conditioned modeling) — G2b bootstrap CIs provide
+the fair uncertainty baseline for comparing against any Phase 8 models.
 
