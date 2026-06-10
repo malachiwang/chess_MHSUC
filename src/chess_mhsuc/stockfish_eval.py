@@ -97,6 +97,37 @@ _LICHESS_PGNS_URL = (
     "lichess_db_standard_rated_2024-09.pgn.zst"
 )
 
+# Explicit Polars schema for output rows — prevents Null-type inference on nullable ints
+_RESULT_SCHEMA: dict[str, pl.PolarsDataType] = {
+    "dataset_id":             pl.Utf8,
+    "version_tag":            pl.Utf8,
+    "game_id":                pl.Utf8,
+    "ply":                    pl.Int64,
+    "selected_position_type": pl.Utf8,
+    "split_set":              pl.Utf8,
+    "move_number":            pl.Int64,
+    "result_class":           pl.Utf8,
+    "has_lichess_eval":       pl.Boolean,
+    "lichess_eval_cp":        pl.Int64,
+    "lichess_eval_mate":      pl.Int64,
+    "fen_hash":               pl.Utf8,
+    "sf_eval_available":      pl.Boolean,
+    "sf_eval_status":         pl.Utf8,
+    "sf_eval_cp":             pl.Int64,
+    "sf_eval_mate":           pl.Int64,
+    "sf_eval_mate_abs":       pl.Int64,
+    "sf_eval_abs":            pl.Int64,
+    "sf_eval_sign":           pl.Int64,
+    "sf_eval_bucket":         pl.Utf8,
+    "sf_depth":               pl.Int64,
+    "sf_nodes":               pl.Int64,
+    "sf_time_ms":             pl.Int64,
+    "sf_engine_name":         pl.Utf8,
+    "sf_engine_version":      pl.Utf8,
+    "sf_eval_timestamp_utc":  pl.Utf8,
+    "sf_error":               pl.Utf8,
+}
+
 # Columns to include in the output Parquet (in order)
 _OUTPUT_COLUMNS = [
     "dataset_id",
@@ -776,11 +807,7 @@ def run_stockfish_eval(
         if engine is not None:
             engine.quit()
 
-    result_df = pl.DataFrame(rows)
-    # Ensure all expected columns are present
-    for col in _OUTPUT_COLUMNS:
-        if col not in result_df.columns:
-            result_df = result_df.with_columns(pl.lit(None).alias(col))
+    result_df = pl.from_dicts(rows, schema=_RESULT_SCHEMA)
     result_df = result_df.select(_OUTPUT_COLUMNS)
 
     return result_df
@@ -1286,6 +1313,16 @@ def main(argv: list[str] | None = None) -> int:
 
     run_finished_utc = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     runtime_s = time.time() - t_start
+
+    # If resuming, merge existing rows with newly processed rows before writing
+    if args.resume and Path(args.output_parquet).exists():
+        existing_df = pl.read_parquet(args.output_parquet)
+        results_df = pl.concat([existing_df, results_df], how="diagonal")
+        print(
+            f"  [resume] merged {len(existing_df)} existing + {len(results_df) - len(existing_df)} new rows "
+            f"= {len(results_df)} total",
+            file=sys.stderr,
+        )
 
     # Compute summary stats
     n_evaluated = int(results_df["sf_eval_available"].sum()) if "sf_eval_available" in results_df.columns else 0

@@ -744,9 +744,11 @@ recommended (~4min runtime); no new dependencies needed.
 
 ### Ticket 8.1B — Stockfish Evaluation Implementation
 
-Status: code-complete. `stockfish_eval.py` + 75 tests. Dry-run passed (10 positions, FEN
-reconstruction OK, URL stream found all target games). Full 6,205-position eval pending
-explicit approval; full artifact not yet generated.
+Status: complete. `stockfish_eval.py` + 76 tests. Full 6,205-position eval completed
+(ok=6205, fail=0, runtime=329s). Lichess eval sign agreement: 95.1% on 932-position overlap.
+Artifact: `data/processed/sf_eval_broad_2024_09_25k_v1.parquet` (gitignored).
+EXP-007 added. Bug fixed: `pl.from_dicts(rows, schema=_RESULT_SCHEMA)` replaces
+`pl.DataFrame(rows)` to prevent Null-type inference on nullable int columns.
 
 See `reports/phase_reports/phase_8_1b_fixed_depth_stockfish_evaluation_implementation.md`.
 

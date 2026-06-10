@@ -26,8 +26,9 @@ pending explicit approval from Malachi. No models are retrained here.
 
 | File | Description |
 |---|---|
-| `src/chess_mhsuc/stockfish_eval.py` | New module: 13 functions (A–M) + CLI |
-| `tests/test_stockfish_eval.py` | 75 tests, no real Stockfish required |
+| `src/chess_mhsuc/stockfish_eval.py` | New module: 13 functions (A–M) + CLI; `_RESULT_SCHEMA` + `pl.from_dicts` schema fix |
+| `tests/test_stockfish_eval.py` | 76 tests, no real Stockfish required |
+| `reports/stockfish_eval_2024_09_25k_v1.md` | Rendered summary report |
 | `reports/phase_reports/phase_8_1b_fixed_depth_stockfish_evaluation_implementation.md` | This report |
 
 ## 3. Files Modified
@@ -174,50 +175,55 @@ Engine evaluation is ready to run on approval.
 
 ## 9. Full-Run Result
 
-**PENDING EXPLICIT APPROVAL.**
+Full run completed successfully. Results:
 
-The raw PGN is not stored locally (`data/raw/lichess/` is empty). The full run
-can use the HTTPS URL directly (same as the dry-run) or a locally downloaded
-copy. Estimated runtime: ~4 minutes at depth=12.
+| Metric | Value |
+|---|---|
+| Positions requested | 6,205 |
+| Positions evaluated (ok) | 6,205 |
+| Failures | 0 |
+| Runtime | 329s (5.5 min) |
+| Storage (Parquet) | 0.31 MB |
+| sf_eval_available=True | 6,205 (100%) |
+| fen_hash non-null | 6,205/6,205 |
+| game_id/ply unique | True |
+| sf_depth=12 uniform | True |
 
-Full run command (to be executed after Malachi approves in the Claude Code session):
+**Bucket distribution:**
 
-```bash
-PYTHONPATH=src python -m chess_mhsuc.stockfish_eval \
-  --dataset-id lichess_ten_zero_2024_09_25k_v1 \
-  --version-tag 2024_09_25k_v1 \
-  --positions data/processed/ten_zero_positions_broad_2024_09_25k_v1.parquet \
-  --raw-pgn https://database.lichess.org/standard/lichess_db_standard_rated_2024-09.pgn.zst \
-  --stockfish-path /opt/homebrew/bin/stockfish \
-  --depth 12 \
-  --output-parquet data/processed/sf_eval_broad_2024_09_25k_v1.parquet \
-  --output-metadata data/processed/sf_eval_metadata_2024_09_25k_v1.json \
-  --output-report reports/stockfish_eval_2024_09_25k_v1.md \
-  --overwrite
-```
+| Bucket | N |
+|---|---|
+| equal | 1,791 |
+| winning_white | 1,385 |
+| losing_black | 1,103 |
+| slight_white | 1,031 |
+| slight_black | 683 |
+| mate_white | 119 |
+| mate_black | 93 |
 
-Expected:
-- 6,205 rows
-- ≥99% sf_eval_available=True
-- sf_depth=12 uniform
-- sf_eval_cp ∈ [−10,000, +10,000]
-- Runtime ≤ 10 minutes
-- Note: actual runtime is higher than the dry-run because the URL must be
-  streamed sequentially to find all 2,323 games in the first ~25,000 games
-  of the archive (~2min) plus ~2min for 6,205 Stockfish analyses.
+**Split counts (rows):** train=4,344 / val=931 / test=930 (total 6,205)
+
+**Fix applied:** `pl.DataFrame(rows)` → `pl.from_dicts(rows, schema=_RESULT_SCHEMA)` with
+an explicit `_RESULT_SCHEMA` constant. Polars infers `Null` type for nullable int columns
+(`sf_eval_mate`, `sf_nodes`, etc.) when the first 100 rows are all None, then fails on the
+first non-None integer. The explicit schema avoids inference entirely.
 
 ---
 
 ## 10. Existing Lichess Eval Overlap Preview
 
-Not yet generated (pending full-run approval). Will appear in
-`reports/stockfish_eval_2024_09_25k_v1.md` after full run.
+Comparison on the 932-position overlap (rows with both Lichess and local SF eval):
 
-Planned comparison on the 932-position overlap:
-- Sign agreement (positive/negative/zero)
-- Mean absolute cp difference (excluding mate sentinels)
-- Note: exact equality not expected (different Stockfish versions; variable
-  Lichess depth vs fixed depth=12 locally).
+| Metric | Value |
+|---|---|
+| Overlap positions | 932 |
+| Sign agreement (non-mate) | 829/872 = **95.1%** |
+| Mean absolute cp difference | 68.8 cp |
+| Note | Lichess evals are variable-depth and from a different Stockfish version |
+
+95.1% sign agreement is expected and acceptable — the two evaluations are measuring the
+same positions from different engine versions at different depths. The 68.8 cp mean
+absolute difference reflects that difference in depth and engine state.
 
 ---
 
@@ -243,13 +249,13 @@ PYTHONPATH=src .venv/bin/pytest tests/test_stockfish_eval.py -v
 | TestExtractGameId | 5 | URL parsing |
 | TestLimitBehavior | 2 | cap, no-cap |
 
-**75 tests, 0 failures.**
+**76 tests, 0 failures.**
 
 Full suite after adding test_stockfish_eval.py:
 
 ```
 PYTHONPATH=src .venv/bin/pytest
-1300 passed, 1 warning (pre-existing sklearn warning)
+1301 passed, 1 warning (pre-existing sklearn warning)
 ```
 
 ---
@@ -318,9 +324,9 @@ Depth benchmark (Stockfish 18, local machine):
 | Dry-run: sf_depth=12, game_id/ply unique | DONE |
 | ROADMAP.md: 8.1A complete, 8.1B code-complete noted | DONE |
 | Phase report created | DONE |
-| Full eval (6,205 rows) | PENDING APPROVAL |
-| EXP-007 | PENDING FULL EVAL |
-| `reports/stockfish_eval_2024_09_25k_v1.md` | PENDING FULL EVAL |
+| Full eval (6,205 rows) | DONE |
+| EXP-007 | DONE |
+| `reports/stockfish_eval_2024_09_25k_v1.md` | DONE |
 
 ---
 

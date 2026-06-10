@@ -838,6 +838,30 @@ class TestResumeBehavior:
             )
         assert len(result_df) == 1
 
+    def test_resume_returns_only_new_rows_from_run_stockfish_eval(self, tmp_path):
+        # run_stockfish_eval itself returns only new rows; merging is done in main()
+        existing = pl.DataFrame({"game_id": ["g1"], "ply": [20], "sf_eval_available": [True]})
+        resume_pq = tmp_path / "existing.parquet"
+        existing.write_parquet(resume_pq)
+
+        positions = _make_positions_df([
+            {"game_id": "g1", "ply": 20},
+            {"game_id": "g2", "ply": 20},
+        ])
+        with patch("chess_mhsuc.stockfish_eval.index_target_games") as mock_idx:
+            mock_idx.return_value = {}
+            result_df = run_stockfish_eval(
+                positions_df=positions,
+                raw_pgn="fake",
+                stockfish_path="/fake/sf",
+                depth=12,
+                dry_run=True,
+                resume_parquet=resume_pq,
+            )
+        # run_stockfish_eval returns only the new g2 row; merging is handled in main()
+        assert len(result_df) == 1
+        assert result_df["game_id"][0] == "g2"
+
 
 # ---------------------------------------------------------------------------
 # 9. extract_game_id helper

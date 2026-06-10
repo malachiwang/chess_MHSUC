@@ -515,3 +515,67 @@ Next step:
 Phase 8 (Stockfish/eval-conditioned modeling) — G2b bootstrap CIs provide
 the fair uncertainty baseline for comparing against any Phase 8 models.
 
+---
+
+## EXP-007 — Phase 8.1B Fixed-Depth Stockfish Evaluation
+
+Experiment ID: EXP-007
+Date: 2026-06-10
+Owner: Malachi Wang
+Status: complete
+
+Question:
+Can local fixed-depth Stockfish evaluation (depth=12) provide full coverage of the
+pilot checkpoint positions, replacing the sparse (13.7%), selection-biased Lichess
+cloud eval? How well does local SF eval agree with existing Lichess cloud evals on the
+overlap positions?
+
+Dataset:
+- Source: Lichess 10+0 (600+0) games, 2024-09 extract (same pilot, no new data)
+- Positions: primary_numbered checkpoints from ten_zero_positions_broad_2024_09_25k_v1.parquet
+- Input: 6,205 positions across 2,323 unique games
+- Engine: Stockfish 18, depth=12 (fixed)
+
+Coverage result:
+- 6,205/6,205 positions evaluated (100% coverage, 0 failures)
+- Up from 932/6,205 (13.7%) Lichess cloud eval coverage
+- No selection bias: local eval evaluates all games uniformly
+
+Eval distribution:
+- equal (|cp| < 100): 1,791 (28.9%)
+- winning_white [300, 10000): 1,385 (22.3%)
+- losing_black (−10000, −300]: 1,103 (17.8%)
+- slight_white [100, 300): 1,031 (16.6%)
+- slight_black (−300, −100]: 683 (11.0%)
+- mate_white (cp = 10000): 119 (1.9%)
+- mate_black (cp = −10000): 93 (1.5%)
+
+Lichess eval overlap agreement (932 positions):
+- Sign agreement (non-mate positions): 829/872 = 95.1%
+- Mean absolute cp difference: 68.8 cp
+- Note: exact equality not expected; Lichess used a different Stockfish version
+  at variable depth. 95.1% sign agreement confirms the local eval is directionally
+  consistent with the Lichess cloud eval.
+
+Output artifact:
+- data/processed/sf_eval_broad_2024_09_25k_v1.parquet (6,205 rows, gitignored)
+- data/processed/sf_eval_metadata_2024_09_25k_v1.json (gitignored)
+- reports/stockfish_eval_2024_09_25k_v1.md (committed)
+
+Implementation notes:
+- FEN reconstruction via python-chess: stream raw PGN, replay moves to target ply,
+  call board.fen(). fen_hash = sha256[:16]. No FENs stored in pipeline previously.
+- PGN indexed in a single pass; stops early once all 2,323 target game_ids found.
+- Bug fixed during implementation: pl.DataFrame(rows) infers Null type for nullable
+  int columns (sf_eval_mate, sf_nodes, etc.) from first 100 rows. Fix: explicit
+  _RESULT_SCHEMA constant with pl.from_dicts(rows, schema=_RESULT_SCHEMA).
+
+Known limitations:
+- Depth=12 is pragmatic; deeper eval would produce slightly different centipawn values.
+- Fixed-depth local eval is not causal; it encodes position strength at a checkpoint.
+- Models trained on sf_eval_* features will be implemented in Ticket 8.2B.
+- No models trained in this ticket.
+
+Next step:
+Phase 8.2 — Existing-vs-fixed eval comparison audit and eval-conditioned modeling.
+
