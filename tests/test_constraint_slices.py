@@ -635,3 +635,23 @@ class TestOutputs:
         assert LATE_CLOCK_ORDER == ["under_60s", "60_180s", "over_180s"]
         assert IMBALANCE_ORDER == [
             "balanced", "moderate_imbalance", "large_imbalance"]
+
+
+# ---------------------------------------------------------------------------
+# 9. Payload-driven limitations prose (9.3B)
+# ---------------------------------------------------------------------------
+
+class TestPayloadDrivenLimitations:
+    def test_limitations_use_dataset_id(self, preds_with_keys):
+        payload = _make_payload(preds_with_keys)
+        text = render_report(payload)
+        assert "`synthetic_ds`" in text
+        # no hardcoded month/sample prose
+        assert "superset 250k sample" not in text
+        assert "2024-09" not in text
+        assert "2024_09_250k" not in text
+
+    def test_external_validity_caveat_generic(self, preds_with_keys):
+        payload = _make_payload(preds_with_keys)
+        text = render_report(payload)
+        assert "external validity beyond the tested month(s) is not established" in text

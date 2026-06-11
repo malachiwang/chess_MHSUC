@@ -1056,3 +1056,97 @@ class TestEndToEndCLI:
                     "per_checkpoint_key_deltas", "pilot_reference"):
             assert key in res, key
         assert res["pilot_reference"]["e3_e4_delta"] == PILOT_E3_E4_DELTA
+
+
+# ---------------------------------------------------------------------------
+# 13. Replication reference comparison (9.3B)
+# ---------------------------------------------------------------------------
+
+class TestReplicationReference:
+    @pytest.fixture
+    def base_payload(self, modeling_df):
+        return _make_payload(modeling_df)
+
+    def test_reference_in_payload_and_report(self, modeling_df):
+        payload = _make_payload(modeling_df)
+        payload["replication_reference"] = {
+            "label": "2024-09 250k replication reference",
+            "e3_e4_delta": -0.0138,
+            "e3_e4_ci_lower": -0.0186,
+            "e3_e4_ci_upper": -0.0091,
+        }
+        text = render_report(payload)
+        assert "2024-09 250k replication reference" in text
+        assert "-0.0138" in text
+        assert "-0.0186" in text
+        assert "-0.0091" in text
+        assert "Replication comparison" in text
+
+    def test_omission_preserves_existing_behavior(self, base_payload):
+        # no replication_reference key (or None) -> no replication block
+        base_payload["replication_reference"] = None
+        text = render_report(base_payload)
+        assert "Replication comparison" not in text
+
+    def test_reference_takes_precedence_over_pilot_block(self, modeling_df):
+        payload = _make_payload(modeling_df)
+        payload["replication_reference"] = {
+            "label": "ref", "e3_e4_delta": -0.01,
+            "e3_e4_ci_lower": -0.02, "e3_e4_ci_upper": -0.005,
+        }
+        text = render_report(payload)
+        assert "Replication comparison" in text
+        assert "Pilot comparison" not in text
+
+    def test_cli_reference_args(self, tmp_path, feature_df, sf_df):
+        modeling_seed = join_sf_features(feature_df, sf_df)
+        fpath, spath, bp, br = _write_cli_fixtures(
+            tmp_path, modeling_seed, feature_df, sf_df
+        )
+        rc = ecm_main([
+            "--dataset-id", "synthetic_ds",
+            "--version-tag", "synthetic_v10",
+            "--features", str(fpath),
+            "--sf-eval", str(spath),
+            "--baseline-predictions", str(bp),
+            "--baseline-results", str(br),
+            "--output-results", str(tmp_path / "r.json"),
+            "--output-predictions", str(tmp_path / "p.parquet"),
+            "--output-report", str(tmp_path / "rep.md"),
+            "--n-replicates", "5",
+            "--reference-label", "my reference",
+            "--reference-e3-e4-delta", "-0.0138",
+            "--reference-e3-e4-ci-lower", "-0.0186",
+            "--reference-e3-e4-ci-upper", "-0.0091",
+            "--overwrite",
+        ])
+        assert rc == 0
+        report = (tmp_path / "rep.md").read_text()
+        assert "my reference" in report
+        assert "Replication comparison" in report
+        res = json.loads((tmp_path / "r.json").read_text())
+        assert res["replication_reference"]["label"] == "my reference"
+
+    def test_cli_without_reference_args_unchanged(self, tmp_path, feature_df, sf_df):
+        modeling_seed = join_sf_features(feature_df, sf_df)
+        fpath, spath, bp, br = _write_cli_fixtures(
+            tmp_path, modeling_seed, feature_df, sf_df
+        )
+        rc = ecm_main([
+            "--dataset-id", "synthetic_ds",
+            "--version-tag", "synthetic_v10",
+            "--features", str(fpath),
+            "--sf-eval", str(spath),
+            "--baseline-predictions", str(bp),
+            "--baseline-results", str(br),
+            "--output-results", str(tmp_path / "r.json"),
+            "--output-predictions", str(tmp_path / "p.parquet"),
+            "--output-report", str(tmp_path / "rep.md"),
+            "--n-replicates", "5",
+            "--overwrite",
+        ])
+        assert rc == 0
+        res = json.loads((tmp_path / "r.json").read_text())
+        assert res["replication_reference"] is None
+        report = (tmp_path / "rep.md").read_text()
+        assert "Replication comparison" not in report

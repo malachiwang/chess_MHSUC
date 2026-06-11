@@ -796,3 +796,76 @@ Next step:
 Candidates: cross-month/pilot-disjoint external validity for the localized
 finding; under_60s cell needs a larger sample (or longer games) to reach CI
 threshold; GBM diagnostic at 45k train rows; player-leakage quantification.
+
+---
+
+## EXP-011 — Phase 9.3B Cross-Month Replication
+
+Experiment ID: EXP-011
+Date: 2026-06-11
+Owner: Malachi Wang
+Status: complete
+
+Question:
+Do the 2024-09 findings (EXP-009 overall clock effect; EXP-010 late-clock
+localization) replicate on a fully separate month?
+
+Design:
+- dataset_id: lichess_ten_zero_2024_10_250k_v1 / 2024_10_250k_v1
+- Source: lichess_db_standard_rated_2024-10.pgn.zst, deterministic first
+  250,000 raw games — fully disjoint from all 2024-09 data (Design B from
+  the 9.3A audit; no skip-offset parser work).
+- Same pipeline, model definitions, slice definitions (fixed since 9.2A,
+  not tuned on 2024-10 results), seeds (splits + bootstrap seed=42).
+
+Dataset:
+- 24,908 600+0 games -> 24,801 clean -> 23,496 broad games -> 62,839
+  primary positions; splits 43,946/9,442/9,451 rows (16,447/3,524/3,525 games)
+- Month comparison: avg_elo within 5 Elo of 2024-09; DRAW rate identical
+  (6.1%); termination mix similar; ~4% fewer 10+0 games in first 250k.
+- Stockfish 18 depth=12: 62,839/62,839 (100%), 0 failures, 1,626 s;
+  299 terminal sf_depth=0 rows; Lichess overlap sign agreement 95.5%.
+
+PRIMARY RESULT — overall E3->E4 (val, paired game-level bootstrap):
+- 2024-10: -0.0120, 95% CI [-0.0177, -0.0062] — EXCLUDES ZERO
+- 2024-09 reference: -0.0138 [-0.0186, -0.0091]
+- Verdict: REPLICATED. Same direction, overlapping CIs, point estimates
+  within 0.002.
+
+Per-checkpoint (pattern reproduces):
+- move_10 -0.0002 [cz], move_20 -0.0005 [cz],
+  move_30 -0.0218 [excl], move_40 -0.0625 [excl]
+
+P3 late-clock localization (within move_30+40): REPLICATED
+- under_60s -0.2468 (241 games, descriptive; 2024-09: -0.2541)
+- 60_180s   -0.0442 [-0.0636, -0.0242] EXCLUDES ZERO (2024-09: -0.0534)
+- over_180s -0.0066 [-0.0133, +0.0007] contains zero narrowly
+  (2024-09: -0.0074 barely excluded — boundary cell flips at the
+  resolvability edge; gradient low-clock >> high-clock reproduces)
+
+Other results:
+- All five pairwise deltas exclude zero again (E1->E3 -0.0068, E4->E5
+  -0.0042, B3->E1 -0.1018, B3->E5 -0.1248).
+- Baselines within ~0.002 of 2024-09 (B3 0.8549 vs 0.8533).
+- P1: equal/decided exclude zero; slight at the boundary (contains this
+  month). P2: middle rating bands exclude zero; 2000_plus descriptive
+  (277 games). Imbalance graded; terminal sensitivity: delta unchanged.
+
+Caveats:
+- Predictive associations; not causal; reasoning quality not measured.
+- Two adjacent months, one platform, one time control — external validity
+  beyond these months is not proven.
+- Stockfish eval is position context, not ground truth. Degradation curves
+  not established. DRAW not solved (575/9,442 val rows). Player-level
+  leakage unresolved. Test split untouched.
+
+Artifacts (gitignored): all *_2024_10_250k_v1 under data/. Committed:
+cross_month_replication / eval_conditioned_modeling / constraint_slices
+2024_10_250k_v1 reports + phase report.
+
+Next step:
+The clock signal now stands on two independent months. Candidates:
+pooled-month analysis to push under_60s past the CI threshold
+(pre-specified pooling rule required); player-level leakage quantification;
+GBM diagnostic at ~44k train rows; Phase 10 feasibility audit only after
+Malachi decides the replication program is sufficient.

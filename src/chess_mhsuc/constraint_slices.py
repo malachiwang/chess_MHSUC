@@ -671,8 +671,9 @@ def render_report(payload: dict) -> str:
     a("")
     a("- Sub-threshold cells (marked 'below min game threshold') have point "
       "deltas only; treat them descriptively.")
-    a("- Slice keys and predictions come from the same superset 250k sample; "
-      "external validity beyond 2024-09 is not established.")
+    a(f"- Slice keys and predictions come from the same dataset "
+      f"(`{payload['dataset_id']}`); external validity beyond the tested "
+      "month(s) is not established.")
     a("- Player-level leakage remains unresolved and applies to every slice.")
     a("- Decidedness, checkpoint, and clock depletion are mutually "
       "correlated; P3's late-checkpoint conditioning controls the largest "

@@ -841,6 +841,29 @@ sensitivity: identical with/without 44 terminal rows. EXP-010 added.
 See `reports/phase_reports/phase_9_2b_constraint_slice_implementation.md`
 and `reports/constraint_slices_2024_09_250k_v1.md`.
 
+### Ticket 9.3A — Independent Replication / External Validity Audit
+
+Status: complete (audit delivered inline in chat on 2026-06-11). Evaluated
+four replication designs; selected Design B (cross-month 250k on 2024-10) —
+it tests the actual remaining threat (time-period specificity) and required
+zero parser changes, vs. same-month disjoint sampling which needs
+skip-offset work and controls less. Identified two small parameterization
+fixes (constraint_slices prose, ecm reference comparison).
+
+### Ticket 9.3B — Cross-Month Replication Implementation
+
+Status: complete. Full pipeline rerun on 2024-10 first-250k (fully disjoint
+from all 2024-09 data): 24,801 clean games, 62,839 primary positions,
+SF 100% coverage (1,626s, 299 terminal rows). **Both replication targets
+hit: overall E3→E4 = −0.0120 [−0.0177, −0.0062] excludes zero (2024-09:
+−0.0138 [−0.0186, −0.0091]) — REPLICATED. P3 late-clock localization
+REPLICATED** (under_60s −0.2468 descriptive; 60_180s −0.0442 excludes zero;
+over_180s ≈ 0). The clock signal now stands on two independent months.
+EXP-011 added. 1,485 tests passing.
+
+See `reports/phase_reports/phase_9_3b_cross_month_replication_implementation.md`
+and `reports/cross_month_replication_2024_10_250k_v1.md`.
+
 ## Phase 10: Neural sequence model exploration
 
 Goal: explore sequence modeling only if justified.

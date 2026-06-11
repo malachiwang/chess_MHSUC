@@ -901,6 +901,7 @@ def build_results_payload(
     dataset_stats: dict | None = None,
     overlap_stats: dict | None = None,
     per_checkpoint_deltas: dict | None = None,
+    replication_reference: dict | None = None,
 ) -> dict:
     """Assemble the results JSON payload. All report prose values are computed
     from the current run — no pilot literals."""
@@ -943,6 +944,7 @@ def build_results_payload(
             "e3_e4_ci": list(PILOT_E3_E4_CI),
             "version_tag": "2024_09_25k_v1",
         },
+        "replication_reference": replication_reference,
         "bootstrap_n_replicates": n_replicates,
         "bootstrap_seed": seed,
         "artifact_paths": artifact_paths,
@@ -1060,7 +1062,17 @@ def render_report(payload: dict) -> str:
           f"{_fmt(best_val_ll)}) does not improve on the current broad champion "
           f"B3 ({_fmt(b3_val_ll)}).")
     a("")
-    if not is_pilot and key_delta is not None and pilot:
+    repl_ref = payload.get("replication_reference")
+    if repl_ref and key_delta is not None:
+        a(f"Replication comparison: the reference result "
+          f"({repl_ref.get('label', 'reference')}) found E3→E4 delta "
+          f"{_fmt(repl_ref.get('e3_e4_delta'))} with 95% CI "
+          f"[{_fmt(repl_ref.get('e3_e4_ci_lower'))}, "
+          f"{_fmt(repl_ref.get('e3_e4_ci_upper'))}]. This run's value is "
+          f"{_fmt(key_delta['point_delta'])} with CI "
+          f"[{_fmt(key_delta['ci_lower'])}, {_fmt(key_delta['ci_upper'])}].")
+        a("")
+    elif not is_pilot and key_delta is not None and pilot:
         a(f"Pilot comparison: the 8.2B pilot ({pilot.get('version_tag')}) found "
           f"E3→E4 delta {_fmt(pilot.get('e3_e4_delta'))} with 95% CI "
           f"[{_fmt(pilot.get('e3_e4_ci', [None, None])[0])}, "
@@ -1469,8 +1481,23 @@ def main(argv: list[str] | None = None) -> int:
                              "(internal consistency is always checked).")
     parser.add_argument("--expected-split-counts", default=None,
                         help="Optional 'train=N,val=N,test=N' validation.")
+    parser.add_argument("--reference-label", default=None,
+                        help="Optional label for an external replication "
+                             "reference (report comparison prose only).")
+    parser.add_argument("--reference-e3-e4-delta", type=float, default=None)
+    parser.add_argument("--reference-e3-e4-ci-lower", type=float, default=None)
+    parser.add_argument("--reference-e3-e4-ci-upper", type=float, default=None)
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args(argv)
+
+    replication_reference = None
+    if args.reference_e3_e4_delta is not None:
+        replication_reference = {
+            "label": args.reference_label or "replication reference",
+            "e3_e4_delta": args.reference_e3_e4_delta,
+            "e3_e4_ci_lower": args.reference_e3_e4_ci_lower,
+            "e3_e4_ci_upper": args.reference_e3_e4_ci_upper,
+        }
 
     print("[ecm] Loading inputs...", file=sys.stderr)
     feature_df = pl.read_parquet(args.features)
@@ -1582,6 +1609,7 @@ def main(argv: list[str] | None = None) -> int:
         dataset_stats=dataset_stats,
         overlap_stats=overlap_stats,
         per_checkpoint_deltas=cpt_deltas,
+        replication_reference=replication_reference,
     )
     report_text = render_report(payload)
 
