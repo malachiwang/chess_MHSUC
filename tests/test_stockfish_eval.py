@@ -922,3 +922,36 @@ class TestLimitBehavior:
                 dry_run=True,
             )
         assert len(result_df) == 5
+
+# ---------------------------------------------------------------------------
+# TestDepthHistogramMetadata (9.1B)
+# ---------------------------------------------------------------------------
+
+class TestDepthHistogramMetadata:
+    def _meta(self, **overrides):
+        from chess_mhsuc.stockfish_eval import build_metadata
+        kwargs = dict(
+            dataset_id="ds", version_tag="tag", positions_path="p.parquet",
+            raw_pgn="r.pgn", output_parquet="o.parquet", depth=12,
+            stockfish_path="/sf", stockfish_version="Stockfish 18",
+            run_started_utc="t0", run_finished_utc="t1",
+            n_requested=10, n_evaluated=10, n_failed=0,
+            status_counts={"ok_cp": 9, "ok_mate": 1},
+            include_last=False, limit=None, dry_run=False,
+            command=["x"], runtime_s=1.0,
+        )
+        kwargs.update(overrides)
+        return build_metadata(**kwargs)
+
+    def test_depth_histogram_in_metadata(self):
+        meta = self._meta(depth_histogram={"0": 2, "12": 8})
+        assert meta["depth_histogram"] == {"0": 2, "12": 8}
+
+    def test_terminal_count_in_metadata(self):
+        meta = self._meta(n_terminal_depth0=2)
+        assert meta["n_terminal_depth0"] == 2
+
+    def test_defaults_are_none(self):
+        meta = self._meta()
+        assert meta["depth_histogram"] is None
+        assert meta["n_terminal_depth0"] is None

@@ -86,11 +86,13 @@ SF_EVAL_CLIP_CP = 1000
 EVAL_FEATURE_COLS = ["sf_eval_cp_clipped", "sf_is_mate_eval"]
 
 # Columns selected from the sf_eval artifact during the join.
-# split_set comes from the sf artifact (joined post-hoc from splits JSON in 8.1B
-# and verified train=4344/val=931/test=930).
+# split_set comes from the sf artifact (joined post-hoc from the splits JSON
+# by stockfish_eval.py). Lichess overlap columns are carried for the report
+# appendix only — they are provenance, never features.
 _SF_JOIN_KEY = ["game_id", "selected_position_type"]
 _SF_SELECT_COLS = _SF_JOIN_KEY + [
     "split_set", "sf_eval_cp", "sf_eval_status", "sf_eval_available", "sf_depth",
+    "has_lichess_eval", "lichess_eval_cp", "lichess_eval_mate",
 ]
 
 # Lichess eval columns — excluded from EVERY primary 8.2B feature set
@@ -106,6 +108,7 @@ _PROVENANCE_COLS = frozenset({
     "sf_eval_abs", "sf_eval_mate", "sf_eval_mate_abs", "sf_depth", "sf_nodes",
     "sf_time_ms", "sf_engine_name", "sf_engine_version",
     "sf_eval_timestamp_utc", "sf_error", "fen_hash",
+    "has_lichess_eval", "lichess_eval_cp", "lichess_eval_mate",
 })
 
 # Label / identity columns — never features (mirrors baselines policy).
@@ -127,9 +130,12 @@ _ECM_CATEGORICAL_COLS = frozenset({"selected_position_type", "phase"})
 
 _LR_PARAMS = {"max_iter": 1000, "solver": "lbfgs"}
 
-EXPECTED_PRIMARY_ROWS = 6205
-EXPECTED_SPLIT_COUNTS = {"train": 4344, "val": 931, "test": 930}
-EXPECTED_TERMINAL_DEPTH0_ROWS = 27
+# Pilot (8.2B / 2024_09_25k_v1) reference values, kept ONLY for cross-version
+# comparison in reports — never used as assertions. Expected counts for the
+# current run are supplied via CLI (--expected-primary-rows /
+# --expected-split-counts) or checked for internal consistency only.
+PILOT_E3_E4_DELTA = -0.0138
+PILOT_E3_E4_CI = (-0.0266, -0.0002)
 
 _PROB_COLS = ["p_BLACK_WIN", "p_DRAW", "p_WHITE_WIN"]
 
@@ -752,6 +758,128 @@ def decisive_only_diagnostic(eval_preds: pl.DataFrame) -> dict[str, dict]:
 
 
 # ---------------------------------------------------------------------------
+# S2. compute_dataset_stats
+# ---------------------------------------------------------------------------
+
+def compute_dataset_stats(modeling_df: pl.DataFrame) -> dict[str, Any]:
+    """
+    Compute run-specific dataset statistics for the report (no hardcoded
+    pilot values): val row/game counts, DRAW counts, per-checkpoint
+    decidedness fractions.
+    """
+    val = modeling_df.filter(pl.col("split_set") == "val")
+    n_val_rows = len(val)
+    n_val_games = val["game_id"].n_unique()
+    n_val_draw = len(val.filter(pl.col("result_class") == "DRAW"))
+
+    decidedness: dict[str, dict] = {}
+    for cpt in sorted(modeling_df["selected_position_type"].unique().to_list()):
+        sub = modeling_df.filter(pl.col("selected_position_type") == cpt)
+        n = len(sub)
+        n_decided = len(sub.filter(pl.col("sf_eval_cp").abs() >= 300))
+        decidedness[cpt] = {
+            "n_rows": n,
+            "frac_abs_cp_ge_300": (n_decided / n) if n else 0.0,
+        }
+
+    n_terminal = (
+        len(modeling_df.filter(pl.col("sf_depth") == 0))
+        if "sf_depth" in modeling_df.columns else 0
+    )
+
+    return {
+        "n_rows": len(modeling_df),
+        "n_val_rows": n_val_rows,
+        "n_val_games": n_val_games,
+        "n_val_draw_rows": n_val_draw,
+        "val_draw_frac": (n_val_draw / n_val_rows) if n_val_rows else 0.0,
+        "checkpoint_decidedness": decidedness,
+        "n_terminal_depth0": n_terminal,
+    }
+
+
+# ---------------------------------------------------------------------------
+# S3. compute_lichess_overlap_stats
+# ---------------------------------------------------------------------------
+
+def compute_lichess_overlap_stats(modeling_df: pl.DataFrame) -> dict[str, Any]:
+    """
+    Lichess cloud-eval overlap statistics for the report appendix
+    (descriptive only — Lichess eval columns are never features).
+
+    Non-mate subset: rows where the Lichess eval is cp-based (no mate) and
+    the local SF eval status is ok_cp.
+    """
+    if "has_lichess_eval" not in modeling_df.columns:
+        return {"available": False}
+
+    overlap = modeling_df.filter(pl.col("has_lichess_eval") == True)  # noqa: E712
+    n_overlap = len(overlap)
+    if n_overlap == 0:
+        return {"available": False}
+
+    nonmate = overlap.filter(
+        pl.col("lichess_eval_mate").is_null()
+        & (pl.col("sf_eval_status") == "ok_cp")
+    )
+    n_nonmate = len(nonmate)
+    if n_nonmate:
+        agree = len(nonmate.filter(
+            pl.col("lichess_eval_cp").sign() == pl.col("sf_eval_cp").sign()
+        ))
+        mean_abs_diff = float(
+            (nonmate["lichess_eval_cp"] - nonmate["sf_eval_cp"]).abs().mean()
+        )
+    else:
+        agree = 0
+        mean_abs_diff = float("nan")
+
+    return {
+        "available": True,
+        "n_overlap": n_overlap,
+        "n_nonmate": n_nonmate,
+        "n_sign_agree": agree,
+        "sign_agreement_frac": (agree / n_nonmate) if n_nonmate else None,
+        "mean_abs_cp_diff": mean_abs_diff,
+    }
+
+
+# ---------------------------------------------------------------------------
+# S4. per_checkpoint_key_deltas
+# ---------------------------------------------------------------------------
+
+def per_checkpoint_key_deltas(
+    eval_preds: pl.DataFrame,
+    model_a: str = "E3",
+    model_b: str = "E4",
+    n_replicates: int = 1000,
+    seed: int = 42,
+) -> dict[str, dict]:
+    """
+    Paired game-level bootstrap deltas for the key comparison, restricted to
+    each checkpoint type on the validation split.
+
+    Each game contributes at most one row per checkpoint type, so within a
+    checkpoint subset the cluster is still the game. Diagnostic: shows where
+    in the game the key signal (if any) concentrates. Does not establish
+    degradation curves.
+    """
+    out: dict[str, dict] = {}
+    val = eval_preds.filter(pl.col("split_set") == "val")
+    for cpt in sorted(val["selected_position_type"].unique().to_list()):
+        sub = val.filter(
+            (pl.col("selected_position_type") == cpt)
+            & pl.col("model_id").is_in([model_a, model_b])
+        ).select(["model_id", "split_set", "game_id", "result_class"] + _PROB_COLS)
+        validate_pairing(sub, model_a, model_b)
+        boot = run_paired_delta_bootstrap(
+            sub, model_a, model_b, n_replicates=n_replicates, seed=seed
+        )
+        out[cpt] = compute_delta_ci(boot, model_a, model_b, sub)
+    return out
+
+
+# ---------------------------------------------------------------------------
 # T. build_results_payload
 # ---------------------------------------------------------------------------
 
@@ -770,16 +898,35 @@ def build_results_payload(
     artifact_paths: dict[str, str],
     n_replicates: int,
     seed: int,
+    dataset_stats: dict | None = None,
+    overlap_stats: dict | None = None,
+    per_checkpoint_deltas: dict | None = None,
 ) -> dict:
-    """Assemble the results JSON payload."""
+    """Assemble the results JSON payload. All report prose values are computed
+    from the current run — no pilot literals."""
     feature_sets = build_eval_feature_sets()
+    ds = dataset_stats or {}
+    n_val = ds.get("n_val_rows", join_summary["split_counts"]["val"])
+    n_draw = ds.get("n_val_draw_rows")
+    n_terminal = sf_summary.get("n_terminal_depth0", 0)
+    n_rows = join_summary["n_rows"]
+
+    draw_caveat = (
+        f"DRAW metrics must be read cautiously because DRAW is sparse "
+        f"({n_draw}/{n_val} val rows)."
+        if n_draw is not None
+        else "DRAW metrics must be read cautiously because DRAW is sparse."
+    )
+
     return {
         "dataset_id": dataset_id,
         "version_tag": version_tag,
-        "ticket": "8.2B",
+        "ticket": "9.1B" if version_tag != "2024_09_25k_v1" else "8.2B",
         "created_at_utc": datetime.now(timezone.utc).isoformat(),
         "sf_artifact_summary": sf_summary,
         "join_summary": join_summary,
+        "dataset_stats": ds,
+        "lichess_overlap_stats": overlap_stats or {"available": False},
         "feature_sets": {
             fid: fs["features"] for fid, fs in feature_sets.items()
         },
@@ -789,7 +936,13 @@ def build_results_payload(
         "bootstrap_cis": bootstrap_cis,
         "pairwise_deltas": pairwise_deltas,
         "per_checkpoint_slice": checkpoint_slice,
+        "per_checkpoint_key_deltas": per_checkpoint_deltas or {},
         "decisive_only_diagnostic": decisive_diag,
+        "pilot_reference": {
+            "e3_e4_delta": PILOT_E3_E4_DELTA,
+            "e3_e4_ci": list(PILOT_E3_E4_CI),
+            "version_tag": "2024_09_25k_v1",
+        },
         "bootstrap_n_replicates": n_replicates,
         "bootstrap_seed": seed,
         "artifact_paths": artifact_paths,
@@ -800,11 +953,11 @@ def build_results_payload(
             "predictive associations, not causal effects of those variables on outcomes.",
             "Late checkpoints are increasingly decided positions; per-checkpoint "
             "slices are reported for this reason.",
-            "DRAW metrics are directional only because DRAW is sparse "
-            "(59/931 val rows).",
+            draw_caveat,
             "Test split was not used for model selection.",
-            "27 terminal positions have sf_depth=0 (checkmate/stalemate already "
-            "on board); expected, not evaluation failures.",
+            f"{n_terminal} of {n_rows} positions are terminal with sf_depth=0 "
+            "(checkmate/stalemate already on board); expected, not evaluation "
+            "failures.",
         ],
     }
 
@@ -823,6 +976,7 @@ def render_report(payload: dict) -> str:
     """
     Render the committed eval-conditioned modeling report. Deterministic:
     no timestamps in the markdown body (timestamp lives in the JSON only).
+    All numeric prose comes from the payload — no pilot literals.
     """
     eval_models = payload["eval_models"]
     refs = payload["reference_baseline_metrics"]
@@ -834,6 +988,19 @@ def render_report(payload: dict) -> str:
     decisive = payload["decisive_only_diagnostic"]
     join_summary = payload["join_summary"]
     sf_summary = payload["sf_artifact_summary"]
+    ds = payload.get("dataset_stats", {})
+    overlap = payload.get("lichess_overlap_stats", {"available": False})
+    cpt_deltas = payload.get("per_checkpoint_key_deltas", {})
+    pilot = payload.get("pilot_reference", {})
+    is_pilot = payload.get("version_tag") == pilot.get("version_tag")
+
+    n_val = ds.get("n_val_rows", join_summary["split_counts"]["val"])
+    n_val_games = ds.get("n_val_games", 0)
+    n_draw = ds.get("n_val_draw_rows")
+    draw_frac = ds.get("val_draw_frac")
+    n_rows = join_summary["n_rows"]
+    n_terminal = sf_summary.get("n_terminal_depth0", 0)
+    decidedness = ds.get("checkpoint_decidedness", {})
 
     b3_val_ll = refs["B3"]["val"]["log_loss"]
     best_val_ll = eval_models[best_e]["metrics"]["val"]["log_loss"]
@@ -848,8 +1015,12 @@ def render_report(payload: dict) -> str:
 
     a("# Eval-Conditioned Modeling — Ablation Report")
     a("")
-    a("**Ticket:** 8.2B — Existing-vs-Fixed Eval Comparison Implementation "
-      "(implementation includes eval-conditioned ablation per 8.2A audit)")
+    if payload.get("ticket") == "9.1B":
+        a("**Ticket:** 9.1B — Scale-Up Implementation "
+          "(eval-conditioned ablation rerun at scale; replication of 8.2B)")
+    else:
+        a("**Ticket:** 8.2B — Existing-vs-Fixed Eval Comparison Implementation "
+          "(implementation includes eval-conditioned ablation per 8.2A audit)")
     a(f"**Dataset:** `{payload['dataset_id']}`")
     a(f"**Version tag:** `{payload['version_tag']}`")
     a("")
@@ -889,6 +1060,14 @@ def render_report(payload: dict) -> str:
           f"{_fmt(best_val_ll)}) does not improve on the current broad champion "
           f"B3 ({_fmt(b3_val_ll)}).")
     a("")
+    if not is_pilot and key_delta is not None and pilot:
+        a(f"Pilot comparison: the 8.2B pilot ({pilot.get('version_tag')}) found "
+          f"E3→E4 delta {_fmt(pilot.get('e3_e4_delta'))} with 95% CI "
+          f"[{_fmt(pilot.get('e3_e4_ci', [None, None])[0])}, "
+          f"{_fmt(pilot.get('e3_e4_ci', [None, None])[1])}]. This run's value "
+          f"is {_fmt(key_delta['point_delta'])} with CI "
+          f"[{_fmt(key_delta['ci_lower'])}, {_fmt(key_delta['ci_upper'])}].")
+        a("")
 
     # 2
     a("## 2. Research Question")
@@ -963,8 +1142,8 @@ def render_report(payload: dict) -> str:
     # 6
     a("## 6. Validation Metrics")
     a("")
-    a("All primary metrics on the validation split (931 rows, 348 games). "
-      "Test split untouched for selection.")
+    a(f"All primary metrics on the validation split ({n_val:,} rows, "
+      f"{n_val_games:,} games). Test split untouched for selection.")
     a("")
     a("| Model | val log_loss | val accuracy | val macro_f1 | val Brier |")
     a("|---|---|---|---|---|")
@@ -1057,13 +1236,23 @@ def render_report(payload: dict) -> str:
     # 9
     a("## 9. Per-Checkpoint-Type Slice")
     a("")
-    a("Validation log_loss by checkpoint type. Late checkpoints are "
-      "increasingly decided positions (move_40: 71% of positions have "
-      "|cp| ≥ 300), so pooled metrics blend easy late positions with hard "
-      "early ones. This slice exists so the pooled number is not over-read. "
-      "It does not establish degradation curves.")
+    decided_bits = []
+    for cpt in sorted(decidedness):
+        frac = decidedness[cpt].get("frac_abs_cp_ge_300", 0.0)
+        decided_bits.append(f"{cpt}: {100 * frac:.0f}%")
+    if decided_bits:
+        a("Validation log_loss by checkpoint type. Late checkpoints are "
+          "increasingly decided positions (fraction with |cp| ≥ 300 — "
+          + "; ".join(decided_bits) + "), so pooled metrics blend easy late "
+          "positions with hard early ones. This slice exists so the pooled "
+          "number is not over-read. It does not establish degradation curves.")
+    else:
+        a("Validation log_loss by checkpoint type. Late checkpoints are "
+          "increasingly decided positions, so pooled metrics blend easy late "
+          "positions with hard early ones. This slice exists so the pooled "
+          "number is not over-read. It does not establish degradation curves.")
     a("")
-    cpts = ["move_10", "move_20", "move_30", "move_40"]
+    cpts = sorted({c for mid in slice_ for c in slice_[mid]})
     a("| Model | " + " | ".join(cpts) + " |")
     a("|---|" + "---|" * len(cpts))
     for mid in sorted(slice_):
@@ -1075,38 +1264,77 @@ def render_report(payload: dict) -> str:
             )
         a(f"| {mid} | " + " | ".join(cells) + " |")
     a("")
+    if cpt_deltas:
+        a("Per-checkpoint paired deltas for the key comparison "
+          "(E3 → E4, validation split):")
+        a("")
+        a("| Checkpoint | Point delta | 95% CI lower | 95% CI upper | CI contains zero |")
+        a("|---|---|---|---|---|")
+        for cpt in sorted(cpt_deltas):
+            d = cpt_deltas[cpt]
+            a(f"| {cpt} | {_fmt(d['point_delta'])} | {_fmt(d['ci_lower'])} | "
+              f"{_fmt(d['ci_upper'])} | {'Yes' if d['contains_zero'] else 'No'} |")
+        a("")
+        a("These per-checkpoint deltas are diagnostic; they show where the "
+          "key signal concentrates and do not establish degradation curves.")
+        a("")
 
     # 10
     a("## 10. Lichess Eval Overlap Appendix")
     a("")
-    a("Sanity context from 8.1B (descriptive only; no model in this ticket "
-      "was trained on Lichess eval columns):")
-    a("")
-    a("- 932 of 6,205 positions also have a Lichess cloud eval.")
-    a("- Non-mate sign agreement: 829/872 = 95.1%.")
-    a("- Mean absolute cp difference: 68.8 cp (different Stockfish versions, "
-      "variable Lichess depth vs fixed depth=12 locally).")
-    a("- Lichess eval columns and `sf_eval_cp_clipped` were never mixed in "
-      "any primary feature set.")
+    if overlap.get("available"):
+        sa = overlap.get("sign_agreement_frac")
+        a("Descriptive only; no model in this ticket was trained on Lichess "
+          "eval columns:")
+        a("")
+        a(f"- {overlap['n_overlap']:,} of {n_rows:,} positions also have a "
+          "Lichess cloud eval.")
+        if sa is not None:
+            a(f"- Non-mate sign agreement: {overlap['n_sign_agree']:,}/"
+              f"{overlap['n_nonmate']:,} = {100 * sa:.1f}%.")
+            a(f"- Mean absolute cp difference: "
+              f"{overlap['mean_abs_cp_diff']:.1f} cp (different Stockfish "
+              "versions, variable Lichess depth vs fixed local depth).")
+        a("- Lichess eval columns and `sf_eval_cp_clipped` were never mixed "
+          "in any primary feature set.")
+    else:
+        a("Lichess overlap statistics not available in this run. Lichess "
+          "eval columns were excluded from every primary feature set.")
     a("")
 
     # 11
-    a("## 11. DRAW Caveat")
+    a("## 11. DRAW Caveat and Metrics")
     a("")
-    a("DRAW is 59/931 validation rows (6.3%). DRAW metrics are directional "
-      "only because DRAW is sparse; per-class DRAW numbers must not be "
-      "treated as reliable at pilot scale.")
+    if n_draw is not None and draw_frac is not None:
+        a(f"DRAW is {n_draw:,}/{n_val:,} validation rows "
+          f"({100 * draw_frac:.1f}%). DRAW metrics must be read cautiously "
+          "because DRAW is sparse relative to decisive outcomes; DRAW is "
+          "not solved.")
+    else:
+        a("DRAW is sparse relative to decisive outcomes; DRAW metrics must "
+          "be read cautiously. DRAW is not solved.")
+    a("")
+    a("Per-class DRAW metrics on the validation split:")
+    a("")
+    a("| Model | DRAW precision | DRAW recall | DRAW f1 | DRAW support |")
+    a("|---|---|---|---|---|")
+    for mid in ("E1", "E3", "E4", "E5"):
+        pc = eval_models[mid]["metrics"]["val"].get("per_class", {}).get("DRAW")
+        if pc:
+            a(f"| {mid} | {_fmt(pc['precision'])} | {_fmt(pc['recall'])} | "
+              f"{_fmt(pc['f1'])} | {pc['support']} |")
     a("")
 
     # 12
     a("## 12. Terminal Position / sf_depth=0 Caveat")
     a("")
-    a("27 of 6,205 positions are terminal (26 checkmate already on board, "
-      "1 stalemate). The engine returns sf_depth=0 for these because no "
-      "search is possible — expected behavior, not evaluation failures. "
-      "These rows are legitimate population members but are mechanically "
-      "decided, so they trivially favor eval-conditioned models; they are "
-      "0.4% of rows.")
+    frac_terminal = (100 * n_terminal / n_rows) if n_rows else 0.0
+    a(f"{n_terminal} of {n_rows:,} positions ({frac_terminal:.1f}%) are "
+      "terminal (checkmate or stalemate already on the board). The engine "
+      "returns sf_depth=0 for these because no search is possible — expected "
+      "behavior, not evaluation failures. These rows are legitimate "
+      "population members but are mechanically decided, so they trivially "
+      "favor eval-conditioned models.")
     a("")
 
     # 13
@@ -1131,24 +1359,25 @@ def render_report(payload: dict) -> str:
     a("- DRAW is not solved; DRAW metrics are directional only.")
     a("- Phase 9 (scaling) is not started; no cross-stratum claims.")
     a("- Test-split metrics are recorded but were not used for any selection.")
-    a("- Pilot scale (931 val rows, 348 games) produces wide CIs; interval "
-      "endpoints should not be over-interpreted.")
+    a(f"- This sample ({n_val_games:,} validation games) still produces "
+      "bootstrap CIs whose interval endpoints should not be over-interpreted.")
     a("")
 
     # 15
     a("## 15. Reproducibility")
     a("")
+    paths = payload.get("artifact_paths", {})
     a("```bash")
     a("PYTHONPATH=src python -m chess_mhsuc.eval_conditioned_modeling \\")
     a(f"    --dataset-id {payload['dataset_id']} \\")
     a(f"    --version-tag {payload['version_tag']} \\")
-    a("    --features data/processed/feature_positions_broad_2024_09_25k_v1.parquet \\")
-    a("    --sf-eval data/processed/sf_eval_broad_2024_09_25k_v1.parquet \\")
-    a("    --baseline-predictions data/processed/baseline_predictions_2024_09_25k_v1.parquet \\")
-    a("    --baseline-results data/processed/baseline_results_2024_09_25k_v1.json \\")
-    a("    --output-results data/processed/eval_conditioned_results_2024_09_25k_v1.json \\")
-    a("    --output-predictions data/processed/eval_conditioned_predictions_2024_09_25k_v1.parquet \\")
-    a("    --output-report reports/eval_conditioned_modeling_2024_09_25k_v1.md \\")
+    a(f"    --features {paths.get('features_parquet', '<FEATURES_PARQUET>')} \\")
+    a(f"    --sf-eval {paths.get('sf_eval_parquet', '<SF_EVAL_PARQUET>')} \\")
+    a(f"    --baseline-predictions {paths.get('baseline_predictions_parquet', '<BASELINE_PREDICTIONS>')} \\")
+    a(f"    --baseline-results {paths.get('baseline_results_json', '<BASELINE_RESULTS>')} \\")
+    a(f"    --output-results {paths.get('results_json', '<RESULTS_JSON>')} \\")
+    a(f"    --output-predictions {paths.get('predictions_parquet', '<PREDICTIONS_PARQUET>')} \\")
+    a(f"    --output-report {paths.get('report_markdown', '<REPORT_MD>')} \\")
     a("    --overwrite")
     a("```")
     a("")
@@ -1158,6 +1387,32 @@ def render_report(payload: dict) -> str:
     a("")
 
     return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# U2. parse_expected_split_counts
+# ---------------------------------------------------------------------------
+
+def parse_expected_split_counts(spec: str) -> dict[str, int]:
+    """
+    Parse 'train=4344,val=931,test=930' into {'train': 4344, ...}.
+
+    Raises ValueError on malformed input or unknown split names.
+    """
+    out: dict[str, int] = {}
+    for pair in spec.split(","):
+        if "=" not in pair:
+            raise ValueError(f"Malformed split-count pair: {pair!r}")
+        k, v = pair.split("=", 1)
+        k = k.strip()
+        if k not in ("train", "val", "test"):
+            raise ValueError(f"Unknown split name: {k!r}")
+        out[k] = int(v)
+    if set(out) != {"train", "val", "test"}:
+        raise ValueError(
+            f"Expected train,val,test — got {sorted(out)}"
+        )
+    return out
 
 
 # ---------------------------------------------------------------------------
@@ -1209,6 +1464,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-report", required=True)
     parser.add_argument("--n-replicates", type=int, default=1000)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--expected-primary-rows", type=int, default=None,
+                        help="Optional explicit row-count validation "
+                             "(internal consistency is always checked).")
+    parser.add_argument("--expected-split-counts", default=None,
+                        help="Optional 'train=N,val=N,test=N' validation.")
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args(argv)
 
@@ -1226,18 +1486,35 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  joined: {join_summary['n_rows']} rows, "
           f"splits={join_summary['split_counts']}", file=sys.stderr)
 
-    if join_summary["n_rows"] != EXPECTED_PRIMARY_ROWS:
+    # Internal consistency (any version_tag): every split non-empty and the
+    # join matched the sf artifact exactly.
+    for split_name, count in join_summary["split_counts"].items():
+        if count == 0:
+            raise ValueError(f"Split '{split_name}' is empty after join")
+    if join_summary["n_rows"] != sf_summary["n_rows"]:
         raise ValueError(
-            f"Expected {EXPECTED_PRIMARY_ROWS} joined rows, "
-            f"got {join_summary['n_rows']}"
-        )
-    if join_summary["split_counts"] != EXPECTED_SPLIT_COUNTS:
-        raise ValueError(
-            f"Expected split counts {EXPECTED_SPLIT_COUNTS}, "
-            f"got {join_summary['split_counts']}"
+            f"Joined rows ({join_summary['n_rows']}) != sf artifact rows "
+            f"({sf_summary['n_rows']})"
         )
 
+    # Optional explicit validation (e.g. pilot reruns)
+    if args.expected_primary_rows is not None:
+        if join_summary["n_rows"] != args.expected_primary_rows:
+            raise ValueError(
+                f"Expected {args.expected_primary_rows} joined rows, "
+                f"got {join_summary['n_rows']}"
+            )
+    if args.expected_split_counts is not None:
+        expected = parse_expected_split_counts(args.expected_split_counts)
+        if join_summary["split_counts"] != expected:
+            raise ValueError(
+                f"Expected split counts {expected}, "
+                f"got {join_summary['split_counts']}"
+            )
+
     modeling_df = derive_eval_features(joined)
+    dataset_stats = compute_dataset_stats(modeling_df)
+    overlap_stats = compute_lichess_overlap_stats(modeling_df)
 
     print("[ecm] Training eval-conditioned models...", file=sys.stderr)
     eval_results, eval_preds = run_all_eval_models(modeling_df)
@@ -1269,6 +1546,16 @@ def main(argv: list[str] | None = None) -> int:
     checkpoint_slice = per_checkpoint_slice(eval_preds)
     decisive_diag = decisive_only_diagnostic(eval_preds)
 
+    print("[ecm] Per-checkpoint E3->E4 deltas...", file=sys.stderr)
+    cpt_deltas = per_checkpoint_key_deltas(
+        eval_preds, n_replicates=args.n_replicates, seed=args.seed
+    )
+    for cpt, d in cpt_deltas.items():
+        zero = "contains 0" if d["contains_zero"] else "excludes 0"
+        print(f"    {cpt}: delta={d['point_delta']:+.4f} "
+              f"[{d['ci_lower']:+.4f}, {d['ci_upper']:+.4f}] {zero}",
+              file=sys.stderr)
+
     payload = build_results_payload(
         dataset_id=args.dataset_id,
         version_tag=args.version_tag,
@@ -1287,9 +1574,14 @@ def main(argv: list[str] | None = None) -> int:
             "report_markdown": str(args.output_report),
             "sf_eval_parquet": str(args.sf_eval),
             "features_parquet": str(args.features),
+            "baseline_predictions_parquet": str(args.baseline_predictions),
+            "baseline_results_json": str(args.baseline_results),
         },
         n_replicates=args.n_replicates,
         seed=args.seed,
+        dataset_stats=dataset_stats,
+        overlap_stats=overlap_stats,
+        per_checkpoint_deltas=cpt_deltas,
     )
     report_text = render_report(payload)
 

@@ -13,10 +13,10 @@ import pytest
 from chess_mhsuc.eval_conditioned_modeling import (
     CLASS_ORDER,
     EVAL_FEATURE_COLS,
-    EXPECTED_PRIMARY_ROWS,
-    EXPECTED_SPLIT_COUNTS,
     LICHESS_EVAL_COLS,
     PAIRWISE_COMPARISONS,
+    PILOT_E3_E4_CI,
+    PILOT_E3_E4_DELTA,
     REFERENCE_MODEL_IDS,
     SF_EVAL_CLIP_CP,
     build_combined_predictions,
@@ -26,10 +26,15 @@ from chess_mhsuc.eval_conditioned_modeling import (
     build_prediction_frame,
     build_results_payload,
     classify_feature_types,
+    compute_dataset_stats,
+    compute_lichess_overlap_stats,
     decisive_only_diagnostic,
     derive_eval_features,
     join_sf_features,
     load_baseline_reference,
+    main as ecm_main,
+    parse_expected_split_counts,
+    per_checkpoint_key_deltas,
     per_checkpoint_slice,
     render_report,
     run_all_eval_models,
@@ -113,17 +118,24 @@ def make_sf_df() -> pl.DataFrame:
             res = _result_for(i)
             cp = {"WHITE_WIN": 250, "BLACK_WIN": -250, "DRAW": 0}[res]
             is_mate = (i % 10 == 9 and cpt == "move_20")
+            sf_cp = (
+                (10_000 if cp >= 0 else -10_000) if is_mate
+                else cp + (5 if cpt == "move_20" else 0)
+            )
+            # Lichess overlap on a subset (every 3rd game, move_10 only),
+            # same sign, +30cp offset, no mate values
+            has_li = (i % 3 == 0 and cpt == "move_10" and not is_mate)
             rows.append({
                 "game_id": gid,
                 "selected_position_type": cpt,
                 "split_set": _split_for(i),
-                "sf_eval_cp": (
-                    (10_000 if cp >= 0 else -10_000) if is_mate
-                    else cp + (5 if cpt == "move_20" else 0)
-                ),
+                "sf_eval_cp": sf_cp,
                 "sf_eval_status": "ok_mate" if is_mate else "ok_cp",
                 "sf_eval_available": True,
                 "sf_depth": 12,
+                "has_lichess_eval": has_li,
+                "lichess_eval_cp": (sf_cp + 30) if has_li else None,
+                "lichess_eval_mate": None,
             })
     return pl.DataFrame(rows, infer_schema_length=None)
 
@@ -219,9 +231,10 @@ class TestJoinIntegrity:
         joined = join_sf_features(feature_df, sf_df)
         assert not [c for c in joined.columns if c.endswith("_right")]
 
-    def test_expected_constants_match_real_pipeline(self):
-        assert EXPECTED_PRIMARY_ROWS == 6205
-        assert EXPECTED_SPLIT_COUNTS == {"train": 4344, "val": 931, "test": 930}
+    def test_pilot_reference_constants(self):
+        # kept for cross-version report comparison only — never asserted on data
+        assert PILOT_E3_E4_DELTA == -0.0138
+        assert PILOT_E3_E4_CI == (-0.0266, -0.0002)
 
 
 # ---------------------------------------------------------------------------
@@ -672,12 +685,17 @@ def _make_payload(modeling_df) -> dict:
         decisive_diag=decisive_only_diagnostic(eval_preds),
         join_summary={"n_rows": 60,
                       "split_counts": {"train": 20, "val": 20, "test": 20}},
-        sf_summary={"n_rows": 60, "n_terminal_depth0": 0,
+        sf_summary={"n_rows": 60, "n_terminal_depth0": 3,
                     "statuses": ["ok_cp", "ok_mate"], "cp_range": [-255, 10000]},
         best_e=best_e,
         artifact_paths={"results_json": "x.json"},
         n_replicates=10,
         seed=42,
+        dataset_stats=compute_dataset_stats(modeling_df),
+        overlap_stats=compute_lichess_overlap_stats(modeling_df),
+        per_checkpoint_deltas=per_checkpoint_key_deltas(
+            eval_preds, n_replicates=10, seed=42
+        ),
     )
 
 
@@ -708,10 +726,19 @@ class TestRenderReport:
         text = render_report(payload)
         assert "## 9. Per-Checkpoint-Type Slice" in text
 
-    def test_lichess_overlap_appendix(self, payload):
+    def test_lichess_overlap_appendix_uses_payload(self, payload):
         text = render_report(payload)
-        assert "95.1%" in text
-        assert "68.8" in text
+        ov = payload["lichess_overlap_stats"]
+        # computed from the synthetic run, not pilot literals
+        assert f"{ov['n_overlap']:,} of " in text
+        assert "95.1%" not in text
+        assert "68.8" not in text
+
+    def test_no_pilot_literals_in_synthetic_report(self, payload):
+        text = render_report(payload)
+        for literal in ("6,205", "931 rows", "348 games", "59/931",
+                        "27 of 6,205", "95.1%", "68.8"):
+            assert literal not in text, literal
 
     def test_forbidden_claims_absent(self, payload):
         text = render_report(payload)
@@ -742,7 +769,7 @@ class TestRenderReport:
             "Eval Feature Semantics", "Models / Feature Sets",
             "Validation Metrics", "Game-Level Bootstrap CIs",
             "Pairwise Delta Results", "Per-Checkpoint-Type Slice",
-            "Lichess Eval Overlap Appendix", "DRAW Caveat",
+            "Lichess Eval Overlap Appendix", "DRAW Caveat and Metrics",
             "Terminal Position / sf_depth=0 Caveat",
             "Scientific Interpretation", "Forbidden Claims / Limitations",
             "Reproducibility",
@@ -822,6 +849,210 @@ class TestArtifacts:
         joined = " ".join(payload["caveats"])
         assert "not ground truth" in joined
         assert "not causal effects" in joined
-        assert "directional only" in joined
+        assert "cautiously" in joined
         assert "Test split was not used" in joined
         assert "sf_depth=0" in joined
+
+    def test_caveats_use_computed_draw_counts(self, modeling_df):
+        payload = _make_payload(modeling_df)
+        ds = payload["dataset_stats"]
+        joined = " ".join(payload["caveats"])
+        assert f"{ds['n_val_draw_rows']}/{ds['n_val_rows']} val rows" in joined
+
+
+# ---------------------------------------------------------------------------
+# 11. New stats functions (9.1B parameterization)
+# ---------------------------------------------------------------------------
+
+class TestDatasetStats:
+    def test_basic_counts(self, modeling_df):
+        ds = compute_dataset_stats(modeling_df)
+        assert ds["n_rows"] == 60
+        assert ds["n_val_rows"] == 20
+        assert ds["n_val_games"] == 10
+        # i in 10..19, DRAW when i%5==2 -> i=12,17 -> 2 games x 2 rows
+        assert ds["n_val_draw_rows"] == 4
+
+    def test_checkpoint_decidedness(self, modeling_df):
+        ds = compute_dataset_stats(modeling_df)
+        assert set(ds["checkpoint_decidedness"]) == {"move_10", "move_20"}
+        for cell in ds["checkpoint_decidedness"].values():
+            assert 0.0 <= cell["frac_abs_cp_ge_300"] <= 1.0
+
+    def test_terminal_count_from_depth(self, feature_df, sf_df):
+        sf_term = sf_df.with_columns(
+            pl.when(pl.col("game_id") == "g000")
+            .then(pl.lit(0)).otherwise(pl.col("sf_depth"))
+            .alias("sf_depth")
+        )
+        mdf = derive_eval_features(join_sf_features(feature_df, sf_term))
+        ds = compute_dataset_stats(mdf)
+        assert ds["n_terminal_depth0"] == 2
+
+
+class TestLichessOverlapStats:
+    def test_overlap_computed(self, modeling_df):
+        ov = compute_lichess_overlap_stats(modeling_df)
+        assert ov["available"] is True
+        assert ov["n_overlap"] == 10  # i%3==0, move_10, non-mate
+        assert ov["n_nonmate"] == 10
+        assert 0.0 <= ov["sign_agreement_frac"] <= 1.0
+        assert ov["mean_abs_cp_diff"] == 30.0
+
+    def test_no_overlap_column(self):
+        df = pl.DataFrame({"sf_eval_cp": [10], "sf_eval_status": ["ok_cp"]})
+        ov = compute_lichess_overlap_stats(df)
+        assert ov["available"] is False
+
+    def test_zero_overlap_rows(self, modeling_df):
+        no_ov = modeling_df.with_columns(
+            pl.lit(False).alias("has_lichess_eval")
+        )
+        ov = compute_lichess_overlap_stats(no_ov)
+        assert ov["available"] is False
+
+
+class TestPerCheckpointKeyDeltas:
+    def test_deltas_per_checkpoint(self, modeling_df):
+        _, eval_preds = run_all_eval_models(modeling_df)
+        deltas = per_checkpoint_key_deltas(eval_preds, n_replicates=10, seed=42)
+        assert set(deltas) == {"move_10", "move_20"}
+        for d in deltas.values():
+            assert d["model_a"] == "E3" and d["model_b"] == "E4"
+            assert d["ci_lower"] <= d["ci_upper"]
+            assert d["contains_zero"] == (d["ci_lower"] <= 0.0 <= d["ci_upper"])
+
+    def test_game_level_clusters_within_checkpoint(self, modeling_df):
+        _, eval_preds = run_all_eval_models(modeling_df)
+        deltas = per_checkpoint_key_deltas(eval_preds, n_replicates=10, seed=42)
+        # 10 val games, each with exactly 1 row per checkpoint type
+        assert deltas["move_10"]["n_common_games"] == 10
+
+
+class TestParseExpectedSplitCounts:
+    def test_valid(self):
+        assert parse_expected_split_counts("train=10,val=5,test=5") == {
+            "train": 10, "val": 5, "test": 5
+        }
+
+    def test_missing_split_raises(self):
+        with pytest.raises(ValueError):
+            parse_expected_split_counts("train=10,val=5")
+
+    def test_unknown_split_raises(self):
+        with pytest.raises(ValueError, match="Unknown split"):
+            parse_expected_split_counts("train=10,val=5,holdout=5")
+
+    def test_malformed_raises(self):
+        with pytest.raises(ValueError, match="Malformed"):
+            parse_expected_split_counts("train:10,val=5,test=5")
+
+
+# ---------------------------------------------------------------------------
+# 12. End-to-end CLI on synthetic non-pilot-sized data
+# ---------------------------------------------------------------------------
+
+def _write_cli_fixtures(tmp_path, modeling_seed_df, feature_df, sf_df):
+    """Write synthetic input files for a main() invocation."""
+    fpath = tmp_path / "features.parquet"
+    spath = tmp_path / "sf.parquet"
+    feature_df.write_parquet(fpath)
+    sf_df.write_parquet(spath)
+
+    # baseline predictions aligned with the modeling row order
+    frames = []
+    for mid in ("B1", "B2", "B3"):
+        n = len(modeling_seed_df)
+        frames.append(pl.DataFrame({
+            "baseline_id": [mid] * n,
+            "split_set": modeling_seed_df["split_set"],
+            "game_id": modeling_seed_df["game_id"],
+            "result_class": modeling_seed_df["result_class"],
+            "pred_class": ["WHITE_WIN"] * n,
+            "p_BLACK_WIN": [0.3] * n,
+            "p_DRAW": [0.2] * n,
+            "p_WHITE_WIN": [0.5] * n,
+        }))
+    bp = tmp_path / "baseline_preds.parquet"
+    pl.concat(frames).write_parquet(bp)
+
+    br = tmp_path / "baseline_results.json"
+    br.write_text(json.dumps({
+        "baselines": {
+            mid: {"metrics": {"val": {
+                "log_loss": 0.9, "accuracy": 0.5,
+                "macro_f1": 0.3, "multiclass_brier": 0.6,
+            }}}
+            for mid in ("B1", "B2", "B3")
+        }
+    }))
+    return fpath, spath, bp, br
+
+
+class TestEndToEndCLI:
+    @pytest.fixture
+    def cli_paths(self, tmp_path, feature_df, sf_df):
+        modeling_seed = join_sf_features(feature_df, sf_df)
+        return tmp_path, _write_cli_fixtures(
+            tmp_path, modeling_seed, feature_df, sf_df
+        )
+
+    def _argv(self, tmp_path, fpath, spath, bp, br, extra=None):
+        argv = [
+            "--dataset-id", "synthetic_ds",
+            "--version-tag", "synthetic_v9",
+            "--features", str(fpath),
+            "--sf-eval", str(spath),
+            "--baseline-predictions", str(bp),
+            "--baseline-results", str(br),
+            "--output-results", str(tmp_path / "out_results.json"),
+            "--output-predictions", str(tmp_path / "out_preds.parquet"),
+            "--output-report", str(tmp_path / "out_report.md"),
+            "--n-replicates", "5",
+            "--overwrite",
+        ]
+        return argv + (extra or [])
+
+    def test_runs_on_non_pilot_counts(self, cli_paths):
+        tmp_path, (fpath, spath, bp, br) = cli_paths
+        # 60 rows != 6,205 — must work without pilot assertions
+        rc = ecm_main(self._argv(tmp_path, fpath, spath, bp, br))
+        assert rc == 0
+        report = (tmp_path / "out_report.md").read_text()
+        assert "60" in report
+        for literal in ("6,205", "95.1%", "68.8", "59/931"):
+            assert literal not in report, literal
+
+    def test_explicit_expected_rows_pass(self, cli_paths):
+        tmp_path, (fpath, spath, bp, br) = cli_paths
+        rc = ecm_main(self._argv(
+            tmp_path, fpath, spath, bp, br,
+            extra=["--expected-primary-rows", "60",
+                   "--expected-split-counts", "train=20,val=20,test=20"],
+        ))
+        assert rc == 0
+
+    def test_explicit_expected_rows_mismatch_fails(self, cli_paths):
+        tmp_path, (fpath, spath, bp, br) = cli_paths
+        with pytest.raises(ValueError, match="Expected 6205 joined rows"):
+            ecm_main(self._argv(
+                tmp_path, fpath, spath, bp, br,
+                extra=["--expected-primary-rows", "6205"],
+            ))
+
+    def test_expected_split_mismatch_fails(self, cli_paths):
+        tmp_path, (fpath, spath, bp, br) = cli_paths
+        with pytest.raises(ValueError, match="Expected split counts"):
+            ecm_main(self._argv(
+                tmp_path, fpath, spath, bp, br,
+                extra=["--expected-split-counts", "train=4344,val=931,test=930"],
+            ))
+
+    def test_results_json_has_new_fields(self, cli_paths):
+        tmp_path, (fpath, spath, bp, br) = cli_paths
+        ecm_main(self._argv(tmp_path, fpath, spath, bp, br))
+        res = json.loads((tmp_path / "out_results.json").read_text())
+        for key in ("dataset_stats", "lichess_overlap_stats",
+                    "per_checkpoint_key_deltas", "pilot_reference"):
+            assert key in res, key
+        assert res["pilot_reference"]["e3_e4_delta"] == PILOT_E3_E4_DELTA

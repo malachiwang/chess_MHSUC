@@ -644,3 +644,76 @@ Committed report: reports/eval_conditioned_modeling_2024_09_25k_v1.md
 Next step:
 Phase 9 (scale-up) audit — re-examine the fragile E3->E4 clock finding and
 the E-model advantage at larger N before any constraint-effect claims.
+
+---
+
+## EXP-009 — Phase 9.1B Scale-Up Replication
+
+Experiment ID: EXP-009
+Date: 2026-06-10
+Owner: Malachi Wang
+Status: complete
+
+Question:
+Does the fragile 8.2B clock finding (E3->E4: clock adds predictive signal
+after eval + rating, CI barely excluding zero) survive a 10x scale-up?
+
+Dataset:
+- dataset_id: lichess_ten_zero_2024_09_250k_v1
+- version_tag: 2024_09_250k_v1
+- Source: same 2024-09 Lichess archive; deterministic first-250,000-games
+  prefix (SUPERSET of the 25k pilot; splits redrawn game-level seed=42;
+  scale-robustness test, not independent cross-month replication)
+- Raw sample: 250,000 games scanned -> 26,041 600+0 -> 25,887 clean ->
+  24,520 broad feature games -> 65,368 primary positions
+- Splits (rows): train=45,818 / val=9,823 / test=9,727
+- Raw prefix tee-cached to data/raw/lichess/lichess_2024_09_first250k.pgn
+  (583 MB, gitignored)
+
+Stockfish:
+- Stockfish 18, depth=12 (8.1B semantics), local cached PGN
+- Coverage: 65,368/65,368 (100%), 0 failures, runtime 1,838 s
+- Depth histogram: 65,080 @ depth 12; 288 terminal sf_depth=0 rows (0.4%)
+- Lichess overlap: 10,166 rows; non-mate sign agreement 95.6%; mean |cp|
+  diff 60.3
+
+Models (logistic-only; no GBMs):
+- References retrained: B1=0.8813, B2=0.8684, B3=0.8533 (val log_loss)
+- E1 (sf_eval only)=0.7568; E3 (+rating)=0.7514; E4 (+clock)=0.7377;
+  E5 (+full context)=0.7329 (best)
+- All values within ~0.002 of pilot — extremely stable across 10x.
+
+PRIMARY RESULT — E3 -> E4 paired game-level bootstrap delta (val):
+- This run: -0.0138, 95% CI [-0.0186, -0.0091] — EXCLUDES ZERO
+- Pilot (8.2B): -0.0138, 95% CI [-0.0266, -0.0002] — excluded zero barely
+- Verdict: PILOT FINDING CONFIRMED. Identical point estimate; CI narrowed
+  ~3x as expected from sqrt(10) more games.
+
+Secondary deltas (all now exclude zero at scale):
+- E1->E3 (rating after eval): -0.0054 [-0.0099, -0.0010] (pilot: unresolved)
+- E4->E5 (context after clock): -0.0048 [-0.0068, -0.0028] (pilot: unresolved)
+- B3->E1: -0.0965 [-0.1099, -0.0832]; B3->E5: -0.1204 [-0.1321, -0.1095]
+
+Per-checkpoint E3->E4 deltas (new diagnostic):
+- move_10: -0.0025 [contains zero]; move_20: -0.0033 [contains zero]
+- move_30: -0.0238 [excludes zero]; move_40: -0.0606 [excludes zero]
+- Clock signal concentrates in late checkpoints. Diagnostic only; does not
+  establish degradation curves.
+
+Caveats:
+- Predictive associations only; not causal effects.
+- Stockfish depth=12 eval is position context, not ground truth.
+- Superset sample; external validity beyond 2024-09 not established.
+- Player-level leakage unresolved (no usernames stored); grows with scale.
+- DRAW not solved: 603/9,823 val rows; unweighted LR predicts zero DRAW
+  argmax rows (per-class DRAW f1=0.0 at support 603).
+- Test split untouched for selection (WORKFLOW.md section 13).
+
+Artifacts (gitignored): sf_eval_broad/eval_conditioned_* 2024_09_250k_v1
+under data/processed/. Committed: reports/scale_up_2024_09_250k_v1.md,
+reports/eval_conditioned_modeling_2024_09_250k_v1.md, phase report.
+
+Next step:
+Phase 9.2 candidates: pilot-disjoint or cross-month sample for external
+validity; rating-band effect stability; GBM diagnostic now defensible at
+45k train rows; player-level leakage quantification.

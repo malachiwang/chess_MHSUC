@@ -116,6 +116,33 @@ POSITION_RECORD_SCHEMA: dict[str, pl.DataType] = {
 
 
 # ---------------------------------------------------------------------------
+# Raw tee-cache
+# ---------------------------------------------------------------------------
+
+class TeeTextStream:
+    """
+    readline-only wrapper that copies every consumed line to a sink file.
+
+    chess.pgn.read_game reads exclusively via readline(), so teeing at this
+    level captures exactly the raw PGN prefix that was parsed. The cached
+    file lets later passes (e.g. stockfish_eval FEN reconstruction) read
+    from local disk instead of re-streaming the remote archive.
+
+    The sink must live under data/ (gitignored). Never stage raw PGN.
+    """
+
+    def __init__(self, inner, sink):
+        self._inner = inner
+        self._sink = sink
+
+    def readline(self, *args):
+        line = self._inner.readline(*args)
+        if line:
+            self._sink.write(line)
+        return line
+
+
+# ---------------------------------------------------------------------------
 # Core parse loop
 # ---------------------------------------------------------------------------
 
@@ -560,8 +587,15 @@ def run_url(
     source_file: str | None,
     max_games: int,
     max_accepted: int | None,
+    raw_cache_path: str | Path | None = None,
 ) -> dict:
-    """Open a .pgn.zst URL and stream-parse up to max_games raw games."""
+    """
+    Open a .pgn.zst URL and stream-parse up to max_games raw games.
+
+    If raw_cache_path is given, the consumed decompressed PGN prefix is
+    tee-written to that local file (must be under data/, gitignored) so
+    later passes can read from disk instead of re-streaming the archive.
+    """
     req = urllib.request.Request(
         url,
         headers={"User-Agent": "chess-MHSUC/0.1 run-parser"},
@@ -575,6 +609,18 @@ def run_url(
         text_stream = io.TextIOWrapper(
             buffered, encoding="utf-8", errors="replace"
         )
+        if raw_cache_path is not None:
+            cache_path = Path(raw_cache_path)
+            cache_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(cache_path, "w", encoding="utf-8") as sink:
+                teed = TeeTextStream(text_stream, sink)
+                return stream_and_parse(
+                    teed,
+                    source_file=source_file,
+                    max_games=max_games,
+                    max_accepted=max_accepted,
+                    url=url,
+                )
         return stream_and_parse(
             text_stream,
             source_file=source_file,
@@ -654,6 +700,14 @@ def main(argv=None) -> int:
         required=True,
         help="Version suffix for output filenames (e.g. v1).",
     )
+    parser.add_argument(
+        "--raw-cache",
+        default=None,
+        help=(
+            "Optional local path (under data/, gitignored) to tee-write the "
+            "consumed raw PGN prefix, so later passes can read from disk."
+        ),
+    )
     args = parser.parse_args(argv)
 
     stem = _make_stem(args.source_file, args.max_games, args.version_tag)
@@ -669,12 +723,16 @@ def main(argv=None) -> int:
     print(f"Output stem:    {stem}", file=sys.stderr)
     print(f"Output dir:     {out_dir}", file=sys.stderr)
 
+    if args.raw_cache:
+        print(f"Raw cache:      {args.raw_cache}", file=sys.stderr)
+
     try:
         result = run_url(
             url=args.url,
             source_file=args.source_file,
             max_games=args.max_games,
             max_accepted=args.max_accepted,
+            raw_cache_path=args.raw_cache,
         )
     except Exception as e:
         print(f"ERROR during streaming: {e}", file=sys.stderr)

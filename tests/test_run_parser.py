@@ -387,3 +387,66 @@ class TestWriteOutputs:
         meta = json.loads(m.read_text())
         assert meta["n_game_records"] == pl.read_parquet(str(g)).height
         assert meta["n_position_records"] == pl.read_parquet(str(p)).height
+
+# ---------------------------------------------------------------------------
+# TestTeeTextStream (9.1B raw cache)
+# ---------------------------------------------------------------------------
+
+from chess_mhsuc.run_parser import TeeTextStream  # noqa: E402
+
+
+class TestTeeTextStream:
+    def test_tee_copies_consumed_lines(self, tmp_path):
+        src = _stream(_ACCEPTED_SHORT_A + _ACCEPTED_SHORT_B)
+        sink_path = tmp_path / "cache.pgn"
+        with open(sink_path, "w", encoding="utf-8") as sink:
+            teed = TeeTextStream(src, sink)
+            result = stream_and_parse(
+                teed, source_file=None, max_games=2, url=""
+            )
+        assert result["n_raw_scanned"] == 2
+        cached = sink_path.read_text()
+        assert "acc00001" in cached
+        assert "acc00002" in cached
+
+    def test_tee_cache_is_reparseable(self, tmp_path):
+        src = _stream(_ACCEPTED_SHORT_A + _NON_600_PGN + _ACCEPTED_SHORT_B)
+        sink_path = tmp_path / "cache.pgn"
+        with open(sink_path, "w", encoding="utf-8") as sink:
+            teed = TeeTextStream(src, sink)
+            first = stream_and_parse(
+                teed, source_file=None, max_games=3, url=""
+            )
+        # re-parse from the cached file: identical raw counts
+        with open(sink_path, encoding="utf-8") as f:
+            second = stream_and_parse(
+                f, source_file=None, max_games=3, url=""
+            )
+        assert second["n_raw_scanned"] == first["n_raw_scanned"] == 3
+        assert second["n_600_0_total"] == first["n_600_0_total"] == 2
+
+    def test_tee_respects_max_games_cap(self, tmp_path):
+        src = _stream(_ACCEPTED_SHORT_A + _ACCEPTED_SHORT_B)
+        sink_path = tmp_path / "cache.pgn"
+        with open(sink_path, "w", encoding="utf-8") as sink:
+            teed = TeeTextStream(src, sink)
+            result = stream_and_parse(
+                teed, source_file=None, max_games=1, url=""
+            )
+        assert result["n_raw_scanned"] == 1
+        cached = sink_path.read_text()
+        assert "acc00001" in cached
+        # second game never consumed -> not in cache (read_game may consume
+        # the next game's first header line; the body must be absent)
+        assert "1. d4" not in cached
+
+    def test_empty_stream_creates_empty_cache(self, tmp_path):
+        src = _stream("")
+        sink_path = tmp_path / "cache.pgn"
+        with open(sink_path, "w", encoding="utf-8") as sink:
+            teed = TeeTextStream(src, sink)
+            result = stream_and_parse(
+                teed, source_file=None, max_games=5, url=""
+            )
+        assert result["n_raw_scanned"] == 0
+        assert sink_path.read_text() == ""

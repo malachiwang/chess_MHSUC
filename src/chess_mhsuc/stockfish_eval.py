@@ -1149,8 +1149,15 @@ def build_metadata(
     command: list[str],
     runtime_s: float,
     git_commit: str | None = None,
+    depth_histogram: dict | None = None,
+    n_terminal_depth0: int | None = None,
 ) -> dict:
-    """Build the metadata JSON dict."""
+    """Build the metadata JSON dict.
+
+    depth_histogram maps sf_depth value -> row count. Terminal positions
+    (checkmate/stalemate already on board) report sf_depth=0 — expected,
+    not failures.
+    """
     import chess
     return {
         "dataset_id": dataset_id,
@@ -1172,6 +1179,8 @@ def build_metadata(
         "include_last": include_last,
         "limit": limit,
         "dry_run": dry_run,
+        "depth_histogram": depth_histogram,
+        "n_terminal_depth0": n_terminal_depth0,
         "command": command,
         "git_commit": git_commit,
     }
@@ -1353,6 +1362,15 @@ def main(argv: list[str] | None = None) -> int:
         command=command,
         runtime_s=runtime_s,
         git_commit=_get_git_commit(),
+        depth_histogram={
+            str(k): v for k, v in sorted(
+                results_df["sf_depth"].value_counts().iter_rows()
+            )
+        } if "sf_depth" in results_df.columns else None,
+        n_terminal_depth0=(
+            len(results_df.filter(pl.col("sf_depth") == 0))
+            if "sf_depth" in results_df.columns else None
+        ),
     )
 
     report_text = render_stockfish_eval_report(results_df, metadata, dry_run=args.dry_run)

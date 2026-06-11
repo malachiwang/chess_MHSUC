@@ -793,9 +793,27 @@ Do we need cloud compute?
 What exact research question requires scale?
 ```
 
+Status: complete (audit delivered inline in chat on 2026-06-10). Answers: no
+external drive or cloud compute needed (250k scale fits local hardware in an
+afternoon; all artifacts tens of MB plus a 583 MB raw cache); the research
+question requiring scale is whether the fragile 8.2B E3→E4 clock result
+survives 10×. Recommended S2=250k same-month superset prefix, logistic-only,
+tee-cached raw prefix, parameterization of eval_conditioned_modeling.py.
+
 ### Ticket 9.1B — Scale-Up Implementation
 
 Scale to larger samples only with explicit caps and verification.
+
+Status: complete. 250k raw games (deterministic first-N prefix, superset of
+pilot) → 25,887 clean → 65,368 primary positions; Stockfish 18 depth=12 full
+coverage (65,368/65,368, 288 terminal depth-0 rows); B1/B2/B3 + E1/E3/E4/E5
+rerun. **8.2B finding CONFIRMED: E3→E4 delta −0.0138 [−0.0186, −0.0091],
+same point estimate as pilot, CI now comfortably excludes zero.** E1→E3 and
+E4→E5 also resolved at scale. Per-checkpoint deltas: clock signal
+concentrates in move_30/40. EXP-009 added. 1,404 tests passing.
+
+See `reports/phase_reports/phase_9_1b_scale_up_implementation.md` and
+`reports/scale_up_2024_09_250k_v1.md`.
 
 ## Phase 10: Neural sequence model exploration
 
