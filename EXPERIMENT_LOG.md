@@ -717,3 +717,82 @@ Next step:
 Phase 9.2 candidates: pilot-disjoint or cross-month sample for external
 validity; rating-band effect stability; GBM diagnostic now defensible at
 45k train rows; player-level leakage quantification.
+
+---
+
+## EXP-010 — Phase 9.2B Constraint Slice Analysis
+
+Experiment ID: EXP-010
+Date: 2026-06-10
+Owner: Malachi Wang
+Status: complete
+
+Question:
+Where does the replicated E3->E4 clock signal (EXP-009: -0.0138
+[-0.0186, -0.0091]) concentrate? Slices fixed by the 9.2A audit BEFORE
+results were computed; no post-hoc tuning.
+
+Inputs (no models trained or retrained):
+- dataset_id: lichess_ten_zero_2024_09_250k_v1 / 2024_09_250k_v1
+- data/processed/eval_conditioned_predictions_2024_09_250k_v1.parquet
+  (E3/E4 validation rows, 9,823 per model, pairing validated per cell)
+- Slice keys joined from feature_positions_broad + sf_eval_broad on
+  (game_id, selected_position_type); 0 orphans; val split only.
+- Bootstrap: game-level clustered, 1,000 replicates, seed=42; CI only for
+  cells with >= 300 unique games; sub-threshold cells reported descriptively.
+
+Reference (per-checkpoint, matches EXP-009):
+- move_10 -0.0025 [cz], move_20 -0.0033 [cz],
+  move_30 -0.0238 [excl], move_40 -0.0606 [excl]
+
+P1 — eval decidedness (|sf_eval_cp|):
+- equal  -0.0151 [-0.0214, -0.0093] excludes zero (1,967 games)
+- slight -0.0096 [-0.0169, -0.0026] excludes zero (2,100 games)
+- decided -0.0168 [-0.0245, -0.0095] excludes zero (2,429 games)
+- mate   -0.0021 [-0.0307, +0.0298] contains zero (306 games)
+- Signal present across contested AND decided positions — not merely a
+  won-position-conversion story.
+
+P2 — avg_elo bucket:
+- under_1200 -0.0096 [-0.0207, +0.0019] contains zero (665 games)
+- 1200_1600 -0.0150 [-0.0224, -0.0075] excludes zero (1,349 games)
+- 1600_2000 -0.0140 [-0.0224, -0.0064] excludes zero (1,335 games)
+- 2000_plus -0.0155 [-0.0312, -0.0001] excludes zero (329 games)
+- No strong skill-dependence pattern; magnitudes similar across bands.
+
+P3 — min-clock bucket WITHIN move_30+move_40 (key constraint test):
+- under_60s -0.2541, 228 games — BELOW CI THRESHOLD, descriptive only
+- 60_180s   -0.0534 [-0.0717, -0.0335] EXCLUDES ZERO (616 games)
+- over_180s -0.0074 [-0.0136, -0.0014] excludes zero (1,582 games)
+- Within late game, the signal is ~7x larger where remaining time is low
+  (60-180s vs >180s), with a very large descriptive point delta under 60s.
+  The clock signal localizes to actual time scarcity, not just game length.
+  Consistent with time-pressure relevance. Predictive association only.
+
+Exploratory:
+- Clock imbalance: balanced -0.0006 [cz]; moderate -0.0061 [excl];
+  large -0.0442 [excl] — graded with imbalance size.
+- Terminal sensitivity: delta identical with/without 44 terminal rows
+  (-0.0138 both) — result robust to terminal positions.
+
+Confounding diagnostic (mandatory): marginal clock x checkpoint cross-tab
+confirms low clock is almost entirely a late-checkpoint phenomenon
+(move_10: 3,674/3,678 rows >180s) — why marginal clock buckets are not
+primary.
+
+Caveats:
+- Predictive associations; not causal; reasoning quality not measured.
+- Slices localize one already-confirmed effect; not independent hypothesis
+  tests; no multiple-comparison correction claimed.
+- Degradation curves not established by ordered-bucket patterns.
+- Stockfish eval is position context, not ground truth.
+- under_60s cell descriptive only (228 games).
+- Test split untouched. Player-level leakage unresolved. DRAW not solved.
+
+Artifacts: data/processed/constraint_slices_2024_09_250k_v1.json (gitignored);
+committed report reports/constraint_slices_2024_09_250k_v1.md.
+
+Next step:
+Candidates: cross-month/pilot-disjoint external validity for the localized
+finding; under_60s cell needs a larger sample (or longer games) to reach CI
+threshold; GBM diagnostic at 45k train rows; player-leakage quantification.

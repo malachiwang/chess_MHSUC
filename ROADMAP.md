@@ -815,6 +815,32 @@ concentrates in move_30/40. EXP-009 added. 1,404 tests passing.
 See `reports/phase_reports/phase_9_1b_scale_up_implementation.md` and
 `reports/scale_up_2024_09_250k_v1.md`.
 
+### Ticket 9.2A — Constraint Slice / Interaction Audit
+
+Status: complete (audit delivered inline in chat on 2026-06-10). Designed the
+slice analysis for localizing the replicated E3→E4 clock signal: primary
+slices = eval decidedness, avg_elo bucket, and min-clock bucket WITHIN late
+checkpoints (marginal clock buckets rejected — confounded with checkpoint:
+99.9% of move_10 rows have >180s remaining). Bootstrap rule: game-level CIs
+only for cells ≥300 games; smaller cells reported descriptively. Use existing
+9.1B predictions; no retraining.
+
+### Ticket 9.2B — Constraint Slice / Interaction Implementation
+
+Status: complete. `constraint_slices.py` + 74 tests. No models trained.
+Key result (P3, within move_30+40): E3→E4 delta by remaining time —
+under_60s −0.2541 (228 games, below CI threshold, descriptive),
+60_180s −0.0534 [−0.0717, −0.0335] excludes zero,
+over_180s −0.0074 [−0.0136, −0.0014]. The clock signal localizes to actual
+time scarcity, not just game length — consistent with time-pressure
+relevance (predictive association, not causal). P1: signal present across
+equal/slight/decided positions (all exclude zero; not merely a
+won-position-conversion story). P2: stable across rating bands. Terminal
+sensitivity: identical with/without 44 terminal rows. EXP-010 added.
+
+See `reports/phase_reports/phase_9_2b_constraint_slice_implementation.md`
+and `reports/constraint_slices_2024_09_250k_v1.md`.
+
 ## Phase 10: Neural sequence model exploration
 
 Goal: explore sequence modeling only if justified.
