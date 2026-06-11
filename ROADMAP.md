@@ -696,7 +696,7 @@ Key outputs:
 
 Local artifacts (gitignored): none.
 
-## Phase 7 Pre-Phase-8 Hardening
+## Phase 7.3: Pre-Phase-8 Hardening
 
 ### Ticket 7.3A — Modeling Hygiene Hardening Audit
 
@@ -728,6 +728,16 @@ Key findings:
 - Bootstrap CIs confirm whether B2→B3 delta (Δ−0.021 log_loss) is statistically resolvable.
 - Short-game exclusion documented: 137 games (n_plies 1–19), not a parser bug, population
   definition is games reaching ply ≥ 20 / move 10.
+
+## Roadmap Reconciliation Note (2026-06-11, Ticket 9.4B)
+
+Fixed-depth Stockfish validation was pulled forward into Phase 8 because
+eval-conditioned modeling required engine control. Scaling/replication work
+became Phase 9. Older notes that refer to "Phase 8 Scaling" or place
+Stockfish validation later (e.g., interpretation prose in early
+EXPERIMENT_LOG entries) reflect pre-reorganization numbering. The current
+ROADMAP numbering below is authoritative. All existing report links remain
+valid.
 
 ## Phase 8: Fixed-depth Stockfish validation
 
@@ -922,7 +932,7 @@ professor email draft
 
 ## Completed tickets
 
-Phases 0–7 and pre-Phase-8 hardening complete:
+Phases 0–9 complete:
 
 - Phase 0: Governance and setup (0.1A/B, 0.2A/B)
 - Phase 1: Lichess source and 10+0 availability (1.1A/B)
@@ -932,5 +942,7 @@ Phases 0–7 and pre-Phase-8 hardening complete:
 - Phase 5: Baseline modeling (5.1A/B, 5.2A/B, 5.3A/B)
 - Phase 6: GBM modeling (6.1A/B, 6.2A/B, 6.3A/B)
 - Phase 7: Calibration and probability interpretation (7.1A/B, 7.2A/B, 7.3A/B)
+- Phase 8: Fixed-depth Stockfish eval (8.1A/B); eval-conditioned modeling (8.2A/B)
+- Phase 9: 250k scale-up (9.1A/B); constraint slices (9.2A/B); cross-month replication (9.3A/B); roadmap reconciliation (9.4A/B)
 
 Update this section after each stable commit.
