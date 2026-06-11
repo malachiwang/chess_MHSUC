@@ -15,6 +15,17 @@ Initial model path: baselines -> logistic regression -> GBM -> calibrated GBM
 Final aspiration: every-ply human outcome prediction under constraints
 ```
 
+## Proposed v11 Research Re-Scope
+
+A proposal for the next research arc — prior-work positioning, claim hardening,
+human-realizable value, positional sharpness, move-quality curves,
+cross-time-control analysis, and packaging — is preserved at
+`docs/roadmap_rescope_v11_draft.md`.
+
+This proposal is not yet authoritative. It should not replace the current
+roadmap until the preliminary re-scope audit is complete and Malachi
+explicitly approves the roadmap patch.
+
 ## Phase 0: Governance and setup
 
 Goal: establish project rules, structure, and safety before data work.
