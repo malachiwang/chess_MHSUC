@@ -919,3 +919,51 @@ Caveats:
 
 Next step:
 11.1A — Scientific Claim Audit + PREREGISTRATION v1 refinement.
+
+---
+
+## EXP-013 — Phase 11.1A Scientific Claim Audit + PREREGISTRATION v1 Refinement
+
+Experiment ID: EXP-013
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete (documentation/audit milestone; no models trained)
+
+Question:
+Is PREREGISTRATION.md specific enough to lock the v11 arc's primary contrasts before
+any Phase 12+ feature exists?
+
+Stub audit verdict: NOT specific enough — six gaps closed:
+central-claim section absent; contrasts unstructured; no metric conventions; split
+discipline missing train-defined-bins / cross-month-independence / no-raw-usernames
+rules; exploratory list incomplete; revision policy underspecified.
+
+Refinement applied (PREREGISTRATION.md stub -> v1):
+- Central scientific claim locked (current supported claim + future v11 hypothesis,
+  with standing qualifiers).
+- Four primary contrasts locked with question/comparison/metric/datasets/success:
+  C1 E4a->E4b->E4c rich clock robustness (Phase 12, both months);
+  C2 board-decided-only E3->E4 vs all-games (Phase 11.2; >= ~half magnitude guideline;
+  collapse -> honest flagging-channel re-frame);
+  C3 sharpness moderation difference-of-deltas (Phase 14; late checkpoints;
+  Tier A engine-side only; advantaged-player conversion headline orientation;
+  kill condition restated);
+  C4 next-move expected-score loss ~ clock bucket (Phase 15; prior-trajectory control
+  mandatory; non-monotone shapes reportable per jk_182 caution).
+- Deferred parameters named, not silent: 14.2A (composite, pooled analysis),
+  15.0A (loss definition, bins, blunder threshold) — these may finalize parameters
+  but not alter intended contrasts.
+- Metric conventions: log loss primary (outcomes); expected-score loss primary
+  (move quality); clipped cp secondary; raw cp eval-band-conditioned only; percent
+  swing exploratory; draws=0.5; mate-band separate; cp lineage preserved; WDL parallel.
+- Split discipline: train-defined bins/thresholds only; cross-month = independent
+  validation; player-clustered checks once 11.3 lands; no raw usernames ever committed.
+- Revision policy: pre-implementation changes logged; post-implementation primary
+  definitions immutable against observed results; deviations documented beside
+  preserved originals; new contrasts need new sections before results viewed.
+
+Caveats: no new data or models; open parameters listed in the phase report carry to
+their designated lock-in tickets.
+
+Next step:
+11.2A — Termination Decomposition Feasibility Audit (feeds locked Contrast 2).

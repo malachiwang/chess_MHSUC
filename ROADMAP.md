@@ -41,8 +41,9 @@ clock-residual moderation (11.0A kill condition not triggered).
   direct ceiling"; advantaged-player conversion sharpness as the Phase 14 headline
   orientation (side-to-move-overall as labeled secondary); `best_move_is_simple_trade`
   excluded from the v1 sharpness composite pending the 13.2 mini-audit.
-- Related work: `docs/RELATED_WORK.md`. Pre-registration: `PREREGISTRATION.md` (v1 stub).
-- **Next ticket: 11.1A — Scientific Claim Audit + PREREGISTRATION v1 refinement.**
+- Related work: `docs/RELATED_WORK.md`. Pre-registration: `PREREGISTRATION.md`
+  (v1, refined by 11.1A — four primary contrasts locked).
+- **Next ticket: 11.2A — Termination Decomposition Feasibility Audit.**
 
 ## Phase 0: Governance and setup
 
