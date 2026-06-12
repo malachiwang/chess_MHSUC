@@ -15,16 +15,34 @@ Initial model path: baselines -> logistic regression -> GBM -> calibrated GBM
 Final aspiration: every-ply human outcome prediction under constraints
 ```
 
-## Proposed v11 Research Re-Scope
+## Active v11 Research Arc (accepted 2026-06-12, Tickets 11.0A/11.0B)
 
-A proposal for the next research arc — prior-work positioning, claim hardening,
-human-realizable value, positional sharpness, move-quality curves,
-cross-time-control analysis, and packaging — is preserved at
-`docs/roadmap_rescope_v11_draft.md`.
+The v11 re-scope was **accepted and applied** after the 11.0A prior-work verification
+(`reports/phase_reports/phase_11_0a_prior_work_novelty_rescoping_audit.md`) confirmed
+the novelty lane is open — no prior work performs eval-controlled, outcome-level
+clock-residual moderation (11.0A kill condition not triggered).
 
-This proposal is not yet authoritative. It should not replace the current
-roadmap until the preliminary re-scope audit is complete and Malachi
-explicitly approves the roadmap patch.
+- **Current arc: Phase 11 onward** — positioning/claim hardening (11), score-scale
+  robustness + stronger clock controls (12), cheap difficulty layer (13), MultiPV
+  sharpness (14), Constraint Atlas / move-quality curves (15), cross-time-control
+  dose-response (16), packaging (17).
+- **The authoritative detailed Phase 11–17 architecture lives in
+  `docs/roadmap_rescope_v11_draft.md`** (with the 11.0A §9 edits folded in). This file
+  stays the high-level active roadmap.
+- Phases 0–9 below remain the completed historical record, unchanged.
+- Phase 10 / sequence models remain **gated, not next** (gate restated at the end of
+  the v11 document; conditions unchanged).
+- The earlier "package first" recommendation is reconciled, not discarded: packaging is
+  now Phase 17, *after* claim hardening (11.2 termination decomposition, 11.3 player
+  leakage), because the 11.0A prior-work findings changed what the packaged claim must say.
+- Standing rules adopted with the arc: Tier A / Tier B sharpness discipline
+  (anti-circularity); EXP-012+ numbering for the new arc; preprints citable but always
+  labeled as such; ChessMimic described only as "a strong neural reference point, not a
+  direct ceiling"; advantaged-player conversion sharpness as the Phase 14 headline
+  orientation (side-to-move-overall as labeled secondary); `best_move_is_simple_trade`
+  excluded from the v1 sharpness composite pending the 13.2 mini-audit.
+- Related work: `docs/RELATED_WORK.md`. Pre-registration: `PREREGISTRATION.md` (v1 stub).
+- **Next ticket: 11.1A — Scientific Claim Audit + PREREGISTRATION v1 refinement.**
 
 ## Phase 0: Governance and setup
 

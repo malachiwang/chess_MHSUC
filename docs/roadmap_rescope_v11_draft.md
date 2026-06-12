@@ -1,6 +1,10 @@
 # chess-MHSUC — ROADMAP Re-Scoping Proposal (v11-draft, v2-merged)
 
-**Status:** PROPOSAL ONLY. Do not apply until 11.0A is complete and Malachi approves 11.0B.
+**Status:** ACCEPTED AND APPLIED (Ticket 11.0B, 2026-06-12), following the 11.0A
+prior-work verification (`reports/phase_reports/phase_11_0a_prior_work_novelty_rescoping_audit.md`)
+and Malachi's approval defaults. This file is the authoritative detailed Phase 11–17
+architecture referenced by `ROADMAP.md`. Provenance: originally stored as PROPOSAL ONLY
+(commit `01e0747`); the 11.0A §9 edits are folded in below.
 **v2 change log:** merges the "Revision Addendum — Explicit Sharpness Definition" into this
 document. The addendum becomes Appendix B.1 (definition layer), with minimal touch-ups to
 13.2, 14.1A, 14.1B, 14.2A, and Appendix C. No phases, tickets, or success/kill criteria
@@ -30,6 +34,13 @@ under bounded constraints (rating, clock, phase, time control, positional sharpn
 - to be extended to rating and time-control moderation (dose-response design);
 - to be bridged to next-move quality as a mechanism-style (still predictive) analysis;
 - eventually synthesized as a "human-realizable value" layer on top of engine eval.
+
+Nearest prior art (per the 11.0A verification): Anderson/Kleinberg/Mullainathan establish
+narrowness→error at the *move* level in tablebase domains; Barthelemy's variation-entropy
+preprint (arXiv:2505.03251) establishes engine-derived narrowness/entropy as descriptively
+relevant to human struggle and think time, expertise-dependently. Neither performs
+eval-controlled, outcome-level clock-residual decomposition or moderation — that lane is
+open (11.0A kill condition not triggered).
 
 **Standing list of claims we must NOT make (verbatim, keep in all reports):**
 - "Sharp positions are harder for humans" as a novel claim (established at the move level
@@ -98,8 +109,11 @@ Deliverables:
      more when fewer near-optimal moves exist. Does NOT do eval-controlled outcome-level
      residual decomposition, moderation tests, or cross-time-control replication.
      **Key comparison paper.**
-   - Maia (KDD 2020), Maia-2 (KDD-era follow-up), Maia4All, Chessformer/"Maia-3"
-     (preprint). Human move prediction conditioned on skill. Owns the move-imitation lane.
+   - Maia (KDD 2020), Maia-2 (NeurIPS 2024, arXiv:2409.20553), Maia4All (preprint;
+     exact identifier to be pinned in RELATED_WORK.md), Chessformer/"Maia-3"
+     (arXiv:2605.19091; **ICLR 2026 poster** — peer-reviewed venue; Maia-3 reaches
+     57.1% move-matching). Human move prediction conditioned on skill. Owns the
+     move-imitation lane.
    - ChessMimic (arXiv:2606.04473, preprint, single author, not peer-reviewed). Per-rating
      transformers for move/clock/outcome on Lichess **blitz**; outcome AUC 0.78 vs
      **material**+rating+clock logistic baselines. Does NOT control for engine eval; does
@@ -108,8 +122,9 @@ Deliverables:
    - DeepMind searchless chess / ChessBench (Ruoss et al., preprint + releases).
      Stockfish-distillation transformer lane; relevant as tokenizer/data-format prior art
      and as evidence the engine-imitation lane is occupied.
-   - Resource-rational chess under time pressure (CogSci, peer-reviewed venue):
-     expertise modulates time-pressure effects; value-of-computation framing.
+   - Resource-rational chess under time pressure (CogSci proceedings; a peer-reviewed
+     journal version also exists — Kuperwajs et al., PMC12553403): expertise modulates
+     time-pressure effects; value-of-computation framing.
    - Decision-time field evidence (econ preprint): best-vs-second-best engine gap predicts
      longer think times. Validates MultiPV gap as behaviorally meaningful.
    - Position-complexity / variation-entropy work (physics preprint): engine-derived
@@ -262,6 +277,11 @@ K=5) but means continuous count/entropy features cannot distinguish "K good move
 primitive (it is what a MultiPV run at the checkpoint natively produces); advantaged-player
 conversion sharpness, defensive sharpness, and mutual sharpness are derived views
 (filters/restrictions on the primitive), not separate engine runs.
+**Nearest-prior-art citation obligation (per 11.0A):** Phase 14 documents must cite
+Barthelemy (arXiv:2505.03251, preprint) as the closest engine-derived narrowness/entropy
+prior art, and the decision-time gap evidence (arXiv:2201.10808; arXiv:2406.15463,
+preprints) as behavioral validation that best-vs-second-best gaps are meaningful to
+humans — while stating that none performs eval-controlled outcome-residual moderation.
 
 ### 14.1B — Pilot Sharpness Extraction (one month first)
 Implements the **local narrowness + obviousness discount layers only** of the Appendix B.1
@@ -303,7 +323,8 @@ circularity). Learned human difficulty is Tier B and lives in Phase 15.
 ### 14.2B — Implement E8/E9 + interaction tests
 ### 14.3B — Sharpness Slice Report
 By month, checkpoint, clock bucket, rating bucket, board leader/trailer; exploratory
-slices labeled.
+slices labeled. The report's related-work paragraph carries the 14.1A nearest-prior-art
+citations (Barthelemy; decision-time gap evidence), clearly labeled as preprints.
 **Success:** clock × sharpness difference-of-deltas CI excludes zero in 2024-09 AND
 replicates in sign in 2024-10 AND survives the 11.2 board-decided filter.
 **Kill:** if sharpness neither moderates the clock residual nor adds main-effect signal
@@ -344,9 +365,17 @@ Answer, against the actual repo (do not assume):
    deferred. Draws scored 0.5. Mate/near-mate = separate band. Orientation formalization
    for the "human realizability gap" is DEFERRED until these definitions exist
    (incorporates correction F — do not commit to a G(s,r,t) formula yet).
+10. **Non-monotonicity caution (per 11.0A):** jk_182's descriptive 3+0 analysis reports
+   that *inaccuracy* rates decrease at low clock while mistake rates stay roughly
+   steady — plausibly simplification and/or selection effects. Curves must pre-accept
+   non-monotone shapes as reportable findings, not anomalies; "loss rises as clock
+   falls" is not the only acceptable shape.
 
 ### 15.0B — Implement Checkpoint-Level Next-Move Loss Extraction
 ### 15.0C — Generate Descriptive Constraint Curves (the Atlas)
+Curve interpretation inherits the 15.0A non-monotonicity caution: non-monotone shapes
+(e.g., inaccuracy rates falling at low clock) are reportable findings, framed against
+the selection-vs-degradation distinction, never forced into a monotone narrative.
 Plot suite (all with bootstrap CI ribbons; median + 75th/90th percentiles where skewed):
 1. Time remaining vs mean/median next-move expected-score loss; lines = rating buckets.
 2. Same x-axis vs clipped cp loss (secondary, familiar metric).

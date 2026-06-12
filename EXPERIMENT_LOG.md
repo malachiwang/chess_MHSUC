@@ -869,3 +869,53 @@ pooled-month analysis to push under_60s past the CI threshold
 (pre-specified pooling rule required); player-level leakage quantification;
 GBM diagnostic at ~44k train rows; Phase 10 feasibility audit only after
 Malachi decides the replication program is sufficient.
+
+---
+
+## EXP-012 — Phase 11.0A/11.0B Prior-Work Verification and v11 Roadmap Application
+
+Experiment ID: EXP-012
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete (documentation/research-planning milestone; no models trained)
+
+Question:
+Is the v11 research arc's novelty lane (eval-controlled clock residuals on human game
+outcomes + sharpness moderation program) actually open, given prior work?
+
+11.0A verification result:
+- All eight required source areas verified directly (web search + abstract/PDF fetch).
+- KILL CONDITION NOT TRIGGERED: no prior work performs eval-controlled, outcome-level
+  clock-residual decomposition or moderation.
+- Nearest neighbors: Anderson/Kleinberg/Mullainathan (move-level narrowness->error,
+  tablebase domains; key comparison paper); Barthelemy arXiv:2505.03251 (descriptive
+  engine-narrowness/entropy vs human struggle/think time — closest sharpness neighbor;
+  mandatory Phase 14 citation); ChessMimic arXiv:2606.04473 (blitz outcome AUC 0.78,
+  material-based baselines, no eval control — "reference point, not ceiling").
+- New caution adopted: jk_182 (descriptive, 3+0) reports inaccuracy rates DECREASE at
+  low clock — Phase 15 curves pre-accept non-monotone shapes.
+
+11.0B application (doc-only):
+- 11.0A §9 edits folded into docs/roadmap_rescope_v11_draft.md (Chessformer -> ICLR 2026
+  poster; Maia-2 -> NeurIPS 2024; Maia4All ID flagged; nearest-prior-art citation
+  obligations in Phase 14; jk_182 caution in Phase 15; novelty-lane prior-art sentence).
+- ROADMAP.md pointer section replaced with active v11 arc status (Phases 11-17 next;
+  Phase 10/sequence models remain gated; Phases 0-9 historical record unchanged;
+  "package first" reconciled into Phase 17 after claim hardening).
+- docs/RELATED_WORK.md created from the verified 11.0A source table.
+- PREREGISTRATION.md v1 stub created: frozen E3/E4 anchors (-0.0138 / -0.0120 with CIs),
+  four primary future contrasts (E4a->E4b/E4c; board-decided-only E3->E4; sharpness
+  difference-of-deltas; next-move expected-score loss ~ clock), split/evaluation
+  discipline, anti-overclaiming language, revision policy.
+- Standing rules adopted (Malachi approval defaults): Tier A/B sharpness discipline;
+  EXP-012+ numbering for the new arc; labeled-preprint citation policy; advantaged-
+  player conversion sharpness as Phase 14 headline orientation; simple-trade excluded
+  from v1 composite.
+
+Caveats:
+- No new data, models, or metrics in this milestone.
+- Maia4All exact arXiv identifier not yet pinned (flagged in RELATED_WORK.md).
+- PREREGISTRATION.md is a stub; 11.1A refines it before any Phase 12+ feature exists.
+
+Next step:
+11.1A — Scientific Claim Audit + PREREGISTRATION v1 refinement.
