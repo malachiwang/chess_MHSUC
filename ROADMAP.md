@@ -43,7 +43,8 @@ clock-residual moderation (11.0A kill condition not triggered).
   excluded from the v1 sharpness composite pending the 13.2 mini-audit.
 - Related work: `docs/RELATED_WORK.md`. Pre-registration: `PREREGISTRATION.md`
   (v1, refined by 11.1A — four primary contrasts locked).
-- **Next ticket: 11.2A — Termination Decomposition Feasibility Audit.**
+- **Next ticket: 11.2B — Termination Decomposition Implementation** (11.2A verdict:
+  feasibility Level 0–1, existing artifacts only, no retraining in the primary design).
 
 ## Phase 0: Governance and setup
 

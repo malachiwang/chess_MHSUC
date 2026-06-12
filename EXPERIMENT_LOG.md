@@ -967,3 +967,49 @@ their designated lock-in tickets.
 
 Next step:
 11.2A — Termination Decomposition Feasibility Audit (feeds locked Contrast 2).
+
+---
+
+## EXP-014 — Phase 11.2A Termination Decomposition Feasibility Audit
+
+Experiment ID: EXP-014
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete (read-only feasibility audit; no models trained, no data written)
+
+Question:
+Can the pipeline separate time-forfeit from board-decided outcomes to test locked
+Contrast 2 (board-decided-only E3->E4 clock residual)?
+
+Verdict: FEASIBILITY LEVEL 0-1 — proceed to 11.2B with existing artifacts only.
+- termination + is_time_forfeit already in both months' feature tables (parsed from
+  raw, preserved by cleaning, never used as model features).
+- Raw vocabulary (250k prefixes, counted): Normal / Time forfeit / Abandoned /
+  Unterminated / Rules infraction. Clean 600+0 set: only Normal / Time forfeit /
+  Rules infraction (Abandoned excluded by cleaning; 1 Rules infraction game/month).
+- Time-forfeit games hold 13.1% of primary rows in BOTH months.
+- E3/E4 predictions reusable via (game_id, selected_position_type) join; primary
+  11.2B design = prediction-side filter of frozen models, NO retraining.
+
+Sample sizes (val, measured):
+- Board-decided retains 87.6% (09) / 86.8% (10) of val rows.
+- Late 60_180s board-decided: 464 g (09) / 424 g (10) — above 300-game CI threshold;
+  carries the localization conclusion.
+- Late under_60s board-decided: 101 g / 94 g — descriptive only; cell loses ~57% of
+  games to the TF filter (low-clock cells are heavily time-forfeit-composed — the
+  channel question is real).
+
+Taxonomy: primary binary time_forfeit vs board_decided; descriptive channels
+time_forfeit / normal_decisive (mate OR resignation — not separable) / normal_draw /
+rules_infraction footnote. No unknown-handling needed (clean set excludes Abandoned).
+
+Found: PREREGISTRATION.md C2 wording inconsistency ("same frozen models, refit") —
+must be clarified before 11.2B (primary = prediction-side filter; refit = optional
+secondary), permitted under the revision policy with logging.
+
+Caveats: timeout is partly cognitive consequence, not purely mechanical; board-decided
+low-clock games are a survivor population; Normal mixes mate/resignation; nothing here
+is causal; player clustering separate (11.3).
+
+Next step:
+11.2B — Termination Decomposition Implementation (Recommendation A).
