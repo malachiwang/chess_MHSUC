@@ -67,10 +67,19 @@ clock-residual moderation (11.0A kill condition not triggered).
   expected-score loss (mover's perspective), `max(0, ES_best_before − ES_after_actual)`;
   clipped-cp loss as the cheap first metric. See
   `reports/phase_reports/phase_15_0a_move_quality_constraint_atlas_audit.md`.
-- **Next ticket: 15.0B — Checkpoint-Level Next-Move Loss Extraction** (may proceed before
-  11.3A/B — it builds per-position targets, not models; full Stockfish post-move pass
-  gated on explicit approval, pilot first). 11.3A/B remain queued before 15.1B
-  controlled modeling.
+- **15.0B done (pilot):** `next_move_loss.py` + 41 tests. 1000-row 2024-09 pilot
+  succeeded — 982 OK, 0 reconstruction/engine failures, 0 FEN-hash mismatches, ~21
+  min/month estimate. Post-move FEN reconstructed from the local raw cache (one
+  `board.push()` past the checkpoint); only post-move positions evaluated (checkpoint
+  `sf_eval_cp` is already the best-line value). Pilot metric = clipped cp loss
+  (mover's perspective, cap ±1000); expected-score loss deferred to 15.0C. Full pass
+  gated (`--limit`/`--allow-full-run`), not run. At numbered checkpoints the mover is
+  always White (even-ply convention). See
+  `reports/phase_reports/phase_15_0b_next_move_loss_extraction.md`.
+- **Next ticket: 15.0C — Full Next-Move Loss Extraction + Expected-Score Transform**
+  (full both-months post-move pass gated on explicit approval; add train-fit cp→ES
+  transform + depth-parity sensitivity check; then 15.1A descriptive Atlas curves).
+  11.3A/B remain queued before 15.1B controlled modeling.
 
 ## Phase 0: Governance and setup
 

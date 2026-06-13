@@ -1163,3 +1163,52 @@ difficulty not novel (Anderson/Barthelemy); DRAW not solved.
 Next step:
 15.0B — Checkpoint-Level Next-Move Loss Extraction (may precede 11.3A/B; full Stockfish
 post-move pass gated on explicit approval, pilot first).
+
+---
+
+## EXP-018 — Phase 15.0B Checkpoint-Level Next-Move Loss Extraction (pilot)
+
+Experiment ID: EXP-018
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete (implementation + pilot; full pass gated, not run)
+
+Purpose:
+Build the measurement layer for Contrast C4 — per-checkpoint next-move quality loss
+(mover's perspective) — to test board-play quality directly rather than infer it from
+final outcomes (which 11.2B showed is mostly the flagging channel).
+
+Implementation:
+- next_move_loss.py: reconstructs post-move FEN from the local raw PGN cache (one
+  board.push() past the checkpoint, reusing stockfish_eval replay/index/engine helpers,
+  unmodified); evaluates ONLY the post-move position (checkpoint sf_eval_cp is already
+  the engine best-line value -> no best-move search, no MultiPV).
+- Metric: clipped cp loss, mover's perspective, cp_loss = max(0, mover_pre_cp -
+  mover_post_cp), cap +/-1000. Expected-score loss DEFERRED to 15.0C/15.1A (train-fit
+  transform; no placeholder shipped).
+- Mate-band rows flagged + excluded from cp summaries. Full-run gated
+  (--limit / --allow-full-run); refuses full pass by default.
+- 41 tests; full suite 1,565 passing (+41), 0 regressions.
+
+Pilot (2024-09, --limit 1000):
+- 982 OK, 18 no-next-move, 0 fen errors, 0 engine errors, 0 FEN-hash mismatches
+  (reconstructed checkpoint FENs match stored hashes exactly), 378 games indexed.
+- runtime 19.6s -> est full month ~21 min (both months ~42 min; 8.1 throughput ~28
+  ms/pos). Consistent with 15.0A estimate.
+- Clipped cp loss (OK non-mate-band, n=943): mean 58.1, median 24, p90 161,
+  zero-loss 29.4%, >100cp 19.1%. 39 mate-band OK rows excluded. By checkpoint:
+  move_10 377 / move_20 294 / move_30 192 / move_40 119.
+- Structural note: at numbered checkpoints (even ply 20/40/60/80) the mover is always
+  White; orientation code tested for both colors regardless.
+
+Artifact: data/processed/next_move_loss_pilot_2024_09_250k_v1.parquet (gitignored, not staged).
+
+Caveats: not causal; no degradation-curve language; Stockfish depth-12 not absolute
+ground truth; depth-parity (pre mover-to-move vs post opponent-to-move, both d12) flagged
+for a d13 sensitivity check; board-decided low-clock = survivor population; right-skewed
+loss -> medians/percentiles.
+
+Next step:
+15.0C — full both-months post-move pass (gated, explicit approval) + train-fit cp->ES
+transform + depth-parity sensitivity check, then 15.1A descriptive Constraint Atlas
+curves. 11.3A/B before 15.1B controlled modeling.
