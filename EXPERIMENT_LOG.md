@@ -1107,3 +1107,59 @@ board-play quality; it is a feasibility/compute audit robust to later split chan
 11.3A/11.3B player-leakage hardening reordered to follow 15.0A but still required
 before any C4 primary modeling result (15.1B); they also gain the job of checking
 whether player leakage inflates the flagging-channel estimate.
+
+---
+
+## EXP-017 — Phase 15.0A Move-Quality / Constraint Atlas Feasibility Audit
+
+Experiment ID: EXP-017
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete (read-only feasibility/design audit; no models, no Stockfish, no data written)
+
+Question:
+Can the project measure next-move quality loss (the Constraint Atlas) directly, rather
+than inferring board-play quality from final outcomes (which 11.2B showed is mostly the
+flagging channel)?
+
+Verdict: FEASIBLE, Level 1-2.
+- No FEN or played move stored in any processed artifact (only irreversible fen_hash);
+  sf_eval stored cp/mate only (no best move, no WDL, no MultiPV).
+- BUT raw PGN caches present locally (data/raw/lichess/lichess_2024_{09,10}_first250k.pgn,
+  583 MB each, gitignored) and stockfish_eval.reconstruct_fen_at_ply already replays
+  mainline moves to a target ply -> post-move FEN is one extra board.push().
+- 98.5% of primary checkpoints (64,371/65,368 in 2024-09) have a next move; 997 games
+  ended at the checkpoint (excluded by definition, reported). By checkpoint: move_10
+  24,384 / move_20 19,639 / move_30 12,950 / move_40 7,398.
+- KEY: the checkpoint sf_eval_cp is already the engine best-line (analyse) value, so
+  engine-best-relative loss needs ONLY a post-move eval pass (no best-move search/MultiPV).
+
+Recommended primary metric: expected-score loss, mover's perspective,
+  loss = max(0, ES_best_before - ES_after_actual), draws = 0.5, mate-band separate.
+  Cheap first metric = clipped-cp loss (same structure, cp scale, clip +/-1000).
+  cp-based E3/E4 lineage preserved separately; percent swing avoided.
+cp->ES: train-fit transform (route b, portable) default; engine WDL (route a) as
+  robustness. Fit on train only.
+Depth-parity caveat: pre-move (mover, d12) vs post-move (opponent, d12) -> handle +
+  sensitivity-check (recommend both d12 with documented parity caveat + d13 spot check).
+
+Compute: ~28 ms/position (8.1 throughput) -> ~30 min/month post-move pass, ~1h both
+months; <5 MB/month artifact. Pilot one month / --limit first; full pass gated on
+explicit approval (8.1B/9.x gate). Checkpoint rows only first; MultiPV deferred to Phase 14.
+
+Bins: late-clock under_60s/60_180s/over_180s (proven, CI-bearing; under_60s descriptive);
+rating 200-Elo or existing 4 buckets for CIs; eval bands equal/slight/decided/mate-band;
+phase move_10..40 + late group; termination channels never silently mixed; medians +
+75/90th percentiles for skew; game-clustered bootstrap CIs.
+
+Staging vs 11.3A/B: 15.0A safe now; 15.0B extraction safe before 11.3A/B (per-position
+targets, no models); 15.1A/B controlled modeling waits for 11.3A/B or player-clustered/
+disjoint design.
+
+Caveats: not causal; no degradation-curve language; Stockfish not absolute ground truth;
+survivorship in board-decided low-clock cells; skewed loss distributions; sharpness
+difficulty not novel (Anderson/Barthelemy); DRAW not solved.
+
+Next step:
+15.0B — Checkpoint-Level Next-Move Loss Extraction (may precede 11.3A/B; full Stockfish
+post-move pass gated on explicit approval, pilot first).

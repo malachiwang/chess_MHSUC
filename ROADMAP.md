@@ -59,9 +59,18 @@ clock-residual moderation (11.0A kill condition not triggered).
   (11.3A/11.3B) is reordered to follow 15.0A but remains required before any C4 primary
   modeling result (15.1B) is locked; it also gains a new purpose (checking whether
   player leakage inflates the flagging-channel estimate). No phases removed.
-- **Next ticket: 15.0A — Move-Quality Curve / Constraint Atlas Audit** (moved earlier;
-  rationale in the 11.2C audit). It is a feasibility/compute audit, robust to later
-  split-discipline changes, so it is safe to run before 11.3A.
+- **15.0A done:** next-move quality is feasible (Level 1–2). No FEN/move stored in
+  processed artifacts, but the local raw PGN caches + the existing `stockfish_eval`
+  replay reconstruct post-move FENs (one extra `board.push()`); 98.5% of primary
+  checkpoints have a next move; the checkpoint `sf_eval_cp` is already the best-line
+  value, so only a post-move eval pass is needed (~30 min/month). Primary metric:
+  expected-score loss (mover's perspective), `max(0, ES_best_before − ES_after_actual)`;
+  clipped-cp loss as the cheap first metric. See
+  `reports/phase_reports/phase_15_0a_move_quality_constraint_atlas_audit.md`.
+- **Next ticket: 15.0B — Checkpoint-Level Next-Move Loss Extraction** (may proceed before
+  11.3A/B — it builds per-position targets, not models; full Stockfish post-move pass
+  gated on explicit approval, pilot first). 11.3A/B remain queued before 15.1B
+  controlled modeling.
 
 ## Phase 0: Governance and setup
 
