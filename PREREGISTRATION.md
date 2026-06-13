@@ -18,14 +18,20 @@ is exploratory and must be labeled as such in every report.
 
 ## Central scientific claim
 
-### Current supported claim
+### Current supported claim (revised after 11.2B; see "Post-11.2B claim status")
 
 > Across two independent Lichess 10+0 monthly samples (2024-09 and 2024-10, 250k raw
 > games each), after controlling for fixed-depth Stockfish eval and ratings, clock
-> features add a small but replicated predictive signal for game outcomes. Slice
-> analysis shows the signal is strongest in late-game low-clock positions. This is
-> predictive evidence of residual human/context signal, not causal evidence that time
-> pressure degrades reasoning.
+> features add a small but replicated predictive signal for game outcomes. A
+> pre-registered termination decomposition (11.2B) shows this residual is substantially
+> attributable to the time-forfeit / flagging channel: among board-decided games the
+> residual is approximately zero (2024-09) or slightly reversed (2024-10). The project
+> has measured and replicated a real human-constraint outcome channel that, in the
+> current outcome setup, is primarily a flagging-risk channel rather than a
+> board-decided outcome signal. Whether low clock relates to board-*play* quality
+> remains open and must be tested directly (next-move quality, Contrast C4), not
+> inferred from final-outcome residuals. This is predictive evidence, not causal
+> evidence that time pressure degrades reasoning.
 
 Standing qualifiers (apply to every restatement): Stockfish eval is objective position
 context, not ground truth; clock effects are associations, not proof of reasoning
@@ -40,6 +46,37 @@ ChessMimic is a strong neural reference point, not a direct ceiling.
 > objective value is harder for humans to realize — especially positions that are
 > engine-narrow, non-obvious, and eventually forward-fragile — and whether that
 > amplification varies by rating and time-control environment.
+
+Post-11.2B refinement: because 11.2B showed the outcome residual is primarily the
+flagging channel, the amplification question is now tested against three distinct
+targets (flagging risk, board-decided outcomes cautiously, and move-quality loss) — see
+the C3a/C3b/C3c split and the strengthened C4. The board-play-quality target (C4 /
+C3c) is the central one; it does not depend on the outcome residual surviving.
+
+## Post-11.2B claim status
+
+Ticket 11.2B executed the pre-registered Contrast C2 and triggered its collapse/reframe
+branch. Recorded result, both months (prediction-side filter of frozen all-games E3/E4
+models; no retraining; paired game-level bootstrap, 1,000 replicates, seed=42):
+
+- **All-games clock residual replicated:** 2024-09 −0.0138 [−0.0186, −0.0091];
+  2024-10 −0.0120 [−0.0177, −0.0062]. CIs exclude zero in both months.
+- **Board-decided-only residual collapsed / sign-reversed:** 2024-09 +0.0010
+  [−0.0029, +0.0049] (CI contains zero, retained fraction 0.07); 2024-10 +0.0060
+  [+0.0015, +0.0109] (CI excludes zero on the *positive* side; the magnitude-based
+  retained fraction 0.50 overstates retention because the sign reversed).
+- **Time-forfeit channel explains most of the all-games residual:** time-forfeit-only
+  delta −0.1183 (2024-09) / −0.1305 (2024-10), ~10× the all-games delta.
+- **Late-game low-clock board-decided localization did not replicate** (60_180s:
+  −0.0294 excl. zero in 2024-09 but −0.0061 contains zero in 2024-10).
+
+Interpretation (predictive only): the replicated clock residual is primarily a
+time-forfeit / flagging channel, not a board-decided outcome signal. The central claim
+is reframed accordingly (above). The board-play-quality question is now carried by C4.
+Filtering time-forfeit games induces selection (board-decided low-clock games are a
+survivor population) and does not create a causal design. See
+`reports/termination_decomposition_combined.md` and
+`reports/phase_reports/phase_11_2c_claim_reframing_audit.md`.
 
 ## Frozen historical comparisons
 
@@ -79,14 +116,34 @@ negative = adding clock improved.)
   lives, not as failure. Either way, E4c becomes the strongest non-sharpness baseline
   that Phase 14 must beat or moderate.
 
-### Contrast 2 — Board-decided-only clock residual (Phase 11.2)
+### Contrast 2 — Board-decided-only clock residual (Phase 11.2) — COMPLETED (11.2B)
+
+**Status: COMPLETED, 2026-06-12 (11.2B). Result: COLLAPSE branch.** All-games residual
+replicated; board-decided-only residual collapsed (2024-09, CI contains zero) /
+sign-reversed (2024-10, positive); time-forfeit channel carries the signal (−0.118 /
+−0.131). Per the pre-registered collapse branch, the central claim is reframed toward
+the flagging channel (see "Post-11.2B claim status"). **Consequence for future
+contrasts:** sharpness moderation (C3) is split so it no longer assumes a surviving
+board-decided outcome residual; C4 (move-quality) is elevated as the central board-play
+test. Full record: `reports/termination_decomposition_combined.md`,
+`reports/phase_reports/phase_11_2c_claim_reframing_audit.md`. The pre-registered
+definition below is preserved unaltered for provenance.
 
 - **Question:** is the E3→E4 clock residual mostly mechanical timeout/flagging risk, or
   does it survive among board-decided games?
-- **Comparison:** all-games E3→E4 delta vs. board-decided-only E3→E4 delta (same months,
-  same frozen models, refit on the filtered population). Conditional on the 11.2A
-  feasibility verdict for termination fields; the minimum supported taxonomy is
-  time-forfeit vs. board-decided.
+- **Comparison (primary design):** all-games E3→E4 validation delta vs.
+  board-decided-only E3→E4 validation delta, computed by **filtering the saved
+  validation predictions of the frozen all-games E3/E4 models** by termination
+  channel. **No retraining for the primary analysis.** Same months; the minimum
+  supported taxonomy is time-forfeit vs. board-decided (confirmed feasible by 11.2A).
+- **Secondary (optional, different estimand):** refitting E3/E4 on board-decided-only
+  training data answers "does the residual exist in a board-decided world?" — it is
+  NOT the primary C2 test and may only run if a later ticket explicitly approves it
+  as a pre-registered secondary.
+- *Revision log: clarified by Ticket 11.2B (2026-06-12) before any C2 results were
+  computed — the 11.0B stub wording "same frozen models, refit on the filtered
+  population" was internally contradictory (found by the 11.2A audit). This is a
+  pre-implementation clarification, not a post-result change.*
 - **Primary metric:** validation log-loss delta with paired game-level bootstrap CI on
   the board-decided subset; late-clock slice replication on the subset where cell sizes
   permit (300-game CI threshold inherited from Phase 9.2).
@@ -97,38 +154,53 @@ negative = adding clock improved.)
   is largely a termination/flagging-channel signal, and packaging language changes
   accordingly. Re-framing is a legitimate outcome, not failure.
 
-### Contrast 3 — Sharpness moderation of the clock residual (Phase 14)
+### Contrast 3 — Sharpness moderation (Phase 14) — split after 11.2B
 
-- **Question:** is the clock residual larger in high-sharpness positions than in
-  low-sharpness positions?
-- **Primary contrast:** difference of paired clock deltas across train-defined
-  sharpness strata — terciles or the binary high-sharpness composite
-  (`narrow AND non-obvious`, per Appendix B.1 of the v11 roadmap) — at late checkpoints
-  (move_30 + move_40), both months.
-- **Model comparison:** clock-enabled vs. no-clock model pairs within strata (the E8/E9
-  structure as defined in Phase 14); the exact final model pair is locked in 14.2A
-  before modeling, but the intended contrast — difference-of-deltas across sharpness
-  strata — is locked here and may not be replaced by a different headline.
-- **Primary metric:** difference in paired log-loss deltas between high- and
-  low-sharpness strata, with bootstrap CI on the difference-of-deltas (game-level
-  clusters; replicate-paired across strata).
-- **Headline orientation:** advantaged-player conversion sharpness (side-to-move
-  primitive restricted to board-leader-to-move positions); side-to-move-overall as the
-  labeled secondary view. Defensive and mutual sharpness are exploratory.
-- **Tier A discipline (binding):** the headline moderator uses engine-side/rule-based
-  inputs only — MultiPV narrowness in expected-score space plus rule-based obviousness
-  discounts. No human-behavior-derived difficulty may enter the headline moderator
-  (anti-circularity; Appendix B of the v11 roadmap).
-- **Required datasets:** both months; strata defined on train only.
-- **Success criterion:** the difference-of-deltas has the expected sign (larger clock
-  delta in high-sharpness strata) in both months, with the CI excluding zero in the
-  primary month or in a pooled analysis that is itself pre-registered in 14.2A before
-  results are viewed; and the result survives the board-decided-only filter if 11.2
-  makes that feasible. **Kill condition** (from the v11 roadmap, restated): if
-  sharpness neither moderates the clock residual nor adds main-effect signal beyond
-  E4c/E7 in either month, the sharpness arc stops and the controlled null is written up.
+11.2B showed the board-decided outcome residual collapsed, so C3 may no longer assume a
+surviving board-decided outcome residual to moderate. C3 is split into three
+distinct-target contrasts. The Tier A anti-circularity discipline (engine-side/rule-based
+sharpness only; MultiPV narrowness in expected-score space plus rule-based obviousness
+discounts; no human-behavior-derived difficulty in any headline moderator — Appendix B
+of the v11 roadmap) and the advantaged-player-conversion headline orientation apply to
+all three. Strata are train-defined; both months required; late checkpoints (move_30 +
+move_40); difference-of-deltas with game-level bootstrap CIs.
 
-### Contrast 4 — Next-move quality constraint curve (Phase 15)
+- **C3a — Flagging-risk sharpness moderation (well-motivated by 11.2B).** Does sharpness
+  / position type interact with clock in predicting *time-forfeit risk*? Target is the
+  termination channel (time-forfeit vs. board-decided), not board-play quality. Locked
+  intended contrast: difference in clock's contribution to flagging-risk prediction
+  across sharpness strata. Exact model/target form locked in 14.2A.
+- **C3b — Board-decided outcome sharpness moderation (cautious / secondary).** Does a
+  board-decided outcome clock residual exist in specific sharpness strata even though it
+  collapsed overall? Optional and explicitly secondary; framed cautiously because C2
+  collapsed; never a headline; a positive stratum-specific finding requires the
+  pre-registered pooled/secondary handling and the board-decided filter.
+- **C3c — Move-quality sharpness moderation (likely the most relevant after 11.2B).**
+  Does sharpness amplify clock's association with worse *next-move expected-score loss*?
+  Target is move quality (the C4 metric), not final outcome. Locked intended contrast:
+  difference of clock's move-quality contribution across sharpness strata. This is the
+  natural sharpness extension of C4 and is structurally immune to the C2 collapse.
+- **Primary metric (each):** difference in paired deltas between high- and low-sharpness
+  strata on the relevant target, with bootstrap CI on the difference-of-deltas
+  (game-level clusters; replicate-paired across strata).
+- **Headline among the three:** to be confirmed with Malachi before 14.2A; the audit
+  (11.2C) recommends C3c (move-quality) as the central sharpness test, with C3a
+  (flagging) as a strong secondary and C3b (board outcome) cautious/secondary.
+- **Success criterion (each):** the difference-of-deltas has the expected sign in both
+  months, CI excluding zero in the primary month or a 14.2A-pre-registered pooled
+  analysis. **Kill condition** (restated): if sharpness neither moderates clock on any
+  of the three targets nor adds main-effect signal beyond E4c/E7 in either month, the
+  sharpness arc stops and the controlled null is written up.
+
+### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
+
+**Post-11.2B status: this is now the central board-play test.** C4 directly measures
+next-move expected-score loss; it **does not depend on the outcome residual surviving
+board-decided filtering** and is therefore structurally immune to the C2 collapse. It is
+the contrast that answers the question 11.2B left open — *does low clock relate to
+board-play quality, not just flagging?* — by measurement rather than inference from
+final outcomes. Its priority is raised accordingly (see the reordering: 15.0A audit
+recommended next).
 
 - **Question:** do low clock and (later) sharpness correspond to worse next-move
   quality, especially in late/sharp positions?
@@ -244,3 +316,17 @@ including (non-exhaustively):
 - Phase-designated lock-in tickets (14.2A for the sharpness composite and pooled
   analysis; 15.0A for the loss definition, bins, and blunder threshold) finalize the
   open parameters named in this document and may not alter the intended contrasts.
+
+### Revision log
+
+- **2026-06-12 (Ticket 11.1A):** stub → v1; four primary contrasts locked.
+- **2026-06-12 (Ticket 11.2B):** C2 wording clarified before any C2 results were
+  computed (primary = prediction-side filter of frozen models, no retraining).
+- **2026-06-12 (Ticket 11.2C):** reframing after the pre-registered C2 collapse branch.
+  C2 marked completed (collapse result); central supported claim revised toward the
+  flagging-channel framing; C3 split into C3a (flagging-risk) / C3b (board-decided
+  outcome, cautious/secondary) / C3c (move-quality); C4 elevated as the central
+  board-play test. **This is a pre-next-analysis reframing executed under the
+  collapse branch that was written before C2 ran — not result-shopping.** No C3/C4
+  inputs exist yet, so their definitions remain revisable per the revision policy; the
+  C2 definition is frozen and preserved for provenance.

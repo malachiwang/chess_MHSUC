@@ -80,5 +80,15 @@ on top of engine eval.
 - ChessMimic wording is fixed (see Forbidden claims). Any direct benchmark claim
   requires actually running a comparison on our domain.
 - Maia4All's exact identifier must be pinned before it is cited in packaged documents.
+- **Post-11.2B positioning note (2026-06-12):** the termination decomposition (11.2B)
+  showed the project's outcome residual is substantially the time-forfeit / flagging
+  channel, and moved the board-play-quality question to next-move-quality analysis
+  (Contrast C4). Move-quality prior work — Anderson et al. (move-level error vs.
+  difficulty/skill/time), the resource-rational literature, and Barthelemy
+  (narrowness/entropy) — is therefore **more central** to the project's framing than
+  before: it is the correct comparison set for C4/C3c, while ChessMimic/Maia remain the
+  reference points for the (avoided) move/outcome-imitation lane. This does not change
+  any source's status label; it raises the relative emphasis of the move-quality
+  sources in C4 and Phase 15 reports.
 - Update this file whenever a new source is verified; never add a source without a
   status label.

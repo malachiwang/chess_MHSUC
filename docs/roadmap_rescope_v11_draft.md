@@ -42,6 +42,19 @@ relevant to human struggle and think time, expertise-dependently. Neither perfor
 eval-controlled, outcome-level clock-residual decomposition or moderation — that lane is
 open (11.0A kill condition not triggered).
 
+**Post-11.2B note (2026-06-12, KNOWN RESULT).** The pre-registered termination
+decomposition (Ticket 11.2B) showed that the replicated all-games E3→E4 outcome residual
+is **substantially the time-forfeit / flagging channel**: among board-decided games it
+collapsed (2024-09, CI contains zero) or sign-reversed (2024-10), while time-forfeit
+games carry the signal (−0.118/−0.131). Consequences for this document: the novelty-lane
+bullet "eval-controlled clock residuals on human game outcomes" must be read as a
+**flagging-channel** outcome residual, not a board-play residual; "moderator of the clock
+residual" (the sharpness bullet) is now split across three targets — flagging risk
+(C3a), board-decided outcomes (C3b, cautious/secondary), and move-quality loss (C3c);
+and the board-play-quality question moves to the next-move-quality bridge (Phase 15 /
+Contrast C4), which does not depend on the outcome residual surviving. See
+`reports/phase_reports/phase_11_2c_claim_reframing_audit.md` and `PREREGISTRATION.md`.
+
 **Standing list of claims we must NOT make (verbatim, keep in all reports):**
 - "Sharp positions are harder for humans" as a novel claim (established at the move level
   by Anderson/Kleinberg/Mullainathan).
@@ -180,6 +193,13 @@ its magnitude with CI excluding zero → claim upgrades to "not merely flagging.
 Re-frame (not failure): if the residual is overwhelmingly the timeout channel, the project
 honestly re-frames as quantifying the flagging channel; packaging text changes accordingly.
 
+**RESULT (11.2B, 2026-06-12): the re-frame branch fired.** The board-decided delta
+collapsed (2024-09: +0.0010, CI contains zero, retained fraction 0.07) / sign-reversed
+(2024-10: +0.0060, CI excludes zero on the positive side); time-forfeit delta
+−0.118/−0.131. The "not merely flagging" upgrade was NOT met. The project re-frames as
+quantifying the flagging channel and moves the board-play-quality question to Phase 15 /
+Contrast C4. See the 11.2C reframing audit.
+
 ### 11.3A — Player-Disjoint Split Feasibility Audit  *(incorporates correction E)*
 Chess rows have TWO players; "player-disjoint" means no username appearing as White or
 Black in train appears in val/test. Audit:
@@ -264,6 +284,20 @@ obvious-recapture narrowness does not.
 Phase 14 implements and tests the explicit layered sharpness definition in
 **Appendix B.1** (local narrowness → obviousness discount → gated forward fragility);
 14.1A/14.1B/14.2A reference that definition rather than restating it.
+
+**Post-11.2B reframing (2026-06-12).** Because 11.2B showed the board-decided outcome
+clock residual collapsed, sharpness moderation is **no longer assumed to moderate a
+board-decided final-outcome residual as the sole or default headline.** Per the 11.2C
+audit and `PREREGISTRATION.md`, sharpness is tested against three distinct targets:
+**C3a — flagging risk** (does sharpness × clock predict time-forfeit risk?, well
+motivated by 11.2B); **C3b — board-decided outcomes** (cautious/secondary, since the
+overall board-decided residual collapsed); **C3c — move-quality loss** (sharpness ×
+clock on next-move expected-score loss — the natural extension of Contrast C4 and the
+recommended central sharpness test). The headline among the three is confirmed with
+Malachi before 14.2A. The Tier A engine-side-only discipline and the advantaged-player
+conversion orientation are unchanged. Phase 14's MultiPV compute is now justified
+primarily by C3a and C3c; confirm the arc is still worth its cost (Appendix C / 14.1A)
+under the reframed targets before committing.
 
 ### 14.1A — MultiPV Feasibility / Compute Audit
 Cost of MultiPV-5 depth-12 on existing checkpoints (~65k + ~63k positions); pilot subset

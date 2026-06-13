@@ -43,8 +43,25 @@ clock-residual moderation (11.0A kill condition not triggered).
   excluded from the v1 sharpness composite pending the 13.2 mini-audit.
 - Related work: `docs/RELATED_WORK.md`. Pre-registration: `PREREGISTRATION.md`
   (v1, refined by 11.1A — four primary contrasts locked).
-- **Next ticket: 11.2B — Termination Decomposition Implementation** (11.2A verdict:
-  feasibility Level 0–1, existing artifacts only, no retraining in the primary design).
+- **11.2B result (replicated): the board-decided clock residual COLLAPSES** —
+  the E3→E4 signal is substantially the time-forfeit/flagging channel
+  (board-decided: +0.0010 cz / +0.0060 sign-reversed; time-forfeit: −0.118/−0.131).
+  Central claim re-framed per the pre-registered collapse branch
+  (`reports/termination_decomposition_combined.md`).
+- **11.2C reframing (done):** the outcome-clock claim is reframed toward the flagging
+  channel; the board-play-quality question moves to Contrast C4 (next-move quality),
+  which does not depend on the outcome residual surviving. Sharpness (C3) is split into
+  C3a flagging-risk / C3b board-decided-outcome (cautious) / C3c move-quality. See
+  `reports/phase_reports/phase_11_2c_claim_reframing_audit.md` and the updated
+  `PREREGISTRATION.md`.
+- **Roadmap reorder:** 11.2C recommends moving the **15.0A move-quality / Constraint
+  Atlas audit earlier** to directly test board-play quality. Player-leakage hardening
+  (11.3A/11.3B) is reordered to follow 15.0A but remains required before any C4 primary
+  modeling result (15.1B) is locked; it also gains a new purpose (checking whether
+  player leakage inflates the flagging-channel estimate). No phases removed.
+- **Next ticket: 15.0A — Move-Quality Curve / Constraint Atlas Audit** (moved earlier;
+  rationale in the 11.2C audit). It is a feasibility/compute audit, robust to later
+  split-discipline changes, so it is safe to run before 11.3A.
 
 ## Phase 0: Governance and setup
 

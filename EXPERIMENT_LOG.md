@@ -1013,3 +1013,97 @@ is causal; player clustering separate (11.3).
 
 Next step:
 11.2B — Termination Decomposition Implementation (Recommendation A).
+
+---
+
+## EXP-015 — Phase 11.2B Termination Decomposition (Contrast C2)
+
+Experiment ID: EXP-015
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete
+
+Question (locked C2):
+Does the replicated E3->E4 clock residual survive removal of time-forfeit games,
+or is it mostly mechanical flagging/timeout risk?
+
+Design (as pre-registered, after logged pre-implementation wording clarification):
+- Prediction-side filter of FROZEN all-games E3/E4 validation predictions.
+- NO retraining. Join by (game_id, selected_position_type) to feature-table
+  termination columns. Paired game-level bootstrap, 1,000 reps, seed=42.
+- Channels: binary time_forfeit vs board_decided; descriptive normal_decisive
+  (mate OR resignation, not separable) / normal_draw / rules_infraction (1/month).
+
+RESULT — the board-decided residual COLLAPSES (replicated):
+- 2024-09: all -0.0138 [-0.0186,-0.0091]; board-decided +0.0010 [-0.0029,+0.0049]
+  contains zero (retained fraction 0.07); time-forfeit -0.1183 [-0.1423,-0.0978].
+- 2024-10: all -0.0120 [-0.0177,-0.0062]; board-decided +0.0060 [+0.0015,+0.0109]
+  EXCLUDES zero in the POSITIVE direction (sign-reversed; fraction 0.50 overstates);
+  time-forfeit -0.1305 [-0.1525,-0.1091].
+- Late-clock board-decided: 60_180s -0.0294 excl (09) but -0.0061 cz (10) — the
+  localized board-decided residual does NOT replicate. under_60s flips to ~+0.17 in
+  BOTH months (descriptive, ~100 games): among flagging survivors, clock features
+  actively mislead.
+
+Interpretation (pre-registered collapse branch; predictive language only):
+The replicated clock residual is substantially attributable to the time-forfeit/
+flagging channel. The project now quantifies the flagging channel rather than
+demonstrating a board-outcome clock residual. Central claim re-framed in
+reports/termination_decomposition_combined.md section 8.
+
+Caveats: filtering induces selection bias; board-decided low-clock games are a
+survivor population; timeout is partly a consequence of earlier time expenditure,
+so the decomposition bounds but does not perfectly separate channels; not causal;
+not a degradation curve.
+
+Implementation: termination_decomposition.py + 39 tests (1,524 total passing).
+One sign-guard bug in interpretation logic found and fixed during implementation,
+before reports were finalized.
+
+Next step:
+Claim-reframing audit BEFORE 11.3A: revisit v11 novelty lane and C3/C4 framing
+(candidates: flagging-risk as explicit object; finer board-decided analysis;
+pivot weight to the C4 move-quality bridge, which does not depend on outcome deltas).
+
+---
+
+## EXP-016 — Phase 11.2C Claim Reframing After Termination Decomposition
+
+Experiment ID: EXP-016
+Date: 2026-06-12
+Owner: Malachi Wang
+Status: complete (documentation/reframing audit; no models trained)
+
+Trigger:
+11.2B (EXP-015) fired the pre-registered C2 collapse/reframe branch — the all-games
+E3->E4 clock residual replicated, but the board-decided-only residual collapsed
+(2024-09 +0.0010 cz) / sign-reversed (2024-10 +0.0060 positive); time-forfeit games
+carry the signal (-0.118/-0.131). The residual is substantially the flagging channel.
+
+Reframing applied (documentation-only):
+- Central claim revised: the replicated clock residual is primarily a time-forfeit /
+  flagging channel, not a board-decided outcome signal. Whether low clock relates to
+  board-PLAY quality is now open and must be tested directly via next-move quality
+  (Contrast C4), not inferred from outcome residuals.
+- What remains supported: all-games residual real/replicated/predictive; strongest at
+  low clock because clock predicts flagging risk; a real human-constraint outcome
+  channel measured and replicated (but primarily flagging).
+- What is weakened: the outcome residual is NOT evidence of worse board-decided
+  outcomes after eval+rating control; the "clock as board-play/cognitive signal"
+  reading is unsupported; late low-clock board-decided localization did not replicate.
+- C3 split: C3a flagging-risk sharpness moderation; C3b board-decided-outcome
+  (cautious/secondary); C3c move-quality sharpness moderation (recommended central).
+- C4 elevated: directly measures next-move expected-score loss; does NOT depend on the
+  outcome residual surviving board-decided filtering; now the central board-play test.
+
+Docs edited: PREREGISTRATION.md (Post-11.2B status; C2 completed; C3->C3a/b/c; C4
+elevated; revision log), ROADMAP.md (reframing + reorder), docs/roadmap_rescope_v11_
+draft.md (Section 0 note; C2 result; Phase 14 split), docs/RELATED_WORK.md
+(move-quality prior work more central), phase_11_2c report.
+
+Next step:
+15.0A — Move-Quality Curve / Constraint Atlas Audit, MOVED EARLIER (it directly tests
+board-play quality; it is a feasibility/compute audit robust to later split changes).
+11.3A/11.3B player-leakage hardening reordered to follow 15.0A but still required
+before any C4 primary modeling result (15.1B); they also gain the job of checking
+whether player leakage inflates the flagging-channel estimate.
