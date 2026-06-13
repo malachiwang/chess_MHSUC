@@ -1212,3 +1212,53 @@ Next step:
 15.0C — full both-months post-move pass (gated, explicit approval) + train-fit cp->ES
 transform + depth-parity sensitivity check, then 15.1A descriptive Constraint Atlas
 curves. 11.3A/B before 15.1B controlled modeling.
+
+---
+
+## EXP-019 — Phase 15.0C Full Next-Move Loss Extraction + Expected-Score Transform
+
+Experiment ID: EXP-019
+Date: 2026-06-13
+Owner: Malachi Wang
+Status: complete
+
+Purpose:
+Produce full checkpoint-level next-move loss artifacts for both months and add a
+train-fit cp->expected-score transform, completing the C4 measurement layer.
+
+Expected-score transform (Option A, implemented):
+- Logistic ES(cp)=1/(1+exp(-cp_clipped/scale)), cp clipped +/-1000, fit by bounded MSE
+  to White expected score (win=1/draw=0.5/loss=0) on 89,764 POOLED TRAIN rows from both
+  months. scale=348.4, MSE 0.183. Train-only; same transform pre/post and both months
+  for comparability; cp lineage preserved (no silent replacement); mate-band excluded.
+
+Full extraction (--allow-full-run, depth 12, post-move position only, ES transform applied):
+- 2024-09: attempted 65,368, OK 64,371, no-next-move 997, fen/engine/hash failures
+  0/0/0, runtime 1,471s (~24.5 min). Clipped cp loss mean 58.3 median 19 p90 159
+  zero 33.3% >100cp 17.3% >200cp 7.3%. ES loss mean 0.0345 median 0.0102 p90 0.0949
+  >0.10 9.3%. mate-band (OK) 2,415.
+- 2024-10: attempted 62,839, OK 61,868, no-next-move 971, failures 0/0/0, runtime
+  1,419s (~23.7 min). Clipped cp loss mean 57.4 median 19 p90 157. ES loss mean 0.0341
+  median 0.0101 p90 0.0933. mate-band (OK) 2,243.
+- Total 126,239 checkpoint moves evaluated; cross-month agreement strong on every stat.
+
+Depth-parity sensitivity (2024-09, 400-row depth-13 post-move re-eval via stored
+post_fen): mean clipped cp loss 57.8 (d12) vs 58.0 (d13); per-row mean abs delta 14cp;
+median delta 0. Benign in aggregate; depth-12 retained.
+
+Descriptive observation (NOT a claim): board-decided vs time-forfeit games have
+near-identical checkpoint next-move loss in both months (clipped cp means within ~1cp;
+ES means within 0.0009) -> consistent with the 11.2B flagging-channel reframing (the
+outcome residual is clock-exhaustion mechanics, not worse board moves at checkpoints).
+No conclusion until Atlas curves + controls.
+
+Tests: 56 in test_next_move_loss.py (+15 ES); full suite 1,580 passing, 0 regressions.
+Artifacts (gitignored): next_move_loss_{2024_09,2024_10}_250k_v1.parquet,
+next_move_expected_score_transform_2024_09_2024_10_v1.json.
+
+Caveats: not causal; no degradation-curve language; Stockfish depth-12 not absolute
+ground truth; survivorship in board-decided low-clock; right-skewed loss; ES is
+logistic-on-clipped-cp (WDL cross-check deferred).
+
+Next step:
+15.1A — Constraint Atlas Descriptive Curves Audit. 11.3A/B before 15.1B controlled modeling.

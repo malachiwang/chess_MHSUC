@@ -41,6 +41,8 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
+import math
 import statistics
 import sys
 import time
@@ -48,7 +50,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import chess
+import numpy as np
 import polars as pl
+from scipy.optimize import minimize_scalar
 
 from chess_mhsuc.stockfish_eval import (
     MATE_CP_SENTINEL,
@@ -96,6 +100,9 @@ _OUTPUT_SCHEMA: dict[str, pl.PolarsDataType] = {
     "mover_post_cp":          pl.Int64,
     "cp_loss":                pl.Int64,
     "clipped_cp_loss":        pl.Int64,
+    "es_pre":                 pl.Float64,
+    "es_post":                pl.Float64,
+    "expected_score_loss":    pl.Float64,
     "is_mate_band":           pl.Boolean,
     "white_rating":           pl.Int64,
     "black_rating":           pl.Int64,
@@ -171,6 +178,87 @@ def time_bucket_for(mover_clock_s: float | None) -> str | None:
     if mover_clock_s < 180:
         return "60_180s"
     return "over_180s"
+
+
+# ---------------------------------------------------------------------------
+# A2. Expected-score transform (cp -> expected score in [0,1])
+# ---------------------------------------------------------------------------
+
+# cp inputs are clipped to this range before the transform (matches the loss cap
+# and folds mate sentinels ±10000 into ±1000).
+ES_CP_CLIP = MOVE_QUALITY_CP_CAP  # 1000
+
+
+def expected_score(cp: int | float | None, scale: float) -> float | None:
+    """
+    Logistic cp -> expected-score transform: ES = 1 / (1 + exp(-cp_clipped/scale)).
+
+    Monotonic increasing in cp; output strictly in (0, 1). cp is clipped to
+    ±ES_CP_CLIP first (so mate sentinels fold to the cap). The SAME transform is
+    applied to pre- and post-move (mover-oriented) cp values. ``scale`` must be
+    positive (centipawns; larger = flatter).
+    """
+    if cp is None:
+        return None
+    if scale <= 0:
+        raise ValueError(f"expected_score scale must be positive, got {scale}")
+    x = max(-ES_CP_CLIP, min(ES_CP_CLIP, float(cp)))
+    return 1.0 / (1.0 + math.exp(-x / scale))
+
+
+def expected_score_loss(
+    mover_pre_cp: int | None,
+    mover_post_cp: int | None,
+    scale: float | None,
+) -> float | None:
+    """
+    expected_score_loss = max(0, ES(mover_pre_cp) - ES(mover_post_cp)).
+    Returns None if scale is None or either input is None.
+    """
+    if scale is None or mover_pre_cp is None or mover_post_cp is None:
+        return None
+    es_pre = expected_score(mover_pre_cp, scale)
+    es_post = expected_score(mover_post_cp, scale)
+    return max(0.0, es_pre - es_post)
+
+
+def fit_expected_score_transform(
+    white_cp: list[int | float],
+    white_score: list[float],
+) -> dict:
+    """
+    Fit the logistic scale on (White-POV cp, White expected score) pairs.
+
+    White expected score: WHITE_WIN=1.0, DRAW=0.5, BLACK_WIN=0.0. cp is clipped
+    to ±ES_CP_CLIP. The scale minimizes mean squared error between
+    sigmoid(cp_clipped/scale) and the realized White score. One pooled parameter,
+    monotonic by construction, fit on TRAIN rows only (caller filters).
+
+    Returns metadata dict: {scale, n_fit, mse, cp_clip, method}.
+    """
+    if len(white_cp) != len(white_score):
+        raise ValueError("white_cp and white_score length mismatch")
+    if len(white_cp) == 0:
+        raise ValueError("no rows to fit expected-score transform")
+
+    x = np.clip(np.asarray(white_cp, dtype=np.float64), -ES_CP_CLIP, ES_CP_CLIP)
+    y = np.asarray(white_score, dtype=np.float64)
+
+    def mse(scale: float) -> float:
+        if scale <= 0:
+            return 1e18
+        pred = 1.0 / (1.0 + np.exp(-x / scale))
+        return float(np.mean((pred - y) ** 2))
+
+    res = minimize_scalar(mse, bounds=(10.0, 2000.0), method="bounded")
+    scale = float(res.x)
+    return {
+        "scale": scale,
+        "n_fit": int(len(x)),
+        "mse": round(mse(scale), 6),
+        "cp_clip": ES_CP_CLIP,
+        "method": "bounded MSE fit of 1/(1+exp(-cp_clip/scale)) to White expected score",
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -335,6 +423,7 @@ def build_row(
     post_eval: dict | None,
     fen_hash_matches: bool | None,
     status: str,
+    es_scale: float | None = None,
 ) -> dict:
     """Assemble a single output-schema row from inputs + reconstruction + post eval."""
     mover_is_white = recon.get("mover_is_white")
@@ -348,6 +437,16 @@ def build_row(
     mover_post = to_mover_cp(post_cp, mover_is_white) if mover_is_white is not None else None
     cp_loss, clipped = compute_cp_loss(mover_pre, mover_post)
     mate_band = is_mate_band(pre_cp, pre_mate, post_cp, post_mate)
+
+    if es_scale is not None and mover_pre is not None:
+        es_pre_val = expected_score(mover_pre, es_scale)
+    else:
+        es_pre_val = None
+    if es_scale is not None and mover_post is not None:
+        es_post_val = expected_score(mover_post, es_scale)
+    else:
+        es_post_val = None
+    es_loss = expected_score_loss(mover_pre, mover_post, es_scale)
 
     white_elo = cp_row.get("white_elo")
     black_elo = cp_row.get("black_elo")
@@ -377,6 +476,9 @@ def build_row(
         "mover_post_cp": mover_post,
         "cp_loss": cp_loss,
         "clipped_cp_loss": clipped,
+        "es_pre": es_pre_val,
+        "es_post": es_post_val,
+        "expected_score_loss": es_loss,
         "is_mate_band": mate_band,
         "white_rating": white_elo,
         "black_rating": black_elo,
@@ -403,12 +505,14 @@ def run_extraction(
     dataset_id: str,
     version_tag: str,
     depth: int,
+    es_scale: float | None = None,
     progress_every: int = 100,
 ) -> tuple[pl.DataFrame, dict]:
     """
     Reconstruct post-move positions and evaluate them. Returns (output_df,
     counts). Only successfully-reconstructed rows with a next move are
     engine-evaluated; all attempted rows appear in the output with a status.
+    ``es_scale`` (if provided) adds expected-score columns.
     """
     cp_rows = rows_df.to_dicts()
     target_ids = {r["game_id"] for r in cp_rows}
@@ -433,24 +537,24 @@ def run_extraction(
             if game is None:
                 counts["game_not_found"] += 1
                 out_rows.append(build_row(dataset_id, version_tag, cp_row,
-                                          {}, None, None, _STATUS_GAME_NOT_FOUND))
+                                          {}, None, None, _STATUS_GAME_NOT_FOUND, es_scale=es_scale))
                 continue
 
             recon = reconstruct_checkpoint_and_next_move(game, cp_row["ply"])
             if recon["status"] == _STATUS_NO_NEXT_MOVE:
                 counts["no_next_move"] += 1
                 out_rows.append(build_row(dataset_id, version_tag, cp_row,
-                                          recon, None, None, _STATUS_NO_NEXT_MOVE))
+                                          recon, None, None, _STATUS_NO_NEXT_MOVE, es_scale=es_scale))
                 continue
             if recon["status"] == _STATUS_FEN_ERR:
                 counts["fen_error"] += 1
                 out_rows.append(build_row(dataset_id, version_tag, cp_row,
-                                          recon, None, None, _STATUS_FEN_ERR))
+                                          recon, None, None, _STATUS_FEN_ERR, es_scale=es_scale))
                 continue
             if recon["status"] == _STATUS_ILLEGAL:
                 counts["illegal"] += 1
                 out_rows.append(build_row(dataset_id, version_tag, cp_row,
-                                          recon, None, None, _STATUS_ILLEGAL))
+                                          recon, None, None, _STATUS_ILLEGAL, es_scale=es_scale))
                 continue
 
             # verify reconstructed checkpoint FEN matches the stored hash
@@ -464,12 +568,12 @@ def run_extraction(
             if not post_eval.get("sf_eval_available"):
                 counts["engine_error"] += 1
                 out_rows.append(build_row(dataset_id, version_tag, cp_row,
-                                          recon, None, matches, _STATUS_ENGINE_ERR))
+                                          recon, None, matches, _STATUS_ENGINE_ERR, es_scale=es_scale))
                 continue
 
             counts["ok"] += 1
             out_rows.append(build_row(dataset_id, version_tag, cp_row,
-                                      recon, post_eval, matches, _STATUS_OK))
+                                      recon, post_eval, matches, _STATUS_OK, es_scale=es_scale))
     finally:
         engine.quit()
 
@@ -504,11 +608,106 @@ def summarize(out_df: pl.DataFrame) -> dict:
             "pct_loss_gt_100": round(100 * sum(1 for x in losses if x > 100) / len(losses), 1),
             "pct_loss_gt_200": round(100 * sum(1 for x in losses if x > 200) / len(losses), 1),
         })
+    # expected-score loss summary (OK, non-mate-band, ES available)
+    es_vals = ok.filter(pl.col("expected_score_loss").is_not_null())["expected_score_loss"].to_list()
+    if es_vals:
+        es_srt = sorted(es_vals)
+        def es_pct(p):
+            return es_srt[min(len(es_srt) - 1, int(p * len(es_srt)))]
+        summary.update({
+            "mean_es_loss": round(statistics.mean(es_vals), 4),
+            "median_es_loss": round(float(statistics.median(es_vals)), 4),
+            "p75_es_loss": round(float(es_pct(0.75)), 4),
+            "p90_es_loss": round(float(es_pct(0.90)), 4),
+            "pct_es_loss_gt_0_05": round(100 * sum(1 for x in es_vals if x > 0.05) / len(es_vals), 1),
+            "pct_es_loss_gt_0_10": round(100 * sum(1 for x in es_vals if x > 0.10) / len(es_vals), 1),
+            "n_es": len(es_vals),
+        })
     by_cpt = ok.group_by("selected_position_type").len().sort("selected_position_type")
     summary["counts_by_checkpoint"] = {r[0]: r[1] for r in by_cpt.iter_rows()}
     tf = ok.group_by("is_time_forfeit").len().sort("is_time_forfeit")
     summary["counts_by_time_forfeit"] = {str(r[0]): r[1] for r in tf.iter_rows()}
+    tb = ok.filter(pl.col("time_bucket").is_not_null()).group_by("time_bucket").len().sort("time_bucket")
+    summary["counts_by_time_bucket"] = {r[0]: r[1] for r in tb.iter_rows()}
     return summary
+
+
+# ---------------------------------------------------------------------------
+# G2. Expected-score transform fit-row loader + depth-parity check
+# ---------------------------------------------------------------------------
+
+_WHITE_SCORE = {"WHITE_WIN": 1.0, "DRAW": 0.5, "BLACK_WIN": 0.0}
+
+
+def load_fit_rows(version_tags: list[str]) -> tuple[list[float], list[float], dict]:
+    """
+    Pool TRAIN-split checkpoint rows from the given months' sf_eval artifacts.
+    Returns (white_cp, white_score, meta). Train-only (split discipline).
+    """
+    cps: list[float] = []
+    scores: list[float] = []
+    per_tag: dict[str, int] = {}
+    for tag in version_tags:
+        df = pl.read_parquet(f"data/processed/sf_eval_broad_{tag}.parquet")
+        tr = df.filter(pl.col("split_set") == "train")
+        for cp, rc in zip(tr["sf_eval_cp"].to_list(), tr["result_class"].to_list()):
+            if cp is None or rc not in _WHITE_SCORE:
+                continue
+            cps.append(float(cp))
+            scores.append(_WHITE_SCORE[rc])
+        per_tag[tag] = len(tr)
+    return cps, scores, {"version_tags": version_tags, "n_train_rows_per_tag": per_tag}
+
+
+def depth_parity_check(
+    artifact_path: str | Path,
+    stockfish_path: str,
+    sample_n: int,
+    alt_depth: int,
+    base_depth: int,
+    seed: int = 42,
+) -> dict:
+    """
+    Re-evaluate the stored ``post_fen`` of a deterministic sample of OK rows at
+    ``alt_depth`` and compare clipped-cp-loss summaries against the base-depth
+    artifact. Uses post_fen only (no PGN reconstruction).
+    """
+    df = pl.read_parquet(artifact_path)
+    ok = df.filter((pl.col("status") == _STATUS_OK) & (~pl.col("is_mate_band"))
+                   & pl.col("post_fen").is_not_null())
+    n = min(sample_n, len(ok))
+    sample = ok.sort(["game_id", "selected_position_type"]).head(n)
+
+    engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
+    base_losses, alt_losses, deltas = [], [], []
+    try:
+        for r in sample.iter_rows(named=True):
+            mover_is_white = (r["mover_color"] == "white")
+            post_eval = analyse_fen(engine, r["post_fen"], alt_depth)
+            if not post_eval.get("sf_eval_available"):
+                continue
+            alt_post_white = post_eval["sf_eval_cp"]
+            alt_mover_post = to_mover_cp(alt_post_white, mover_is_white)
+            _, alt_clip = compute_cp_loss(r["mover_pre_cp"], alt_mover_post)
+            if alt_clip is None or r["clipped_cp_loss"] is None:
+                continue
+            base_losses.append(r["clipped_cp_loss"])
+            alt_losses.append(alt_clip)
+            deltas.append(alt_clip - r["clipped_cp_loss"])
+    finally:
+        engine.quit()
+
+    if not deltas:
+        return {"n": 0}
+    return {
+        "n": len(deltas),
+        "base_depth": base_depth,
+        "alt_depth": alt_depth,
+        "base_mean_clipped_cp_loss": round(statistics.mean(base_losses), 1),
+        "alt_mean_clipped_cp_loss": round(statistics.mean(alt_losses), 1),
+        "mean_abs_delta": round(statistics.mean(abs(d) for d in deltas), 1),
+        "median_delta": float(statistics.median(deltas)),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -580,8 +779,18 @@ def render_report(
       "same mover.")
     a(f"- `cp_loss = max(0, mover_pre_cp − mover_post_cp)`; "
       f"`clipped_cp_loss = min(cp_loss, {MOVE_QUALITY_CP_CAP})`.")
-    a("- Expected-score loss is DEFERRED (15.0C/15.1A, train-fit transform).")
+    if "mean_es_loss" in s:
+        a(f"- `expected_score_loss = max(0, ES(mover_pre_cp) − ES(mover_post_cp))` "
+          "with the train-fit logistic cp→ES transform.")
+    else:
+        a("- Expected-score loss is DEFERRED (15.0C/15.1A, train-fit transform).")
     a("")
+    if "mean_es_loss" in s:
+        a("Expected-score loss (OK, non-mate-band, n="
+          f"{s.get('n_es', 0)}): mean {s['mean_es_loss']} | median "
+          f"{s['median_es_loss']} | p90 {s['p90_es_loss']} | "
+          f">0.10: {s['pct_es_loss_gt_0_10']}%")
+        a("")
     a("## 7. Basic pilot summaries")
     a("")
     if "mean_clipped_cp_loss" in s:
@@ -669,12 +878,59 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--schema-only", action="store_true",
                         help="print the output schema and exit (no engine/PGN)")
     parser.add_argument("--overwrite", action="store_true")
+    # Expected-score transform
+    parser.add_argument("--es-transform", default=None,
+                        help="path to a fitted cp->ES transform JSON; if present, "
+                             "expected-score columns are added during extraction")
+    parser.add_argument("--fit-es-transform", action="store_true",
+                        help="MODE: fit the pooled-train cp->ES transform and write "
+                             "JSON to --es-transform-out, then exit (no PGN/engine)")
+    parser.add_argument("--es-transform-out", default=None,
+                        help="output path for --fit-es-transform")
+    parser.add_argument("--fit-version-tags", default=None,
+                        help="comma-separated version tags to pool for fitting "
+                             "(default: --version-tag)")
+    # Depth-parity sensitivity
+    parser.add_argument("--parity-check", action="store_true",
+                        help="MODE: re-evaluate post_fen of a sample at --parity-depth "
+                             "and compare cp-loss vs the artifact, then exit")
+    parser.add_argument("--parity-input", default=None)
+    parser.add_argument("--parity-sample", type=int, default=300)
+    parser.add_argument("--parity-depth", type=int, default=13)
     args = parser.parse_args(argv)
 
     if args.schema_only:
         print("output schema:")
         for k, v in _OUTPUT_SCHEMA.items():
             print(f"  {k}: {v}")
+        return 0
+
+    # --- MODE: fit expected-score transform (no PGN, no extraction) ---
+    if args.fit_es_transform:
+        fit_tags = ([t.strip() for t in args.fit_version_tags.split(",")]
+                    if args.fit_version_tags else [args.version_tag])
+        out_json = Path(args.es_transform_out
+                        or "data/processed/next_move_expected_score_transform_v1.json")
+        if out_json.exists() and not args.overwrite:
+            raise FileExistsError(f"{out_json} exists; pass --overwrite")
+        cps, scores, meta = load_fit_rows(fit_tags)
+        fit = fit_expected_score_transform(cps, scores)
+        payload = {**fit, **meta,
+                   "fitted_at_utc": datetime.now(timezone.utc).isoformat()}
+        out_json.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_json, "w") as f:
+            json.dump(payload, f, indent=2)
+        print(f"[nml] fitted cp->ES transform: scale={fit['scale']:.2f} "
+              f"mse={fit['mse']} n_fit={fit['n_fit']} -> {out_json}")
+        return 0
+
+    # --- MODE: depth-parity sensitivity (uses stored post_fen; no PGN) ---
+    if args.parity_check:
+        sf_path = resolve_stockfish_path(args.stockfish_path)
+        inp = args.parity_input or f"data/processed/next_move_loss_{args.version_tag}.parquet"
+        res = depth_parity_check(inp, sf_path, args.parity_sample,
+                                 args.parity_depth, args.depth)
+        print(f"[nml] depth-parity check ({inp}): {json.dumps(res)}")
         return 0
 
     # Full-run guard
@@ -693,6 +949,19 @@ def main(argv: list[str] | None = None) -> int:
     if output.exists() and not args.overwrite:
         raise FileExistsError(f"{output} exists; pass --overwrite")
 
+    # Load ES transform if provided/exists
+    es_scale = None
+    if args.es_transform:
+        tp = Path(args.es_transform)
+        if tp.exists():
+            with open(tp) as f:
+                es_scale = float(json.load(f)["scale"])
+            print(f"  [nml] expected-score transform loaded: scale={es_scale:.2f}",
+                  file=sys.stderr)
+        else:
+            print(f"  [nml] WARNING: --es-transform {tp} not found; ES columns null",
+                  file=sys.stderr)
+
     sf_path = resolve_stockfish_path(args.stockfish_path)
     sf_version = get_stockfish_version(sf_path)
     print(f"  [nml] Stockfish: {sf_version} ({sf_path}); depth={args.depth}",
@@ -704,7 +973,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  [nml] {len(rows)} checkpoint rows to process", file=sys.stderr)
 
     out_df, counts = run_extraction(
-        rows, raw_pgn, sf_path, args.dataset_id, tag, args.depth)
+        rows, raw_pgn, sf_path, args.dataset_id, tag, args.depth, es_scale=es_scale)
     summary = summarize(out_df)
 
     per_row_s = (counts["runtime_s"] / max(1, counts["ok"])) if counts["ok"] else 0.0
@@ -731,6 +1000,10 @@ def main(argv: list[str] | None = None) -> int:
               f"median={summary['median_clipped_cp_loss']} "
               f"p90={summary['p90_clipped_cp_loss']} "
               f"zero={summary['pct_zero_loss']}% >100cp={summary['pct_loss_gt_100']}%")
+    if "mean_es_loss" in summary:
+        print(f"  expected-score loss: mean={summary['mean_es_loss']} "
+              f"median={summary['median_es_loss']} p90={summary['p90_es_loss']} "
+              f">0.10={summary['pct_es_loss_gt_0_10']}%")
     return 0
 
 

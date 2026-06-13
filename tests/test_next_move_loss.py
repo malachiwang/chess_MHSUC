@@ -11,6 +11,7 @@ import polars as pl
 import pytest
 
 from chess_mhsuc.next_move_loss import (
+    ES_CP_CLIP,
     MATE_CP_SENTINEL,
     MOVE_QUALITY_CP_CAP,
     _STATUS_ILLEGAL,
@@ -20,6 +21,9 @@ from chess_mhsuc.next_move_loss import (
     build_row,
     compute_cp_loss,
     default_raw_pgn_path,
+    expected_score,
+    expected_score_loss,
+    fit_expected_score_transform,
     is_mate_band,
     load_checkpoint_rows,
     main as nml_main,
@@ -346,6 +350,117 @@ class TestSummarize:
 # ---------------------------------------------------------------------------
 # 9. Full-run guard (CLI)
 # ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# 10. Expected-score transform
+# ---------------------------------------------------------------------------
+
+class TestExpectedScore:
+    def test_monotonic_increasing(self):
+        s = 300.0
+        vals = [expected_score(cp, s) for cp in (-500, -100, 0, 100, 500)]
+        assert all(b > a for a, b in zip(vals, vals[1:]))
+
+    def test_in_unit_interval(self):
+        for cp in (-5000, -1000, 0, 1000, 5000):
+            es = expected_score(cp, 250.0)
+            assert 0.0 < es < 1.0
+
+    def test_zero_cp_is_half(self):
+        assert expected_score(0, 300.0) == pytest.approx(0.5)
+
+    def test_clips_extreme_cp(self):
+        # beyond the clip both map to the clipped-boundary value
+        assert expected_score(5000, 250.0) == pytest.approx(
+            expected_score(ES_CP_CLIP, 250.0))
+        assert expected_score(-5000, 250.0) == pytest.approx(
+            expected_score(-ES_CP_CLIP, 250.0))
+
+    def test_none(self):
+        assert expected_score(None, 300.0) is None
+
+    def test_bad_scale_raises(self):
+        with pytest.raises(ValueError):
+            expected_score(100, 0.0)
+
+    def test_es_loss_clips_at_zero(self):
+        # mover improved -> ES went up -> loss clamped to 0
+        assert expected_score_loss(50, 300, 300.0) == 0.0
+
+    def test_es_loss_positive(self):
+        loss = expected_score_loss(300, -300, 300.0)
+        assert loss > 0
+
+    def test_es_loss_mover_black_orientation(self):
+        # both perspectives already mover-oriented; symmetric magnitude
+        white = expected_score_loss(300, 50, 300.0)
+        black = expected_score_loss(300, 50, 300.0)
+        assert white == black
+
+    def test_es_loss_none_without_scale(self):
+        assert expected_score_loss(300, 50, None) is None
+        assert expected_score_loss(None, 50, 300.0) is None
+
+
+class TestFitTransform:
+    def test_fit_recovers_monotonic_scale(self):
+        # synthetic: white score rises with cp -> fit yields positive scale + monotonic ES
+        cps, scores = [], []
+        for cp in range(-800, 801, 50):
+            cps.append(cp)
+            scores.append(1.0 / (1.0 + 2.718281828 ** (-cp / 250.0)))
+        fit = fit_expected_score_transform(cps, scores)
+        assert fit["scale"] > 0
+        assert fit["n_fit"] == len(cps)
+        # ES with fitted scale is monotonic
+        es = [expected_score(cp, fit["scale"]) for cp in (-400, 0, 400)]
+        assert es[0] < es[1] < es[2]
+
+    def test_fit_empty_raises(self):
+        with pytest.raises(ValueError):
+            fit_expected_score_transform([], [])
+
+    def test_fit_length_mismatch_raises(self):
+        with pytest.raises(ValueError):
+            fit_expected_score_transform([1, 2], [0.5])
+
+
+class TestBuildRowES:
+    def test_es_columns_present_with_scale(self):
+        cp_row = {
+            "game_id": "g1", "selected_position_type": "move_10", "ply": 20,
+            "move_number": 11, "split_set": "val", "sf_eval_cp": 200,
+            "sf_eval_mate": None, "sf_depth": 12, "fen_hash": "abc",
+            "result_class": "WHITE_WIN", "white_elo": 1600, "black_elo": 1500,
+            "white_clock_s_capped": 100.0, "black_clock_s_capped": 100.0,
+            "white_to_move_next": True, "termination": "Normal",
+            "is_time_forfeit": False,
+        }
+        recon = {"mover_is_white": True, "actual_move_uci": "a", "pre_fen": "x",
+                 "post_fen": "y", "move_number": 11}
+        post = {"sf_eval_cp": 50, "sf_eval_mate": None}
+        row = build_row("ds", "v", cp_row, recon, post, True, _STATUS_OK, es_scale=300.0)
+        assert row["es_pre"] is not None and row["es_post"] is not None
+        assert row["expected_score_loss"] >= 0
+        # es_pre (mover +200) > es_post (mover +50)
+        assert row["es_pre"] > row["es_post"]
+
+    def test_es_columns_none_without_scale(self):
+        cp_row = {
+            "game_id": "g1", "selected_position_type": "move_10", "ply": 20,
+            "move_number": 11, "split_set": "val", "sf_eval_cp": 200,
+            "sf_eval_mate": None, "sf_depth": 12, "fen_hash": "abc",
+            "result_class": "WHITE_WIN", "white_elo": 1600, "black_elo": 1500,
+            "white_clock_s_capped": 100.0, "black_clock_s_capped": 100.0,
+            "white_to_move_next": True, "termination": "Normal",
+            "is_time_forfeit": False,
+        }
+        recon = {"mover_is_white": True, "actual_move_uci": "a", "pre_fen": "x",
+                 "post_fen": "y", "move_number": 11}
+        post = {"sf_eval_cp": 50, "sf_eval_mate": None}
+        row = build_row("ds", "v", cp_row, recon, post, True, _STATUS_OK)
+        assert row["es_pre"] is None and row["expected_score_loss"] is None
+
 
 class TestFullRunGuard:
     def test_no_limit_no_allow_errors(self):

@@ -76,10 +76,18 @@ clock-residual moderation (11.0A kill condition not triggered).
   gated (`--limit`/`--allow-full-run`), not run. At numbered checkpoints the mover is
   always White (even-ply convention). See
   `reports/phase_reports/phase_15_0b_next_move_loss_extraction.md`.
-- **Next ticket: 15.0C — Full Next-Move Loss Extraction + Expected-Score Transform**
-  (full both-months post-move pass gated on explicit approval; add train-fit cp→ES
-  transform + depth-parity sensitivity check; then 15.1A descriptive Atlas curves).
-  11.3A/B remain queued before 15.1B controlled modeling.
+- **15.0C done:** full both-months next-move loss extraction (126,239 checkpoint moves;
+  0 reconstruction/engine failures, 0 FEN-hash mismatches; ~48 min total). Train-fit
+  pooled cp→expected-score transform (scale=348.4, 89,764 train rows). Clipped cp loss
+  median 19 both months; ES loss median ~0.010 both. Depth-13 parity check benign
+  (0.2cp aggregate shift). Board-decided ≈ time-forfeit checkpoint loss (descriptive —
+  consistent with the 11.2B flagging-channel reframing). 1,580 tests passing. Artifacts
+  gitignored. See `reports/next_move_loss_combined.md` and
+  `reports/phase_reports/phase_15_0c_full_next_move_loss_extraction.md`.
+- **Next ticket: 15.1A — Constraint Atlas Descriptive Curves Audit** (design the
+  descriptive curve/stratification set against the extracted artifacts; no controlled
+  modeling). 11.3A/B player-leakage hardening remains required before 15.1B controlled
+  modeling.
 
 ## Phase 0: Governance and setup
 
