@@ -84,10 +84,20 @@ clock-residual moderation (11.0A kill condition not triggered).
   consistent with the 11.2B flagging-channel reframing). 1,580 tests passing. Artifacts
   gitignored. See `reports/next_move_loss_combined.md` and
   `reports/phase_reports/phase_15_0c_full_next_move_loss_extraction.md`.
-- **Next ticket: 15.1A — Constraint Atlas Descriptive Curves Audit** (design the
-  descriptive curve/stratification set against the extracted artifacts; no controlled
-  modeling). 11.3A/B player-leakage hardening remains required before 15.1B controlled
-  modeling.
+- **15.1A done (audit):** 15.0C artifacts complete and clean (0 dups, 0 nulls in
+  headline metrics, row counts match; no repair needed). Headline metric = expected-score
+  loss (mover's perspective): mean+median+p75/p90 + large-loss probabilities; clipped cp
+  secondary; mate-band excluded; month-by-month then combined; all-games and
+  board-decided side-by-side. Clock bucketed WITHIN checkpoint (move_10 is 99.96%
+  over-180s — marginal clock curves forbidden). Rating 200-pt bins / quantiles; eval
+  bands near_equal/slight/clear/decided; cell rules n<50 hidden / 50–300 descriptive /
+  ≥300 CI-bearing with game-level bootstrap. Scope limitation: numbered checkpoints are
+  White-to-move only. See
+  `reports/phase_reports/phase_15_1a_constraint_atlas_descriptive_curves_audit.md`.
+- **Next ticket: 15.1B — Constraint Atlas Descriptive Curves Implementation**
+  (descriptive only; game-level bootstrap CIs; may proceed before 11.3A/B). 11.3A/B
+  player-leakage hardening remains required before 15.1C / 15.2B controlled modeling and
+  sharpness moderation.
 
 ## Phase 0: Governance and setup
 

@@ -1262,3 +1262,57 @@ logistic-on-clipped-cp (WDL cross-check deferred).
 
 Next step:
 15.1A — Constraint Atlas Descriptive Curves Audit. 11.3A/B before 15.1B controlled modeling.
+
+---
+
+## EXP-020 — Phase 15.1A Constraint Atlas Descriptive Curves Audit
+
+Experiment ID: EXP-020
+Date: 2026-06-13
+Owner: Malachi Wang
+Status: complete (read-only audit/design; no models, no Stockfish, no data written)
+
+Question:
+How should the Constraint Atlas descriptively summarize next-move loss across clock,
+rating, eval, phase, and termination channel without misleading marginal curves or
+causal language?
+
+Artifact integrity (read-only): 15.0C artifacts CLEAN, no repair needed.
+- 2024-09: 65,368 total / 64,371 ok / 997 no-next-move; 2024-10: 62,839 / 61,868 / 971.
+- 0 duplicate (game_id, selected_position_type); 0 nulls in headline metrics
+  (expected_score_loss, clipped_cp_loss, cp_loss, es_pre/post, mover_pre_cp,
+  mover_clock_s, mover_rating, time_bucket, split_set); 33 cols; counts match 15.0C.
+- mover_color always White (numbered even-ply checkpoints) -> Atlas describes
+  White-to-move decision quality (documented scope limitation, not a defect).
+
+Design decisions:
+- Headline metric: expected-score loss (mover perspective) mean+median+p75/p90 +
+  large-loss probs (ES>0.05, ES>0.10); clipped cp loss secondary; mate-band excluded;
+  month-by-month then combined; all-games AND board-decided side-by-side.
+- Clock: coarse under_60/60_180/over_180 bucketed WITHIN checkpoint. Marginal clock
+  curves FORBIDDEN (confound: move_10 99.96% over-180s; low clock only at move_30/40).
+  Finer <10/10-30/30-60/60-180/>180 exploratory within late group (sub-300 descriptive).
+- Rating: 200-pt bins / quantiles for CI cells across ~800-2199 (range 422-2709, median
+  1601); tails descriptive; 100-pt only smoothed pooled.
+- Eval bands: near_equal(<=100)/slight(100-300)/clear(300-700)/decided(700-1000, fold
+  the 226 >1000 rows in); mate_band separate.
+- Phase: per-checkpoint + late group (move_30+40); never collapse without phase-conditioning.
+- Termination: always show composition; all-games vs board-decided side-by-side;
+  time-forfeit a distinct population; re-examine the 15.0C coarse board-decided≈
+  time-forfeit observation STRATIFIED before any reading.
+- Cell rules: n<50 hidden; 50-300 descriptive no-CI; >=300 CI-bearing; GAME-level
+  bootstrap (multiple checkpoints/game); player-clustered deferred.
+
+Staging: 15.1B descriptive curves MAY proceed before 11.3A/B if descriptive,
+month-replicated, game-level bootstrap, no player-level/causal claims. Controlled
+modeling (15.1C/15.2B) waits for 11.3A/B.
+
+Repair needs: NONE. Artifacts sufficient for 15.1B. Black-to-move checkpoints a possible
+future sampling extension, not a prerequisite.
+
+Caveats: descriptive only; not causal; no degradation-curve language; Stockfish depth-12
+not absolute ground truth; survivorship in board-decided low-clock; right-skewed loss;
+White-to-move scope.
+
+Next step:
+15.1B — Constraint Atlas Descriptive Curves Implementation. 11.3A/B before 15.1C/15.2B.
