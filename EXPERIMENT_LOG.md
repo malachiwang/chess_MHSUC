@@ -1364,3 +1364,57 @@ Next step:
 11.3A — Player-Disjoint / Player-Clustered Feasibility Audit (before controlled C4
 modeling 15.1C and sharpness moderation 15.2B). Controlled models MUST condition on eval
 band (it dominates) and treat low-clock cells cautiously.
+
+## EXP-022 — Phase 11.3A Player-Disjoint / Player-Clustered Feasibility Audit
+
+Experiment ID: EXP-022
+Date: 2026-06-13
+Owner: Malachi Wang
+Status: complete (read-only audit; no code/data changes; no models; no Stockfish; no
+usernames written/printed/committed — all player work via in-memory salted hashes)
+
+Purpose:
+Quantify player-repetition dependence and decide the hardening route (strict player-disjoint
+split vs player-clustered uncertainty) required before controlled C4/C3 modeling.
+
+Player identifier availability:
+- Raw PGN headers carry raw usernames (White/Black) + Site slug = game_id; optional
+  WhiteTitle/BlackTitle == "BOT". Usernames STRIPPED at parse (DATA_POLICY.md), absent from
+  every processed artifact (game records, features, E3/E4 preds, next-move-loss). No hashed
+  ID exists yet. Recoverable via game_id join (100% of primary game_ids matched in raw cache,
+  both months). No anonymous/"?"/empty players; bot-involved primary games 12 (09) / 7 (10).
+
+Current split design + leakage:
+- split_unit = game_id (StratifiedShuffleSplit, seed 42, 0.70/0.15/0.15, stratify
+  result_class). Prevents game leakage; does NOT prevent player leakage / repeated-player
+  dependence / cross-month dependence.
+
+Concentration (primary game sets, salted hashes):
+- 09: 24,520 games, 17,116 players, median 2 games/player, p90 6, max 36; top10% players ->
+  33.0% game-appearances, top10% mover-players -> 29.5% checkpoint rows.
+- 10: 23,496 games, 17,209 players, median 2, max 32; top10% -> 33.1% / 29.6%. Stable across
+  months; moderate (no single account dominates).
+
+Cross-month overlap:
+- 3,346 players in both months (~19.5% of 09, 19.4% of 10); ~40% of each month's checkpoint
+  rows involve a cross-month player -> strong but not fully independent replication.
+
+Train/val/test overlap (HEADLINE RISK):
+- Players spanning >1 split: 39.8% (09) / 37.8% (10). Games touching a multi-split player:
+  86.8% / 85.3%. Rows touching: 86.5% / 85.0%. Players in BOTH train and test: 4,223 / 3,982.
+
+Strict player-disjoint feasibility (player-game graph, union-find):
+- Giant component holds 92.0% games / 86.0% players (09), 92.6% / 85.1% (10), 94.6% / 89.1%
+  (pooled). Strict 3-way disjoint split INFEASIBLE (component assignment forces ~92% into one
+  split; edge-cut discards most games). Player-disjoint held-out slice possible but costly.
+
+Recommendation:
+- Option A — hashed player IDs in ignored artifacts only + player-clustered (mover-player /
+  two-way) bootstrap, generalizing existing game-cluster machinery (bootstrap_ci.py,
+  constraint_atlas.bootstrap_mean_es_ci, termination_decomposition). Re-verify 11.2B
+  termination deltas (likely survive — large effect vs moderate concentration) and 15.1B
+  eval-band headline under player clustering. NOT Option B (giant component).
+
+Next step:
+11.3B — Player Metadata Extraction + Clustered-Bootstrap Implementation (Option A). Required
+before controlled C4 modeling (15.1C) and C3 sharpness moderation (15.2B).

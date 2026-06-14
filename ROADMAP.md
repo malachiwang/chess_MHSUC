@@ -103,9 +103,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   checkpoint loss slightly above board-decided (descriptive). 1,635 tests passing. See
   `reports/constraint_atlas_combined.md` and
   `reports/phase_reports/phase_15_1b_constraint_atlas_descriptive_curves.md`.
-- **Next ticket: 11.3A — Player-Disjoint / Player-Clustered Feasibility Audit** —
-  required before controlled C4 modeling (15.1C) and sharpness moderation (15.2B). The
-  Atlas already shows eval-band conditioning dominates and must be controlled.
+- **11.3A complete (audit):** player IDs exist only in raw PGN headers (raw usernames,
+  `White`/`Black`), **stripped at parse**, absent from all processed artifacts; recoverable
+  via `game_id` join. Player dependence is **severe**: ~86–87% of checkpoint rows touch a
+  player spanning >1 split; ~4,000+ players in both train and test each month. Concentration
+  moderate (top decile ~30% of rows, max ~36 games). Cross-month: ~19.5% of players recur,
+  ~40% of rows involve a cross-month player → months are a strong-but-not-independent
+  replication. **Strict player-disjoint 3-way split INFEASIBLE** — player–game graph has a
+  giant component (~92% games / ~86% players per month, ~95% pooled). Recommended hardening:
+  **player-clustered (mover-player) bootstrap** (existing game-cluster machinery
+  generalizes), hashed IDs in ignored artifacts only, no usernames ever committed. See
+  `reports/phase_reports/phase_11_3a_player_disjoint_cluster_feasibility_audit.md`.
+- **Next ticket: 11.3B — Player Metadata Extraction + Clustered-Bootstrap Implementation
+  (Option A)** — hashed player IDs (ignored artifacts), cluster bootstrap (game /
+  mover-player / two-way), re-verify 11.2B + 15.1B headline uncertainties under player
+  clustering. Required before controlled C4 modeling (15.1C) and C3 sharpness moderation
+  (15.2B). Strict player-disjoint split not pursued as primary route (giant component); a
+  player-disjoint held-out slice is a possible secondary robustness check.
 
 ## Phase 0: Governance and setup
 

@@ -276,11 +276,16 @@ including (non-exhaustively):
   validation.
 - **Cross-month replication is treated as independent validation:** a primary contrast
   is "replicated" only if it holds on both monthly datasets, each with its own splits.
-- **Player leakage:** player-clustered uncertainty (and player-disjoint splits if the
-  11.3A graph audit permits) are applied to primary contrasts once Phase 11.3
-  establishes them; until then, the player-leakage caveat is mandatory in every
-  report. **No raw usernames are ever committed** anywhere in the repo; any player
-  identifier used for clustering is a salted hash kept in gitignored data artifacts.
+- **Player leakage:** the 11.3A graph audit established that a **strict player-disjoint
+  3-way split is infeasible** (a giant connected component holds ~92% of games / ~86% of
+  players per month), so the planned robustness route is **player-clustered (mover-player /
+  two-way) bootstrap** applied to primary contrasts once Phase 11.3B implements it; a
+  player-disjoint *held-out slice* may serve as a secondary check only. Controlled C4/C3
+  modeling requires this player-aware uncertainty plan before any primary result. Until
+  11.3B lands, the player-leakage caveat is mandatory in every report (~86% of checkpoint
+  rows touch a player spanning >1 split). **No raw usernames are ever committed** anywhere
+  in the repo; any player identifier used for clustering is a salted hash kept in gitignored
+  data artifacts.
 - Slice definitions for pre-registered contrasts are fixed before results are computed
   and never tuned after seeing them; sub-threshold cells (< 300 games) are reported
   descriptively with explicit no-CI markers, never silently dropped or merged.
