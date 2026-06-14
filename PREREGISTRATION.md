@@ -229,6 +229,34 @@ recommended next).
   feature), so 15.1D's controls are eval band + phase + rating + termination + month;
   adding a trajectory feature is a separate future extraction ticket, and until then
   the "clock as symptom of past struggle" confound is an explicit stated limitation.
+- **Controlled-model result status (15.1D, both months + pooled + locked test):** the
+  **eval-band positive control replicated** as expected (slight/near_equal/clear all
+  > decided, CIs exclude zero, dominant). The **coarse-clock contrast was NOT null**:
+  it is small but **monotone and replicated** (`60_180` vs `over_180` ≈ +0.003,
+  `under_60` vs `over_180` ≈ +0.007 ES loss; both months and the locked test split
+  exclude zero), ~5–8× smaller than the eval-band effect. This **refines** the
+  15.1B/11.3B descriptive no-gradient result (which was marginal): conditioning on eval
+  band reveals a small clock residual. Termination (`time_forfeit` vs `board_decided`)
+  was ≈0 after controls, consistent with the 11.2B flagging-channel reframing. Because
+  the clock association is non-null, it is routed to a **robustness audit (15.1E)**
+  before any C4 consolidation. All predictive/descriptive — no causal or
+  reasoning-degradation claim. (Deviation log: bootstrap reps = 200 as pre-set;
+  logistic robustness retained; no design changes vs the 15.1C lock.)
+- **Clock-association robustness criteria (locked in 15.1E, for 15.1F — post-15.1D
+  planning, not goalpost-moving):** the small controlled clock association is credited
+  as a **small SECONDARY** finding only if the `60_180` vs `over_180` contrast (a) stays
+  positive in both months, (b) has a pooled mover-player-clustered CI excluding zero,
+  (c) is **not materially eliminated** by a continuous within-band cp control, (d) keeps
+  the same sign in a **board-decided-only** model (time-forfeit excluded), and (e) agrees
+  in direction under a transform-free metric (`clipped_cp_loss` / large-loss). If the
+  continuous-eval or board-decided check drives it to ≈0 or flips the sign, or it fails to
+  replicate, the C4 claim **consolidates around the eval-band structure and the
+  flagging-risk separation**, with clock treated as mainly a flagging-risk predictor and
+  the move-quality association reported as weak/unresolved. Mixed outcomes are reported as
+  conditional and **not headlined**. Even if it survives, the clock association remains
+  small, secondary to eval band, and predictive/descriptive (not causal). Two threats are
+  already empirically confirmed (within-band cp varies by clock; `under_60` is ~2/3
+  time-forfeit), so the continuous-eval and board-decided checks are mandatory.
 - **Required datasets:** both months (extraction cost permitting; one-month pilot first
   is acceptable if 15.0A's compute audit requires it, with the second month as
   confirmation).

@@ -273,6 +273,95 @@ def clustered_paired_delta_ci(
 
 
 # ---------------------------------------------------------------------------
+# D2. Cluster bootstrap that REFITS a model (for controlled regression contrasts)
+# ---------------------------------------------------------------------------
+
+def cluster_bootstrap_refit(
+    X: np.ndarray,
+    y: np.ndarray,
+    cluster_ids: list,
+    fit_fn,
+    n_replicates: int = 200,
+    seed: int = 42,
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """
+    Cluster bootstrap that refits a model on each replicate.
+
+    ``X`` is an (n, p) design matrix, ``y`` an (n,) target, ``cluster_ids`` a
+    length-n list of cluster labels. ``fit_fn(Xb, yb)`` must return a length-p
+    coefficient vector aligned to X's columns. Resamples whole clusters with
+    replacement and refits; degenerate refits (raising or non-finite) are
+    skipped and counted. Returns (full_sample_coef, boot_coefs[(n_success, p)],
+    meta). Raises if < 2 clusters.
+    """
+    X = np.asarray(X, dtype=np.float64)
+    y = np.asarray(y, dtype=np.float64)
+    if X.shape[0] != len(cluster_ids) or X.shape[0] != y.shape[0]:
+        raise ValueError("X, y, and cluster_ids must share the same length")
+    uniq, idx_lists = _cluster_index(list(cluster_ids))
+    n_clusters = len(uniq)
+    if n_clusters < 2:
+        raise ValueError(f"too few clusters ({n_clusters}) for refit bootstrap")
+    full_coef = np.asarray(fit_fn(X, y), dtype=np.float64)
+    rng = np.random.default_rng(seed)
+    boots: list[np.ndarray] = []
+    for _ in range(n_replicates):
+        pick = rng.integers(0, n_clusters, size=n_clusters)
+        sel = np.concatenate([idx_lists[p] for p in pick])
+        try:
+            coef = np.asarray(fit_fn(X[sel], y[sel]), dtype=np.float64)
+        except Exception:
+            continue
+        if coef.shape == full_coef.shape and np.all(np.isfinite(coef)):
+            boots.append(coef)
+    boot_coefs = (np.vstack(boots) if boots
+                  else np.empty((0, X.shape[1]), dtype=np.float64))
+    meta = {
+        "n_clusters": n_clusters,
+        "n_rows": int(X.shape[0]),
+        "n_replicates": n_replicates,
+        "n_success": len(boots),
+    }
+    return full_coef, boot_coefs, meta
+
+
+def summarize_contrasts(
+    full_coef: np.ndarray,
+    boot_coefs: np.ndarray,
+    coef_names: list[str],
+    contrasts: list[str],
+    alpha: float = _CI_ALPHA,
+) -> dict[str, dict[str, Any]]:
+    """
+    Turn a refit-bootstrap result into per-contrast CI dicts. ``contrasts`` are
+    coefficient names (a subset of ``coef_names``). Point estimate is the
+    full-sample coefficient; CI is the percentile interval over the bootstrap
+    refits. CI is None/NaN if fewer than 2 successful refits.
+    """
+    name_idx = {n: i for i, n in enumerate(coef_names)}
+    out: dict[str, dict[str, Any]] = {}
+    for c in contrasts:
+        if c not in name_idx:
+            raise KeyError(f"contrast {c!r} not among coefficient names")
+        i = name_idx[c]
+        est = float(full_coef[i])
+        if boot_coefs.shape[0] >= 2:
+            col = boot_coefs[:, i]
+            lo, hi = _percentile_ci(col, alpha)
+            cz: bool | None = lo <= 0.0 <= hi
+        else:
+            lo = hi = float("nan")
+            cz = None
+        out[c] = {
+            "estimate": round(est, 4),
+            "ci_lower": round(lo, 4) if np.isfinite(lo) else None,
+            "ci_upper": round(hi, 4) if np.isfinite(hi) else None,
+            "contains_zero": cz,
+        }
+    return out
+
+
+# ---------------------------------------------------------------------------
 # E. Termination decomposition rerun
 # ---------------------------------------------------------------------------
 

@@ -1,5 +1,13 @@
 # chess-MHSUC — ROADMAP Re-Scoping Proposal (v11-draft, v2-merged)
 
+**SUPERSEDED IN PART (2026-06-14, Ticket 15.1E):** this document's detailed Phase 14–15
+sequence is no longer authoritative for the live arc. After 11.2B (clock-outcome residual =
+substantially the flagging channel) and 15.1D (a small but replicated controlled C4 clock
+association on next-move quality), the live arc runs 15.1B→11.3B→15.1C/D→15.1E→15.1F
+(clock-association robustness) → C4 consolidation, then sharpness. `ROADMAP.md` is the
+authoritative live sequence; a full reconciliation patch to this file is deferred until after
+15.1F / C4 consolidation. Phases/criteria below are retained for provenance.
+
 **Status:** ACCEPTED AND APPLIED (Ticket 11.0B, 2026-06-12), following the 11.0A
 prior-work verification (`reports/phase_reports/phase_11_0a_prior_work_novelty_rescoping_audit.md`)
 and Malachi's approval defaults. This file is the authoritative detailed Phase 11–17

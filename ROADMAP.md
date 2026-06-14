@@ -141,11 +141,40 @@ clock-residual moderation (11.0A kill condition not triggered).
   NO pre-checkpoint trajectory feature → 15.1D controls = eval+phase+rating+termination+month;
   prior-trajectory is a separate extraction ticket. See
   `reports/phase_reports/phase_15_1c_controlled_move_quality_modeling_audit.md`.
-- **Next ticket: 15.1D — Controlled Move-Quality Modeling Implementation** —
-  `controlled_move_quality.py` (design-matrix builder, sklearn OLS adjusted-mean +
-  large-loss logistic, `cluster_bootstrap_refit` over `mover_player_hash`, per-month +
-  pooled + test confirmation, markdown reports, CLI) + tests. Excludes sharpness/MultiPV/
-  neural/cross-TC/new Stockfish. C3 sharpness moderation (15.2B) remains a later ticket.
+- **15.1D complete (implementation):** controlled C4 model built (`controlled_move_quality.py`:
+  one-hot design w/ fixed refs, numpy OLS adjusted-mean, sklearn large-loss logistic,
+  `cluster_bootstrap_refit`+`summarize_contrasts` added to `clustered_uncertainty.py`,
+  per-month+pooled+locked-test, CLI). 16 tests; 1,687 total passing. 200 bootstrap reps,
+  seed 42, 200/200 OLS refits. **RESULTS:** (1) eval-band positive control DOMINANT and
+  replicated — slight +0.0286 / near_equal +0.0223 / clear +0.0158 vs decided (pooled, all
+  exclude 0, both months + test). (2) clock association SMALL but **NON-NULL and REPLICATED** —
+  `60_180` vs `over_180` +0.0034 [+0.0015,+0.0051], `under_60` vs `over_180` +0.0072
+  [+0.0042,+0.0115] (pooled; monotone less-clock→more-loss; both months + test exclude 0);
+  ~5–8× smaller than eval band. Refines (not overturns) 15.1B: descriptive cells flat
+  marginally; small clock residual emerges once eval band is conditioned on. (3) termination
+  tf-vs-board_decided ≈0 after controls (consistent w/ 11.2B flagging reframing). Logistic
+  signs agree. Predictive/descriptive, not causal. See
+  `reports/controlled_move_quality_combined.md` +
+  `reports/phase_reports/phase_15_1d_controlled_move_quality_modeling.md`.
+- **15.1E complete (audit):** robustness threats to the small 15.1D clock association ranked;
+  two confirmed live empirically — (1) within-band |cp| varies by clock (`slight` low-clock
+  ≈205cp vs over_180 ≈189cp; `near_equal` low-clock ≈30–38 vs ≈45, both months) → coarse-band
+  residual confound; (2) `under_60` only 31%/36% board-decided (vs 86.5% overall) → ~2/3
+  time-forfeit, a flagging-survivor population. **Mandatory 15.1F checks:** continuous
+  `abs(mover_pre_cp)` eval control, late-only (move_30+40), **board-decided-only**, rating-spec
+  sensitivity, metric sensitivity (`clipped_cp_loss` + large-loss), cluster sensitivity
+  (mover/game/White-Black) → compact robustness matrix (60_180 contrast × month/pooled).
+  Success/weaken/mixed criteria LOCKED pre-implementation. Data ready, no extraction;
+  prior-trajectory absent = stated limitation. v11 draft tagged superseded by live roadmap;
+  full reconciliation deferred to post-15.1F. See
+  `reports/phase_reports/phase_15_1e_clock_association_robustness_audit.md`.
+- **Next ticket: 15.1F — Clock Association Robustness Implementation** — the §5 mandatory
+  matrix; §7 criteria locked in advance. If a specific confound (likely prior trajectory) is
+  implicated, a trajectory-extraction ticket precedes C4 consolidation; else C4 consolidation
+  (15.1B + 11.3B + 15.1D + 15.1F) follows. C3 sharpness (15.2A) remains a separate later arc.
+- **NOTE:** the live ROADMAP has diverged from `docs/roadmap_rescope_v11_draft.md` because
+  11.2B triggered the flagging reframe branch and 15.1D found a small controlled C4 clock
+  association; a full v11 reconciliation patch is deferred until after 15.1F / C4 consolidation.
 
 ## Phase 0: Governance and setup
 

@@ -1514,3 +1514,100 @@ Next step:
 15.1D — Controlled Move-Quality Modeling Implementation (controlled_move_quality.py + tests +
 3 reports). Excludes sharpness/MultiPV/neural/cross-TC/new Stockfish. Not causal; White-to-move
 scope; Stockfish eval objective context not ground truth.
+
+## EXP-025 — Phase 15.1D Controlled Move-Quality Modeling Implementation
+
+Experiment ID: EXP-025
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (controlled C4 modeling; no Stockfish, no outcome models, no data artifacts
+modified, no new deps; nothing staged/committed)
+
+Purpose:
+Controlled C4 estimate: after conditioning on checkpoint, eval band, rating, month, and
+termination with mover-player clustering, does clock retain a stable association with next-move
+ES loss, or is eval state the robust structure?
+
+Implementation:
+- controlled_move_quality.py: build_model_frame (atlas loader + mover-hash join + non-mate
+  filter + month/termination_binary/large-loss targets), build_design (explicit one-hot, fixed
+  refs clock=over_180/checkpoint=move_10/eval=decided/termination=board_decided/month=2024_09,
+  intercept col), numpy OLS (_ols_fit), sklearn logistic (C=inf, fit_intercept=False),
+  per-month + pooled (month FE) + locked-test, CLI. rating_z standardized on TRAIN only.
+- clustered_uncertainty.py: added cluster_bootstrap_refit (refit model per resampled-cluster
+  replicate; skips/counts degenerate refits) + summarize_contrasts (percentile CIs for named
+  coefs). Generic, reused by the modeling module.
+- 16 module tests; full suite 1,687 passing (+16), 0 regressions. 200 bootstrap reps, seed 42,
+  200/200 OLS refits; ~11s/month.
+
+Results (adjusted ΔES loss, mover-player-clustered 95% CI):
+- EVAL-BAND POSITIVE CONTROL dominant + replicated (pooled): slight +0.0286 [+0.0270,+0.0302],
+  near_equal +0.0223 [+0.0205,+0.0239], clear +0.0158 [+0.0143,+0.0173] vs decided. Both months
+  + test confirm. Recovers 15.1B structure.
+- CLOCK association SMALL but NON-NULL + REPLICATED: 60_180 vs over_180 pooled +0.0034
+  [+0.0015,+0.0051]; under_60 vs over_180 +0.0072 [+0.0042,+0.0115]. Monotone (less clock→more
+  loss). Both months (09: +0.0031/+0.0080; 10: +0.0038/+0.0065) AND locked test (60_180 +0.0045,
+  under_60 +0.0073) exclude zero. ~5-8× smaller than eval band.
+- TERMINATION tf vs board_decided ≈ 0 after controls (pooled -0.0003, contains 0) — consistent
+  with 11.2B flagging reframing (flagging = clock expiry, not worse moves).
+- Logistic large-loss (log-odds) signs agree with OLS (clock + eval both raise mistake prob;
+  eval far larger).
+
+Interpretation: REFINES (not overturns) 15.1B. Descriptive marginal cells flat because eval-band
+composition varies across clock; conditioning on eval band (required by 15.1A/15.1C) reveals a
+small ordered clock residual. Eval state is the robust dominant move-quality structure; clock
+residual small but replicated + test-confirmed. Predictive/descriptive ONLY — not causal, no
+degradation-curve language, no reasoning-degradation claim. Prior-trajectory control DEFERRED
+(absent from artifacts) = stated limitation.
+
+Next step:
+15.1E — Clock Association Robustness Audit (continuous mover_pre_cp vs 4 bands, residual
+clock×checkpoint confounding, rating non-linearity, sparse under_60, two-way White×Black
+dependence). C4 consolidation folds in after; C3 sharpness (15.2A) separate later arc.
+
+## EXP-026 — Phase 15.1E Clock Association Robustness Audit
+
+Experiment ID: EXP-026
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (audit/design, doc-only; no models, no regressions, no Stockfish, no data
+written)
+
+Purpose:
+Stress-test the small 15.1D controlled clock association (60_180 vs over_180 ≈ +0.0034 pooled;
+under_60 ≈ +0.0072) before C4 consolidation: artifact of coarse eval bands / checkpoint-clock
+structure / survivor composition / rating spec / ES transform / clustering, or robust?
+
+Empirically-confirmed live threats (read-only):
+1. Within-band |cp| varies by clock bucket: slight low-clock ≈205cp vs over_180 ≈189cp;
+   near_equal low-clock ≈30-38 vs ≈45 (both months) → coarse-band residual confound.
+2. under_60 only 31% (09) / 36% (10) board-decided vs 86.5% overall → ~2/3 time-forfeit,
+   flagging-survivor population; under_60 concentrated at move_30/40 (move_10 has 1 row).
+
+Mandatory 15.1F checks (each reports 60_180 vs over_180 clock contrast, mover-player-clustered,
+month + pooled, eval-band positive control retained):
+1. Continuous abs(mover_pre_cp) eval control (+ finer cp bins) — does it drive clock→0?
+2. Late-only model (move_30+40).
+3. Board-decided-only model (exclude time-forfeit) — decisive move-quality test.
+4. Rating-spec sensitivity (bins / quadratic).
+5. Metric sensitivity (clipped_cp_loss + large-loss indicators).
+6. Cluster sensitivity (mover primary; game + White/Black secondary).
+Output = compact robustness matrix (check × month/pooled).
+
+Interpretation criteria LOCKED pre-implementation:
+- SURVIVES: 60_180 positive both months, pooled CI excludes 0, NOT eliminated by continuous
+  eval control, board-decided-only same sign, metric direction agrees → small SECONDARY
+  headline (still not causal, still eval-dominated).
+- WEAKENS: eval control → ≈0 / board-decided fails / sign not replicated / metric disagrees →
+  consolidate around eval-band + flagging; clock = mainly flagging predictor.
+- MIXED: conditional/sensitive; do not headline clock.
+
+Readiness: data complete, no extraction (mover_pre_cp, clipped_cp_loss, large-loss, termination,
+splits, mover-hash all present). Prior-trajectory absent = stated limitation, not a blocker.
+v11 draft tagged superseded-in-part; full reconciliation deferred to post-15.1F. Phase 14
+sharpness stays after C4 consolidation.
+
+Next step:
+15.1F — Clock Association Robustness Implementation (mandatory matrix; locked criteria). If a
+named confound (likely prior trajectory) is implicated, trajectory extraction precedes C4
+consolidation; else C4 consolidation follows.
