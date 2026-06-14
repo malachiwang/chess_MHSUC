@@ -94,10 +94,18 @@ clock-residual moderation (11.0A kill condition not triggered).
   ≥300 CI-bearing with game-level bootstrap. Scope limitation: numbered checkpoints are
   White-to-move only. See
   `reports/phase_reports/phase_15_1a_constraint_atlas_descriptive_curves_audit.md`.
-- **Next ticket: 15.1B — Constraint Atlas Descriptive Curves Implementation**
-  (descriptive only; game-level bootstrap CIs; may proceed before 11.3A/B). 11.3A/B
-  player-leakage hardening remains required before 15.1C / 15.2B controlled modeling and
-  sharpness moderation.
+- **15.1B done (descriptive):** `constraint_atlas.py` + 55 tests; three committed Atlas
+  reports (2024-09, 2024-10, combined). Disciplined readout: **no clock gradient on
+  next-move loss among CI-bearing cells** (late cells flat ~0.028–0.031 both months); the
+  apparent low-clock bump is a sparse-cell artifact that **does not replicate**
+  (2024-09 `<10s` 0.042 vs 2024-10 0.028); **strong replicated eval-band pattern** (ES
+  loss peaks at near_equal/slight, lowest at decided, both months). Time-forfeit
+  checkpoint loss slightly above board-decided (descriptive). 1,635 tests passing. See
+  `reports/constraint_atlas_combined.md` and
+  `reports/phase_reports/phase_15_1b_constraint_atlas_descriptive_curves.md`.
+- **Next ticket: 11.3A — Player-Disjoint / Player-Clustered Feasibility Audit** —
+  required before controlled C4 modeling (15.1C) and sharpness moderation (15.2B). The
+  Atlas already shows eval-band conditioning dominates and must be controlled.
 
 ## Phase 0: Governance and setup
 

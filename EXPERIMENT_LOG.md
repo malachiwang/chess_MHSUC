@@ -1316,3 +1316,51 @@ White-to-move scope.
 
 Next step:
 15.1B — Constraint Atlas Descriptive Curves Implementation. 11.3A/B before 15.1C/15.2B.
+
+---
+
+## EXP-021 — Phase 15.1B Constraint Atlas Descriptive Curves
+
+Experiment ID: EXP-021
+Date: 2026-06-13
+Owner: Malachi Wang
+Status: complete (descriptive readout; no models, no Stockfish, no data written)
+
+Purpose:
+Descriptively summarize next-move loss (expected-score loss, mover perspective) across
+clock/rating/eval/phase/termination using the 15.0C artifacts. Measurement, not modeling.
+
+Implementation:
+- constraint_atlas.py: pure bins (clock coarse/fine, 200-pt rating, eval bands
+  near_equal/slight/clear/decided/mate_band, termination channel), cell-count policy
+  (n<50 hidden / 50-300 descriptive / >=300 ci_ok), game-level clustered bootstrap on
+  headline late cells, month + combined markdown reports, CLI. result_class optional
+  (not in artifact; binary board_decided/time_forfeit via is_time_forfeit unaffected).
+- 55 tests; full suite 1,635 passing, 0 regressions. Markdown tables only (no plots, no
+  data writes).
+
+Key descriptive findings (BOTH months unless noted):
+1. Overall mean ES loss ~0.034, median ~0.010 (right-skewed); median clipped cp 19.
+2. NO clean clock gradient among CI-bearing cells: late-group fine-clock cells flat
+   (30-60s/60-180s/over-180s all ~0.028-0.031) in both months.
+3. Apparent low-clock bump (2024-09 <10s ES 0.042) DOES NOT REPLICATE (2024-10 <10s
+   0.028) -> sparse-cell artifact (n~90, descriptive-only). Pre-accepted per 15.1A /
+   jk_182 non-monotonicity caution.
+4. STRONG REPLICATED eval-band pattern (late, over-180s): ES loss peaks near_equal/slight
+   (09: 0.0345/0.0414; 10: 0.0322/0.0396), lowest decided (0.0168/0.0148). Decided
+   positions have little expected score left to lose. Eval-band conditioning dominates.
+5. Time-forfeit checkpoint loss slightly above board-decided in CI cells (descriptive;
+   survivor-population caveat).
+
+Replication: overall stats agree closely across months; the no-gradient and eval-band
+patterns replicate; the low-clock bump does not.
+
+Caveats: descriptive/not causal; no degradation-curve language; Stockfish not absolute
+ground truth; White-to-move scope (even-ply checkpoints); survivorship in board-decided
+low-clock; right-skew (medians/quantiles); DRAW sparse; sharpness not implemented/invoked.
+Not "not merely flagging" — that is a controlled question.
+
+Next step:
+11.3A — Player-Disjoint / Player-Clustered Feasibility Audit (before controlled C4
+modeling 15.1C and sharpness moderation 15.2B). Controlled models MUST condition on eval
+band (it dominates) and treat low-clock cells cautiously.
