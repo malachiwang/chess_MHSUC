@@ -214,6 +214,21 @@ recommended next).
   with interactions (time × rating, time × eval band, time × sharpness) added only
   after the main-effects model is reported. Prior-trajectory control is mandatory
   (the "clock as symptom of past struggle" confound).
+- **Controlled-model operational lock (resolved in 15.1C, for 15.1D):** primary model
+  is `expected_score_loss ~ C(clock_bucket, ref=over_180) + C(checkpoint) +
+  C(eval_band, ref=decided) + rating_z + C(month) + C(termination_binary)` on non-mate
+  rows, fit by OLS with a **mover-player-clustered bootstrap** for contrast CIs
+  (large-loss logistic ES>0.05/0.10 as robustness). The **eval-band contrast is the
+  positive control** (expected to replicate, CIs exclude zero); the **coarse clock
+  contrast is the main uncertain/null-prone test** and **a clock null is a
+  pre-registered acceptable outcome** (it confirms the 15.1B/11.3B no-gradient result).
+  `60_180` is the stable low-clock contrast; `under_60` is exploratory (sparse,
+  confounded). Estimate on train+val with **test reserved as a locked confirmation**;
+  month is replication (per-month then pooled). **Prior-trajectory control is not
+  available in the current next-move-loss artifacts** (no pre-checkpoint trajectory
+  feature), so 15.1D's controls are eval band + phase + rating + termination + month;
+  adding a trajectory feature is a separate future extraction ticket, and until then
+  the "clock as symptom of past struggle" confound is an explicit stated limitation.
 - **Required datasets:** both months (extraction cost permitting; one-month pilot first
   is acceptable if 15.0A's compute audit requires it, with the second month as
   confirmation).

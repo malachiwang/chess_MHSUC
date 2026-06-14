@@ -128,12 +128,24 @@ clock-residual moderation (11.0A kill condition not triggered).
   `reports/player_clustered_constraint_atlas.md`,
   `reports/player_metadata_privacy_summary.md`,
   `reports/phase_reports/phase_11_3b_player_metadata_clustered_uncertainty.md`.
-- **Next ticket: 15.1C — Controlled Move-Quality Modeling Audit** — design controlled C4
-  modeling (next-move ES loss ~ clock + rating + eval band + phase + prior trajectory, with
-  interactions), conditioning on eval band (dominates) and carrying mover-player-clustered
-  uncertainty (now available). Strict player-disjoint split remains infeasible (11.3A) except
-  as an optional held-out robustness slice. C3 sharpness moderation (15.2B) likewise unblocked
-  for player-clustered inference.
+- **15.1C complete (audit):** controlled C4 modeling design locked. Inputs clean (every
+  column, splits, 100% mover-hash coverage). Target = `expected_score_loss` (non-mate,
+  ~33% zero-inflated, right-skewed) → **primary OLS adjusted-mean model + cluster bootstrap**;
+  large-loss logistic (ES>0.05/0.10) as robustness; two-part deferred. **Primary contrast =
+  coarse clock (60_180/under_60 vs over_180) net of checkpoint + eval band + rating_z + month
+  + termination binary, mover-player-clustered**; eval-band contrast (vs decided) = positive
+  control; **a clock null is a pre-registered acceptable outcome**. under_60 sparse
+  (~750–800/mo, confounded) → exploratory; 60_180 (~2,600/mo) stable. Discipline: estimate on
+  train+val, **test reserved as locked confirmation**, month = replication. `statsmodels` NOT
+  installed → use sklearn + own cluster bootstrap (no new dep). NOTE: next-move-loss rows carry
+  NO pre-checkpoint trajectory feature → 15.1D controls = eval+phase+rating+termination+month;
+  prior-trajectory is a separate extraction ticket. See
+  `reports/phase_reports/phase_15_1c_controlled_move_quality_modeling_audit.md`.
+- **Next ticket: 15.1D — Controlled Move-Quality Modeling Implementation** —
+  `controlled_move_quality.py` (design-matrix builder, sklearn OLS adjusted-mean +
+  large-loss logistic, `cluster_bootstrap_refit` over `mover_player_hash`, per-month +
+  pooled + test confirmation, markdown reports, CLI) + tests. Excludes sharpness/MultiPV/
+  neural/cross-TC/new Stockfish. C3 sharpness moderation (15.2B) remains a later ticket.
 
 ## Phase 0: Governance and setup
 

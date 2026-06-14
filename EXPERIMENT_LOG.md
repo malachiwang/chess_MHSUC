@@ -1469,3 +1469,48 @@ artifacts); DRAW sparse; Stockfish eval objective context not ground truth.
 Next step:
 15.1C — Controlled Move-Quality Modeling Audit (eval-band-conditioned C4 modeling with
 mover-player-clustered uncertainty). C3 sharpness moderation (15.2B) likewise unblocked.
+
+## EXP-024 — Phase 15.1C Controlled Move-Quality Modeling Audit
+
+Experiment ID: EXP-024
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (audit/design, doc-only; no models, no regressions, no Stockfish, no data
+written)
+
+Purpose:
+Design the controlled C4 move-quality model before implementation: does clock retain a stable
+association with next-move ES loss after conditioning on eval band, checkpoint, rating, month,
+and termination, with mover-player clustering — or is eval state the robust structure?
+
+Input audit (read-only, both months):
+- Non-mate modeling base 61,956 (09) / 59,625 (10); mover_player_hash 100% coverage (0 null);
+  ~12,900 unique movers; splits present; mover_rating full range no nulls.
+- Target expected_score_loss: bounded [0,~0.81], right-skewed, ~33% zero-inflated, ~20% >0.05,
+  ~9% >0.10. Drives model-family choice.
+- Clock×checkpoint confound severe (move_10 99.96% over_180); under_60 ~750-800/mo (sparse,
+  confounded) -> exploratory; 60_180 ~2,600/mo stable. eval decided ~3,000 (smallest, CI-ok).
+- mover_color uniformly White -> White-to-move scope.
+- statsmodels NOT installed -> use sklearn + own cluster bootstrap (no new dep).
+
+Design decisions:
+- Target: expected_score_loss (non-mate), mate-band excluded. Primary = OLS adjusted-mean +
+  mover-player cluster bootstrap; secondary = large-loss logistic (ES>0.05/0.10); two-part
+  deferred.
+- Primary contrast: coarse clock (60_180/under_60 vs over_180) net of C(checkpoint) +
+  C(eval_band, ref=decided) + rating_z + C(month) + C(termination_binary). Eval-band = positive
+  control. A clock null is a pre-registered acceptable outcome.
+- Interactions staged & exploratory (clock×checkpoint, clock×eval, clock×rating,
+  termination×clock, month×clock), one family at a time.
+- Discipline: estimate on train+val, test reserved as locked confirmation; month = replication
+  (per-month then pooled); rating_z scaled on train only; inference via cluster bootstrap.
+- Uncertainty: mover-player cluster bootstrap (refit per replicate, 500 reps target / 200 first
+  pass, seed 42), game-clustered secondary, row-level reference only. clustered_uncertainty.py
+  lacks a model-refit bootstrap -> 15.1D adds cluster_bootstrap_refit reusing _cluster_index.
+- NOTE: no pre-checkpoint trajectory feature exists in the artifacts -> controls =
+  eval+phase+rating+termination+month; prior-trajectory = separate future extraction ticket.
+
+Next step:
+15.1D — Controlled Move-Quality Modeling Implementation (controlled_move_quality.py + tests +
+3 reports). Excludes sharpness/MultiPV/neural/cross-TC/new Stockfish. Not causal; White-to-move
+scope; Stockfish eval objective context not ground truth.
