@@ -1418,3 +1418,54 @@ Recommendation:
 Next step:
 11.3B — Player Metadata Extraction + Clustered-Bootstrap Implementation (Option A). Required
 before controlled C4 modeling (15.1C) and C3 sharpness moderation (15.2B).
+
+## EXP-023 — Phase 11.3B Player Metadata Extraction + Clustered Uncertainty
+
+Experiment ID: EXP-023
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (implementation; no models trained, no Stockfish, no existing artifacts
+modified; player metadata artifacts gitignored; no raw usernames stored/printed/committed)
+
+Purpose:
+Implement player-clustered uncertainty (11.3A's recommended hardening, since strict
+player-disjoint splitting is infeasible) and re-check whether the 11.2B termination and 15.1B
+atlas headline findings survive repeated-player dependence.
+
+Implementation:
+- player_metadata.py: normalize (strip/lower) + blake2b one-way hash (non-secret pepper),
+  PGN header parser, raw-PGN locator, hashed-ID joins (white/black + mover/opponent), CLI.
+  Output frame = hashes + bot flags + version_tag only; assert_no_raw_usernames guard.
+- clustered_uncertainty.py: validate_cluster_key, clustered_mean_ci, clustered_mean_diff_ci,
+  clustered_paired_delta_ci (configurable cluster key; game_id reproduces game-level), plus
+  termination + atlas rerun report generators and a CLI. One-way clustering; two-way
+  White×Black deferred (reports the wider of White/Black as conservative).
+- 21 + 15 module tests; full suite 1,671 passing (+36), 0 regressions.
+- Extraction: 250k games/month, 108,642 / 112,556 unique players, 634 / 434 bot games, 0
+  anonymous; 100% join coverage onto primary 600+0 frames.
+
+CORRECTNESS ANCHOR: game-clustered paired delta reproduces the published 11.2B CIs to 4 dp
+(2024-09 all-games −0.0138 [−0.0186,−0.0091]; 2024-10 board-decided +0.0060 [+0.0015,+0.0109]).
+
+Key results (1000 replicates, seed 42):
+- 11.2B termination SURVIVES clustering. Time-forfeit: 09 −0.1183, 10 −0.1305, CI excludes
+  zero under game/White/Black clustering. Board-decided: 09 +0.0010 (contains 0), 10 +0.0060
+  (small, sign-reversed) — no board-decided residual rescued. All-games stays negative,
+  excludes zero. Player CIs only modestly wider than game CIs (moderate concentration).
+- 15.1B atlas eval-band SURVIVES mover-player clustering. Mean ES loss: near_equal ~0.034,
+  slight ~0.042 (peak), clear ~0.031, decided ~0.018 (lowest), both months, all CIs exclude
+  zero. Pairwise slight−decided +0.024 / near_equal−decided +0.016 exclude zero both months.
+  Late coarse-clock cells flat (under_60/60_180/over_180 ~0.029-0.033, overlapping CIs) -> no
+  clock gradient, unchanged.
+
+Interpretation: both headline conclusions are robust to repeated-player dependence. Flagging
+channel is the substantive clock-outcome signal; eval-band conditioning dominates next-move
+loss; no replicated raw clock gradient among stable cells. Predictive/descriptive only.
+
+Caveats: one-way clustering (two-way deferred); mover-player clustering only on decision-maker;
+filtering TF induces selection (not causal); pepper non-secret (hashes never leave ignored
+artifacts); DRAW sparse; Stockfish eval objective context not ground truth.
+
+Next step:
+15.1C — Controlled Move-Quality Modeling Audit (eval-band-conditioned C4 modeling with
+mover-player-clustered uncertainty). C3 sharpness moderation (15.2B) likewise unblocked.

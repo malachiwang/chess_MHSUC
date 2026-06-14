@@ -278,14 +278,16 @@ including (non-exhaustively):
   is "replicated" only if it holds on both monthly datasets, each with its own splits.
 - **Player leakage:** the 11.3A graph audit established that a **strict player-disjoint
   3-way split is infeasible** (a giant connected component holds ~92% of games / ~86% of
-  players per month), so the planned robustness route is **player-clustered (mover-player /
-  two-way) bootstrap** applied to primary contrasts once Phase 11.3B implements it; a
-  player-disjoint *held-out slice* may serve as a secondary check only. Controlled C4/C3
-  modeling requires this player-aware uncertainty plan before any primary result. Until
-  11.3B lands, the player-leakage caveat is mandatory in every report (~86% of checkpoint
+  players per month), so the robustness route is **player-clustered bootstrap**, now
+  **implemented in 11.3B** (`clustered_uncertainty.py`: game / White-player / Black-player /
+  mover-player clustering; exact two-way White×Black deferred). Controlled C4/C3 modeling
+  **must carry mover-player-clustered uncertainty** before any primary result; a
+  player-disjoint *held-out slice* may serve as a secondary check only. 11.3B confirmed both
+  prior headline findings survive player clustering (11.2B flagging channel; 15.1B eval-band
+  structure). The player-leakage caveat remains noted in every report (~86% of checkpoint
   rows touch a player spanning >1 split). **No raw usernames are ever committed** anywhere
-  in the repo; any player identifier used for clustering is a salted hash kept in gitignored
-  data artifacts.
+  in the repo; any player identifier used for clustering is a salted one-way hash kept in
+  gitignored data artifacts.
 - Slice definitions for pre-registered contrasts are fixed before results are computed
   and never tuned after seeing them; sub-threshold cells (< 300 games) are reported
   descriptively with explicit no-CI markers, never silently dropped or merged.

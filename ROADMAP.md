@@ -114,12 +114,26 @@ clock-residual moderation (11.0A kill condition not triggered).
   **player-clustered (mover-player) bootstrap** (existing game-cluster machinery
   generalizes), hashed IDs in ignored artifacts only, no usernames ever committed. See
   `reports/phase_reports/phase_11_3a_player_disjoint_cluster_feasibility_audit.md`.
-- **Next ticket: 11.3B — Player Metadata Extraction + Clustered-Bootstrap Implementation
-  (Option A)** — hashed player IDs (ignored artifacts), cluster bootstrap (game /
-  mover-player / two-way), re-verify 11.2B + 15.1B headline uncertainties under player
-  clustering. Required before controlled C4 modeling (15.1C) and C3 sharpness moderation
-  (15.2B). Strict player-disjoint split not pursued as primary route (giant component); a
-  player-disjoint held-out slice is a possible secondary robustness check.
+- **11.3B complete (implementation):** privacy-safe player metadata extraction
+  (`player_metadata.py`, hashed IDs in gitignored artifacts, no raw usernames) + configurable
+  one-way cluster bootstrap (`clustered_uncertainty.py`: mean / mean-diff / paired delta).
+  Both headline findings **survive player clustering**. (1) 11.2B termination: time-forfeit
+  channel stays large with CI excluding zero under game/White/Black clustering (09 −0.1183;
+  10 −0.1305); board-decided stays unresolved/collapsed; **game-clustered reproduces the
+  published 11.2B CIs exactly**. (2) 15.1B atlas: eval-band ordering holds under mover-player
+  clustering (slight−decided +0.024, near_equal−decided +0.016, both exclude zero, both
+  months); late clock cells flat. Player clustering widens CIs only modestly (moderate
+  concentration). 56 module tests; 1,671 total passing. Two-way White×Black clustering
+  deferred. See `reports/player_clustered_termination_decomposition.md`,
+  `reports/player_clustered_constraint_atlas.md`,
+  `reports/player_metadata_privacy_summary.md`,
+  `reports/phase_reports/phase_11_3b_player_metadata_clustered_uncertainty.md`.
+- **Next ticket: 15.1C — Controlled Move-Quality Modeling Audit** — design controlled C4
+  modeling (next-move ES loss ~ clock + rating + eval band + phase + prior trajectory, with
+  interactions), conditioning on eval band (dominates) and carrying mover-player-clustered
+  uncertainty (now available). Strict player-disjoint split remains infeasible (11.3A) except
+  as an optional held-out robustness slice. C3 sharpness moderation (15.2B) likewise unblocked
+  for player-clustered inference.
 
 ## Phase 0: Governance and setup
 
