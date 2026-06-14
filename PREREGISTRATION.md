@@ -269,6 +269,22 @@ recommended next).
   The outcome-level clock signal remains substantially the flagging channel (11.2B); the
   main unadjusted alternative is the deferred prior-trajectory confound. (No deviations
   from the 15.1E criteria; 200 bootstrap reps, seed 42.)
+- **C4 consolidation + prior-trajectory deviation note (15.1G):** the C4 / move-quality
+  arc is consolidated and **closed as a predictive/descriptive claim** (see
+  `reports/phase_reports/phase_15_1g_c4_claim_consolidation.md`): eval state dominates
+  next-move loss; clock has a small, replicated, robustness-checked secondary association;
+  the outcome-level clock signal is substantially the flagging channel. **Deviation:** the
+  C4 bullet above locks "prior-trajectory control is mandatory." That requirement was
+  written before the measurement layer existed, and the next-move-loss artifacts carry **no
+  pre-checkpoint trajectory feature** (logged pre-results at 15.1C). Because the
+  trajectory/"clock as symptom of past struggle" confound threatens a **causal** reading and
+  the consolidated C4 claim is **explicitly descriptive/predictive, never causal**, the
+  "mandatory" lock is **reinterpreted as mandatory before any causal / mediation C4 claim**.
+  The descriptive C4 claim is closed now with prior trajectory as an **explicit stated
+  limitation** and a **recommended optional follow-up** (a future trajectory-extraction
+  audit/implementation, after which the controlled + robustness models would be re-run). This
+  is a documented deviation, not a silent omission; a closer-to-causal C4 statement requires
+  Option B (extract trajectory first).
 - **Required datasets:** both months (extraction cost permitting; one-month pilot first
   is acceptable if 15.0A's compute audit requires it, with the second month as
   confirmation).

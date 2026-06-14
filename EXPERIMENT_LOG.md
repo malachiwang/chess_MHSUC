@@ -1657,3 +1657,53 @@ from artifacts) = stated limitation.
 Next step:
 15.1G — C4 Claim Consolidation / Move-Quality Arc Summary (15.1B + 11.3B + 15.1D + 15.1F).
 Prior-trajectory feature extraction = candidate follow-up. C3 sharpness 15.2A separate arc.
+
+## EXP-028 — Phase 15.1G C4 Claim Consolidation / Move-Quality Arc Summary
+
+Experiment ID: EXP-028
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (consolidation/reporting, doc-only; no models, no regressions, no Stockfish,
+no data written)
+
+Purpose:
+Consolidate the C4 / move-quality arc (11.2B → 15.1F) into a settled claim, fix allowed vs
+forbidden claims, reconcile descriptive vs controlled results, and decide the prior-trajectory
+question.
+
+SETTLED C4 CLAIM (predictive/descriptive, NOT causal):
+- Final-outcome clock signal = substantially flagging/time-forfeit channel (11.2B; survives
+  player clustering 11.3B).
+- Next-move ES loss dominated by eval state (15.1B descriptive + 15.1D controlled; replicated).
+- After controls (checkpoint+eval+rating+month+termination), clock retains a SMALL replicated
+  association with next-move ES loss: pooled 60_180 vs over_180 +0.0034 [+0.0015,+0.0052].
+- SURVIVES all 15.1F mandatory robustness checks incl. continuous within-band cp control and
+  board-decided-only (not solely a time-forfeit artifact at move-quality level).
+- ~5-8× smaller than eval-band structure; replicated both months + locked test; survives
+  mover/game/White/Black clustering.
+
+Descriptive↔controlled reconciliation: 15.1B flat MARGINAL clock cells were composition-masked
+(clock buckets differ in eval composition); conditioning on eval band reveals the small
+residual. Not contradictory.
+
+Allowed claims (7): flagging-channel outcome result; eval-state dominance; small replicated
+controlled clock association; survives board-decided-only; secondary to eval band;
+predictive/replicated; survives player clustering.
+Forbidden: causes worse reasoning / cognitive degradation / low clock causes blunders /
+Stockfish ground truth / DRAW solved / best human predictor / sharpness shown / trajectory
+controlled / clock effect large / "not merely flagging" / unqualified degradation curve.
+
+PRIOR-TRAJECTORY DECISION: Option A — DEFER. Original C4 prereg locked trajectory "mandatory",
+but (a) deviation logged pre-results at 15.1C (absent from artifacts), (b) 15.1F discharged the
+immediate confounds, (c) "mandatory" was motivated by the clock-as-symptom-of-past-struggle
+confound which threatens a CAUSAL reading — and the C4 claim is explicitly descriptive/
+predictive, never causal. So "mandatory" reinterpreted (deviation note) as required before any
+causal/mediation C4 claim; descriptive C4 closed now with trajectory as stated headline
+limitation + recommended optional follow-up. (Judgment call on a pre-registered mandatory item;
+Option B = extract trajectory then re-run controlled+robustness, if a closer-to-causal claim is
+wanted.)
+
+Next step:
+15.1H — Phase 15 / Roadmap Reconciliation Patch (reconcile ROADMAP.md vs v11 draft, fold in C4
+claim, sequence sharpness) → 14.1A MultiPV Sharpness Feasibility/Compute Audit. Prior-trajectory
+extraction = optional follow-up.

@@ -182,13 +182,24 @@ clock-residual moderation (11.0A kill condition not triggered).
   Per-month subset CIs occasionally touch 0 (low power for ~+0.003 effect); verdict rests on
   pooled + consistent sign per locked criteria. See `reports/clock_association_robustness_combined.md`
   + `reports/phase_reports/phase_15_1f_clock_association_robustness.md`.
-- **Next ticket: 15.1G — C4 Claim Consolidation / Move-Quality Arc Summary** — consolidate
-  15.1B (descriptive) + 11.3B (clustered) + 15.1D (controlled) + 15.1F (robustness): eval-band
-  = dominant robust structure; small replicated controlled clock association survives robustness
-  as a SECONDARY non-causal finding; outcome-level clock signal stays substantially the flagging
-  channel (11.2B). Prior-trajectory feature extraction is the main candidate follow-up. C3
-  sharpness (15.2A) is a separate later arc. A full v11 reconciliation patch
-  (`docs/roadmap_rescope_v11_draft.md`, tagged superseded-in-part) folds into 15.1G or after.
+- **15.1G complete (consolidation):** C4 / move-quality arc consolidated. **SETTLED C4 CLAIM
+  (predictive/descriptive, NOT causal):** (a) the final-outcome clock signal is substantially
+  the flagging/time-forfeit channel (11.2B); (b) next-move ES loss is dominated by eval state
+  (15.1B/15.1D); (c) after controls, clock retains a small, replicated association with
+  next-move ES loss (pooled 60_180 vs over_180 +0.0034) that (d) survives all 15.1F robustness
+  checks incl. board-decided-only, and (e) is ~5–8× smaller than the eval-band structure;
+  (f) all findings replicate across both months + survive player clustering (11.3B).
+  **Prior-trajectory decision: OPTION A — DEFER.** The artifacts carry no pre-checkpoint
+  trajectory feature; the original C4 "mandatory" trajectory lock is reinterpreted (deviation
+  noted in PREREGISTRATION) as mandatory only before a CAUSAL/mediation claim — the
+  descriptive C4 claim is closed now with trajectory as the stated headline limitation +
+  recommended optional follow-up. See `reports/phase_reports/phase_15_1g_c4_claim_consolidation.md`
+  and `reports/c4_move_quality_arc_summary.md`.
+- **Next ticket: 15.1H — Phase 15 / Roadmap Reconciliation Patch** — reconcile `ROADMAP.md`
+  with `docs/roadmap_rescope_v11_draft.md` (superseded-in-part since 15.1E), fold in the
+  consolidated C4 claim, and sequence the sharpness arc → then **14.1A — MultiPV Sharpness
+  Feasibility / Compute Audit**. A **prior-trajectory feature-extraction audit/impl** remains
+  the recommended optional follow-up if a closer-to-causal C4 statement is later desired.
 
 ## Phase 0: Governance and setup
 
