@@ -257,6 +257,18 @@ recommended next).
   small, secondary to eval band, and predictive/descriptive (not causal). Two threats are
   already empirically confirmed (within-band cp varies by clock; `under_60` is ~2/3
   time-forfeit), so the continuous-eval and board-decided checks are mandatory.
+- **Clock-association robustness result (15.1F):** the small clock association
+  **SURVIVED** all mandatory checks under the locked criteria above. Pooled `60_180`
+  vs `over_180` = +0.0034 [+0.0015, +0.0052]; it is **not eliminated by continuous
+  within-band cp control** (+0.0034), **survives board-decided-only** (+0.0034, isolated
+  from flagging), is stable under rating-bin/quadratic and late-only specs, agrees in
+  direction across `clipped_cp_loss` and both large-loss logistics, and holds under
+  game/White/Black clustering — positive in both months and on the locked test split. It
+  is therefore credited as a **small, replicated, controlled, SECONDARY** association
+  (≈5–8× smaller than the eval-band structure), **predictive/descriptive, not causal**.
+  The outcome-level clock signal remains substantially the flagging channel (11.2B); the
+  main unadjusted alternative is the deferred prior-trajectory confound. (No deviations
+  from the 15.1E criteria; 200 bootstrap reps, seed 42.)
 - **Required datasets:** both months (extraction cost permitting; one-month pilot first
   is acceptable if 15.0A's compute audit requires it, with the second month as
   confirmation).

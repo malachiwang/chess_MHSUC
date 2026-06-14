@@ -168,13 +168,27 @@ clock-residual moderation (11.0A kill condition not triggered).
   prior-trajectory absent = stated limitation. v11 draft tagged superseded by live roadmap;
   full reconciliation deferred to post-15.1F. See
   `reports/phase_reports/phase_15_1e_clock_association_robustness_audit.md`.
-- **Next ticket: 15.1F — Clock Association Robustness Implementation** — the §5 mandatory
-  matrix; §7 criteria locked in advance. If a specific confound (likely prior trajectory) is
-  implicated, a trajectory-extraction ticket precedes C4 consolidation; else C4 consolidation
-  (15.1B + 11.3B + 15.1D + 15.1F) follows. C3 sharpness (15.2A) remains a separate later arc.
-- **NOTE:** the live ROADMAP has diverged from `docs/roadmap_rescope_v11_draft.md` because
-  11.2B triggered the flagging reframe branch and 15.1D found a small controlled C4 clock
-  association; a full v11 reconciliation patch is deferred until after 15.1F / C4 consolidation.
+- **15.1F complete (implementation):** clock-association robustness matrix built
+  (`clock_association_robustness.py`: configurable variant design reusing the 15.1D layer,
+  OLS/logistic variant fit with chosen cluster key, 12-check mandatory matrix, locked-criteria
+  verdict logic, month+combined reports, CLI). 18 tests; 1,705 total passing. 200 reps seed 42.
+  **CONCLUSION: SURVIVES.** Pooled `60_180` vs `over_180` +0.0034 [+0.0015,+0.0052] holds under
+  EVERY mandatory check: continuous within-band |cp| control +0.0034 (coarse-band threat does
+  NOT eliminate it), board-decided-only +0.0034 (isolated from flagging), rating bins/quadratic
+  ~+0.0032/+0.0033, late-only pooled +0.0033, clipped_cp +6.09 / logistic ES>0.05 +0.088 /
+  ES>0.10 +0.141 (directional agree), game/White/Black clustering all +0.0034 — all pooled CIs
+  exclude 0, positive both months + locked test. Small + SECONDARY to eval band (~5–8×),
+  predictive/descriptive NOT causal. under_60 board-decided-only contains 0 (sparse, ~2/3 TF).
+  Per-month subset CIs occasionally touch 0 (low power for ~+0.003 effect); verdict rests on
+  pooled + consistent sign per locked criteria. See `reports/clock_association_robustness_combined.md`
+  + `reports/phase_reports/phase_15_1f_clock_association_robustness.md`.
+- **Next ticket: 15.1G — C4 Claim Consolidation / Move-Quality Arc Summary** — consolidate
+  15.1B (descriptive) + 11.3B (clustered) + 15.1D (controlled) + 15.1F (robustness): eval-band
+  = dominant robust structure; small replicated controlled clock association survives robustness
+  as a SECONDARY non-causal finding; outcome-level clock signal stays substantially the flagging
+  channel (11.2B). Prior-trajectory feature extraction is the main candidate follow-up. C3
+  sharpness (15.2A) is a separate later arc. A full v11 reconciliation patch
+  (`docs/roadmap_rescope_v11_draft.md`, tagged superseded-in-part) folds into 15.1G or after.
 
 ## Phase 0: Governance and setup
 

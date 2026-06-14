@@ -1611,3 +1611,49 @@ Next step:
 15.1F — Clock Association Robustness Implementation (mandatory matrix; locked criteria). If a
 named confound (likely prior trajectory) is implicated, trajectory extraction precedes C4
 consolidation; else C4 consolidation follows.
+
+## EXP-027 — Phase 15.1F Clock Association Robustness Implementation
+
+Experiment ID: EXP-027
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (robustness modeling; no Stockfish, no new data artifacts, no new deps, no
+existing modules modified; nothing staged/committed)
+
+Purpose:
+Run the 15.1E mandatory robustness matrix on the small 15.1D clock association and apply the
+locked 15.1E criteria: does 60_180 vs over_180 survive continuous eval control, late-only,
+board-decided-only, rating spec, metric, and cluster variations?
+
+Implementation:
+- clock_association_robustness.py: build_variant_design (reuses 15.1D reference levels;
+  adaptive checkpoint ref; optional abs_cp_z within-band control; rating linear/quadratic/
+  train-quantile-bins; optional month/termination), fit_variant (OLS/logistic, chosen cluster
+  key, via cluster_bootstrap_refit), 12-check mandatory specs, verdict_for_contrast +
+  overall_conclusion (locked gate), matrix renderer, month+combined reports, CLI. No edits to
+  controlled_move_quality.py / clustered_uncertainty.py (imported/reused).
+- 18 tests incl. baseline-design-equals-cmq and baseline-contrast reproduction; full suite
+  1,705 passing (+18), 0 regressions. 200 reps seed 42; combined run ~82s.
+
+CONCLUSION: SURVIVES. Pooled 60_180 vs over_180 +0.0034 [+0.0015,+0.0052]; every mandatory
+check pooled-excludes-0 and positive both months:
+- continuous within-band |cp| control +0.0034 [+0.0015,+0.0052] (KEY coarse-band threat — NOT
+  eliminated);
+- board-decided-only +0.0034 [+0.0010,+0.0063] (isolated from flagging — survives);
+- rating quantile bins +0.0032 / quadratic +0.0033; late-only pooled +0.0033;
+- clipped_cp +6.09 [+2.84,+9.18]; logistic ES>0.05 +0.088 [+0.021,+0.160]; ES>0.10 +0.141
+  [+0.008,+0.249] (directional, agree);
+- game_id +0.0034 / White-player +0.0034 / Black-player +0.0034.
+under_60 board-decided-only contains 0 (+0.0045 [-0.0013,+0.0109]) — sparse, ~2/3 TF (15.1E).
+Per-month subset CIs occasionally touch 0 (low power for ~+0.003 effect); verdict rests on
+pooled + consistent positive sign per locked criteria.
+
+Interpretation: C4 clock association credited as SMALL, replicated, controlled, SECONDARY to
+eval band (~5-8× larger), predictive/descriptive NOT causal. Eval-band structure remains the
+dominant robust move-quality structure; outcome-level clock signal stays substantially the
+flagging channel (11.2B). Main remaining alt-explanation = prior trajectory (deferred, absent
+from artifacts) = stated limitation.
+
+Next step:
+15.1G — C4 Claim Consolidation / Move-Quality Arc Summary (15.1B + 11.3B + 15.1D + 15.1F).
+Prior-trajectory feature extraction = candidate follow-up. C3 sharpness 15.2A separate arc.
