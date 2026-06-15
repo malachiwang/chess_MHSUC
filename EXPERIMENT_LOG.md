@@ -1915,3 +1915,52 @@ narrowness, not ground truth; White-to-move scope.
 Next step:
 14.2A — Sharpness Interaction Pre-Registration (lock feature/threshold/orientation/C3c target/
 uncertainty/criteria before any C3c/C3a/C3b modeling). Prior-trajectory = optional follow-up.
+
+## EXP-033 — Phase 14.2A Sharpness Interaction Pre-Registration
+
+Experiment ID: EXP-033
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (pre-registration / design, doc-only; NO modeling run; no data/code/tests
+changed; nothing staged/committed)
+
+Purpose:
+Lock the C3c clock × sharpness move-quality moderation test before 14.2B implementation.
+
+Question: does the small controlled 60_180-vs-over_180 clock association with next-move ES
+loss (15.1D/15.1F, pooled +0.0034) become LARGER in objectively sharp positions?
+
+LOCKED (PREREGISTRATION §C3c):
+- Target: expected_score_loss (mover perspective, non-mate), 15.1D/15.1F family.
+- Feature: sharp_value_fragility_v1 = n_good_10es<=2 AND worst_top5_loss_es>=0.10 AND
+  legal_move_count>=8 (engine-side value fragility; NOT human obviousness; base rate ~0.142).
+- Contrast: 60_180 vs over_180 × sharp; estimand = DiD = interaction coefficient (positive ⇒
+  low-clock association larger when sharp). under_60×sharp secondary/exploratory.
+- Model: OLS expected_score_loss ~ C(clock,ref=over_180) + sharp + clock:sharp +
+  C(checkpoint,ref=move_10) + C(eval_band,ref=decided) + rating_z + C(month,ref=2024_09) +
+  C(termination_binary,ref=board_decided). Rating linear primary (15.1F), bins/quadratic
+  sensitivity. Estimate train+val; test locked confirmation; no test selection.
+- Uncertainty: mover-player-clustered bootstrap (cluster_bootstrap_refit + summarize_contrasts),
+  200 reps seed 42, per-month then pooled.
+- Strong support: positive both months + pooled CI excludes 0 + not single-cell-driven +
+  survives robustness (esp. continuous-eval + board-decided-only). Weak/null/kill criteria
+  fully specified.
+
+Read-only feasibility (no model): join unique on (game_id, selected_position_type); 100%
+coverage onto non-mate frame (61,956/59,625); mover-hash present all rows. PRIMARY-CELL
+ADEQUACY: sharp×60_180 = 348 (2024-09) / 329 (2024-10) / ~677 pooled — just above the ≥300 CI
+threshold → power bottleneck + kill criterion (no claim if <~300/mo after primary filters).
+under_60×sharp ~110/mo → exploratory only.
+
+12 pre-registered robustness checks (month replication, board-decided-only, termination
+control, eval control band+continuous-cp, rating spec, checkpoint, sharpness-threshold
+sensitivity, large-loss logistic, clipped-cp secondary, exploratory surface-bait [NOT
+obviousness], cluster sensitivity, mate-band sensitivity).
+
+Forbidden: causal claims; "time pressure causes worse moves/reasoning"; sharpness proven pre-
+model; v1 = all human difficulty; human obviousness modeled; Stockfish ground truth; DRAW
+solved; best predictor; degradation curve.
+
+Next step:
+14.2B — Sharpness Interaction Modeling Implementation (fit the locked model; no design changes
+without a logged deviation).

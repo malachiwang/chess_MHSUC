@@ -192,6 +192,114 @@ move_40); difference-of-deltas with game-level bootstrap CIs.
   of the three targets nor adds main-effect signal beyond E4c/E7 in either month, the
   sharpness arc stops and the controlled null is written up.
 
+#### C3c — Sharpness × Clock Move-Quality Moderation — PRE-REGISTRATION (locked 14.2A, before any modeling)
+
+**Status: locked before modeling.** This operationalizes C3c for the 14.2B implementation.
+It builds on the settled C4 baseline (15.1D/15.1F) and the 14.1C full sharpness artifacts.
+**No model has been run.** Predictive/descriptive association and moderation only — **not
+causal**; the v1 sharpness feature is an engine-side value-fragility proxy, **not** human
+obviousness and **not** a complete account of practical difficulty.
+
+1. **Research question.** Does the small, controlled `60_180`-vs-`over_180` clock
+   association with next-move expected-score (ES) loss (15.1D/15.1F, pooled ≈ +0.0034)
+   become **larger in objectively sharp / value-fragile positions**? I.e. is there a
+   positive **clock × sharpness moderation** of next-move ES loss?
+
+2. **Data universe.** Both 10+0 months (2024-09, 2024-10). Per month, join
+   `next_move_loss_<m>_250k_v1.parquet` ⋈ `multipv_sharpness_<m>_250k_v1.parquet`
+   ⋈ `player_metadata_<m>_250k_v1.parquet` (hashed mover IDs). Confirmed feasible:
+   sharpness artifact is unique on the join key, **100% join coverage** onto the non-mate
+   modeling frame, mover-player hash present for all rows.
+
+3. **Join keys.** `(game_id, selected_position_type)` for the next-move-loss ⋈ sharpness
+   join; `game_id` for the player-metadata join (then mover hash via `mover_color`, always
+   White at these even-ply checkpoints).
+
+4. **Exclusions.** Primary analysis: next-move-loss `status == ok` AND sharpness
+   `status == ok` AND **non-mate-band** rows AND required covariates non-null. Mate-band is
+   **excluded from the primary analysis** (ES comparability) and only appears in a labeled
+   mate-band sensitivity (robustness #12). Single-legal-move rows (where `best_second_gap_es`
+   is null) are retained — the primary feature does not require it — but `sharp_value_fragility_v1`
+   requires `legal_move_count >= 8` so they are non-sharp by construction.
+
+5. **Primary target.** `expected_score_loss` (mover's perspective), checkpoint-level
+   next-move loss — the **same target family as 15.1D / 15.1F**.
+
+6. **Primary sharpness feature (locked binary).**
+   `sharp_value_fragility_v1 = (n_good_10es <= 2) AND (worst_top5_loss_es >= 0.10) AND
+   (legal_move_count >= 8)` — objective value fragility (narrow viable set, steep drop-off
+   outside it, sufficient legal-choice clutter). Base rate ≈ 0.142 both months (14.1C).
+   **Not human obviousness; not a complete account of difficulty; a pre-registered
+   engine-side proxy.** No threshold tuning based on outcomes.
+
+7. **Primary clock contrast.** `60_180` vs `over_180` (the stable controlled contrast from
+   the C4 arc), **interacted with `sharp_value_fragility_v1`**.
+
+8. **Primary estimand (difference-in-differences).**
+   `[mean ES loss(60_180) − mean ES loss(over_180) | sharp] − [mean ES loss(60_180) −
+   mean ES loss(over_180) | non-sharp]`, recovered as the **`clock=60_180 × sharp` interaction
+   coefficient** in the model below. **Positive ⇒ the controlled low-clock association is
+   larger in sharp positions.**
+
+9. **Model formula (interpretable controlled OLS, 15.1D/15.1F family).**
+   `expected_score_loss ~ C(clock_bucket, ref=over_180) + sharp_value_fragility_v1
+   + C(clock_bucket):sharp_value_fragility_v1 + C(selected_position_type, ref=move_10)
+   + C(eval_band, ref=decided) + rating_z + C(month, ref=2024_09)
+   + C(termination_binary, ref=board_decided)`. Fit per month (no month term) and pooled
+   (with month term).
+
+10. **Controls.** Checkpoint, eval band (primary; continuous `abs(mover_pre_cp)` as
+    sensitivity per 15.1F), `rating_z` (linear, train-only moments — the 15.1F primary;
+    quantile-bin / quadratic as sensitivity), month (pooled), termination binary. Estimate
+    on **train+val**, **test reserved as locked confirmation**; **no test-set model selection**.
+
+11. **Uncertainty.** **Mover-player-clustered bootstrap** via the existing
+    `clustered_uncertainty.cluster_bootstrap_refit` + `summarize_contrasts` (refit per
+    resampled cluster), 200 replicates, seed 42 — the 15.1D/15.1F machinery. Month-specific
+    estimates computed separately; pooled with month control. Game-clustered and
+    White/Black-player-clustered as cluster-sensitivity (robustness #11). Two-way clustering
+    remains deferred.
+
+12. **Replication / success criteria (strong support).** ALL of: (a) the primary
+    interaction estimate is **positive in both months**; (b) the **pooled** interaction CI
+    **excludes zero** (mover-player-clustered); (c) it is **not driven entirely** by one
+    checkpoint, one eval band, mate-band rows, or one termination channel; (d) the direction
+    **survives** the required robustness checks (esp. continuous-eval control and
+    board-decided-only).
+
+13. **Robustness checks (pre-registered).** (1) month-specific replication + pooled;
+    (2) board-decided-only (exclude time-forfeit); (3) termination-controlled (primary +
+    sensitivity); (4) eval control (band primary, continuous `abs(mover_pre_cp)` sensitivity);
+    (5) rating spec (linear primary, quantile-bin/quadratic sensitivity); (6) checkpoint
+    controls + checkpoint-specific estimates where n permits; (7) sharpness-threshold
+    sensitivity (`_relaxed`, `_strict` — no outcome tuning); (8) large-loss secondary targets
+    (logistic `ES>0.05`, optional `ES>0.10`); (9) clipped-cp-loss secondary (familiar
+    robustness; ES loss stays primary); (10) surface-bait as an **exploratory** moderator
+    (NOT human obviousness, no headline); (11) cluster sensitivity (mover / game / White-Black);
+    (12) mate-band sensitivity (primary excludes; document include/exclude effect).
+
+14. **Weak / null / kill criteria.** *Weak/suggestive:* pooled positive but CI overlaps zero;
+    or pooled excludes zero but one month is weak/inconsistent; or only a narrower secondary
+    contrast survives. *Null/no-support:* small pooled effect with CI overlapping zero; or
+    month signs conflict; or robustness shows a confound/sparse-cell driver. *Kill / no-claim:*
+    the **sharp × `60_180` cell** is the power bottleneck — measured ≈ **348 (2024-09) / 329
+    (2024-10), ≈ 677 pooled** (just above the project's ≥300 CI threshold); if after primary
+    filters this cell falls materially below ~300/month (or the bootstrap interaction CI is
+    uninformatively wide), the interaction is reported as **underpowered / no claim**. Also
+    no-claim if the feature fails to join, becomes near-degenerate, results depend on post-hoc
+    threshold changes, or appear **only** in surface-bait diagnostics or **only** after changing
+    the primary clock contrast. `under_60 × sharp` (≈110/month) is **exploratory only**.
+
+15. **Forbidden claims (this contrast).** No causality; no "time pressure causes worse moves /
+    worse reasoning"; no claim sharpness is proven before/without the model; no claim the v1
+    feature captures all human difficulty; **no claim human obviousness has been modeled**; no
+    "Stockfish is ground truth"; no "DRAW is solved"; no "best human predictor"; no
+    "degradation curve". Even on strong support, the moderation is a **small, secondary,
+    predictive/descriptive** finding conditioned on eval-state-dominant move quality.
+
+**Next implementation ticket: 14.2B** — fit this locked model; no design changes permitted
+without a logged deviation.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures

@@ -242,12 +242,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   no PGN/usernames/hashes). Candidate composites pending 14.2A; **sharpness NOT shown; no
   human-obviousness claim; no moderation model run.** See `reports/multipv_sharpness_combined.md`
   + `reports/phase_reports/phase_14_1c_full_sharpness_extraction.md`.
-- **Next ticket: 14.2A — Sharpness Interaction Pre-Registration** — lock v1 sharpness
-  feature/threshold (train-defined `sharp_value_fragility_v1` or train tercile of continuous
-  score), orientation (side-to-move primitive vs advantaged-player view), the **C3c
-  (move-quality) primary target** with mover-player-clustered uncertainty + month replication +
-  success/kill criteria, BEFORE any C3c/C3a/C3b modeling. Prior-trajectory extraction = optional
-  follow-up, revisited at 14.2A.
+- **14.2A complete (pre-registration, doc-only):** locked the **C3c clock × sharpness
+  move-quality moderation** test in PREREGISTRATION §C3c (target=`expected_score_loss`
+  non-mate; feature=`sharp_value_fragility_v1`; contrast=`60_180` vs `over_180` ×
+  sharp, DiD interaction coefficient; OLS controls = checkpoint+eval_band+rating_z+month+
+  termination, refs as 15.1D/15.1F; mover-player-clustered bootstrap 200reps seed42; train+val
+  estimate, locked-test confirmation; strong support = positive both months + pooled CI
+  excludes 0 + not single-cell-driven + survives robustness). Read-only join check: unique
+  keys, 100% coverage, mover-hash present. **Power bottleneck = sharp×`60_180` cell ≈348/329
+  (~677 pooled), just above ≥300 → kill criterion if it falls below ~300/mo.** under_60×sharp
+  (~110/mo) exploratory only. 12 robustness checks + forbidden-claims locked. NO model run; no
+  human-obviousness/sharpness claim. EXP-033. See
+  `reports/phase_reports/phase_14_2a_sharpness_interaction_preregistration.md`.
+- **Next ticket: 14.2B — Sharpness Interaction Modeling Implementation** — fit the locked
+  §C3c model (per-month + pooled + locked-test; mover-player-clustered bootstrap; 12 robustness
+  checks; success/weak/null/kill criteria), reusing `controlled_move_quality` +
+  `clock_association_robustness` + `clustered_uncertainty`. No design changes without a logged
+  deviation. Prior-trajectory extraction = optional follow-up.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 
