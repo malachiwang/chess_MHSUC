@@ -2129,3 +2129,53 @@ Stockfish not ground truth; DRAW not solved.
 Next step:
 16.0A — Final Synthesis / Public-Facing Claim Audit. Fallbacks: 14.3B flagging-only pre-reg
 (C3b), or 14.2E C3c enrichment audit.
+
+## EXP-038 — Synthesis Readiness / Public-Facing Claim Audit
+
+Experiment ID: EXP-038
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (doc/design audit; NO modeling; no thresholds/classifications changed; no
+data/code/tests changed; nothing staged/committed)
+
+Purpose:
+Decide whether the project is ready for final public-facing synthesis and lock the claim
+architecture.
+
+VERDICT: READY for final report drafting (Option A). Evidence sufficient; no more modeling
+needed; remaining work = figure/table generation + minor consolidation inside the synthesis
+ticket.
+
+Claim hierarchy (full text in reports/synthesis_readiness_audit.md):
+- L1 headline: (1) clock improves outcome prediction beyond eval+rating (E3→E4 −0.0138/−0.0120);
+  (2) that signal is largely the flagging/time-forfeit channel (board-decided collapsed
+  +0.0010/+0.0060; TF −0.118/−0.131), NOT board-play degradation; (3) eval-state dominates
+  next-move ES loss, clock a small robust residual after controls (60_180 vs over_180 pooled
+  +0.0034).
+- L2 secondary (caveated): robustness survival; board-decided-only same-sign; clustering doesn't
+  remove it; sharpness features feasible/stable.
+- L3 exploratory: atlas, surface-bait, sharpness distributions, C3b feasibility.
+- L4 unresolved: C3c sharpness×clock move-quality moderation — directional, underpowered/no-claim,
+  not confirmed/not disproven.
+- L5 abandoned/not-recommended: C3a (confounded/null-by-construction), human obviousness
+  (deferred), DRAW-specific, prior-trajectory control (deferred).
+
+Deliverables: candidate abstract (DRAFT), forbidden-claims list, 15-section report outline,
+10-table + 7-figure inventories (figures NOT generated here; reports/figures/ empty, ready).
+Repo/doc readiness verified: ROADMAP/PREREGISTRATION/EXPERIMENT_LOG coherent; heavy artifacts
+ignored; all arcs ready or ready-pending-figure (none blocking).
+
+Limitations restated: 10+0 only; 2 months; observational/predictive not causal; Stockfish =
+benchmark not ground truth; outcome clock ≈ flagging; board-decided collapsed; ES transform
+train-fit; clock/move-quality effect small; eval dominates; C3c underpowered; no human
+obviousness; selection/time-management remain; White-to-move scope; DRAW not solved; no
+best-predictor claim.
+
+Non-claims: no modeling run; no sharpness moderation shown; C3c neither null nor confirmed;
+C3a/C3b not modeled; no causality; no human obviousness; Stockfish not ground truth; DRAW not
+solved.
+
+Next step:
+16.0B — Final Report Skeleton / Claim Architecture Draft (assemble skeleton + generate tables/
+figures + consolidate). Fallbacks (deliberate choice): 14.2E (C3c enrichment) or 14.3B (C3b
+flagging).

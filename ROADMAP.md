@@ -297,13 +297,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   move to final synthesis.** EXP-037; PREREGISTRATION C3a/C3b audit note. No model run; no
   thresholds changed; C3c stays unresolved/no-claim. See
   `reports/phase_reports/phase_14_3a_outcome_flagging_sharpness_audit.md`.
-- **Next ticket: 16.0A — Final Synthesis / Public-Facing Claim Audit** — consolidate the settled
-  arc (C4 closed; clock = small secondary robust move-quality association + substantially the
-  flagging channel at outcome level; eval-state dominant; C3c sharpness unresolved/underpowered;
-  C3a/C3b not pursued). **Preserved fallbacks (user's call): 14.3B — Flagging Sharpness
-  Pre-Registration** (C3b-only, flagging-channel framing, never move-quality) or **14.2E —
-  Third-Month / Pooled-Power Enrichment Audit** (revisit C3c). C3a not recommended in any form.
-  Prior-trajectory extraction = optional follow-up.
+- **16.0A complete (synthesis-readiness audit, doc-only):** project is **READY for final report
+  drafting (Option A)** — evidence sufficient, no more modeling needed. Locked the 5-level claim
+  hierarchy (L1 headline: clock improves outcome prediction → that signal is largely the flagging
+  channel → eval-state dominant move quality w/ small robust clock residual; L4 unresolved: C3c
+  underpowered/no-claim; L5 abandoned: C3a/human-obviousness/DRAW/trajectory), a DRAFT
+  public-facing abstract, forbidden-claims list, 15-section report outline, and 10-table/7-figure
+  inventories — all in `reports/synthesis_readiness_audit.md`. Repo/doc coherence verified
+  (ROADMAP/PREREGISTRATION/EXPERIMENT_LOG consistent; heavy artifacts ignored; all arcs
+  ready-or-ready-pending-figure). EXP-038; PREREGISTRATION synthesis-readiness note. No model;
+  no thresholds/classifications changed. See
+  `reports/phase_reports/phase_16_0a_synthesis_readiness_public_claim_audit.md`.
+- **Next ticket: 16.0B — Final Report Skeleton / Claim Architecture Draft** — assemble the report
+  skeleton from `synthesis_readiness_audit.md`, generate the inventoried tables + 7 figures into
+  `reports/figures/`, consolidate the per-arc reports. **Preserved fallbacks (deliberate choice
+  only, off the default path): 14.2E — Third-Month/Pooled-Power C3c Enrichment Audit** or
+  **14.3B — C3b Flagging Sharpness Pre-Registration**. Prior-trajectory extraction = optional
+  follow-up.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 

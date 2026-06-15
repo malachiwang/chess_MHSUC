@@ -349,6 +349,18 @@ requires its own separate pre-registration before modeling.** 14.3A recommends m
 synthesis (16.0A); a flagging-only C3b pre-registration is the named fallback if the channel
 question is specifically desired. No design or thresholds changed here.
 
+**Synthesis-readiness status (16.0A, 2026-06-15):** the project is assessed **ready for final
+public-facing synthesis**. Settled core claims: (1) clock improves outcome prediction beyond
+eval+rating; (2) that outcome-level signal is **substantially the flagging/time-forfeit
+channel** (board-decided residual collapsed); (3) at the move level, **eval state dominates**
+and clock retains a **small, replicated, robust, secondary** association after controls — all
+predictive/descriptive, not causal. **Sharpness moderation (C3c) is unresolved/no-claim**;
+C3a/C3b are not pursued. The reusable claim hierarchy, candidate abstract, forbidden-claims
+list, and report/table/figure inventories live in `reports/synthesis_readiness_audit.md`. Any
+future sharpness work (C3c enrichment or C3b flagging) requires its **own** pre-registration.
+This note **does not rewrite any locked analysis**; locked contrasts/thresholds/classifications
+stand.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures
