@@ -1864,3 +1864,54 @@ Pilot (MultiPV-5, d10 + d12, seed 42, 1000 rows / 250 per checkpoint, Stockfish 
 Next step:
 14.1C — Full Sharpness Extraction (both months, MultiPV-5 d12, ~3.7 h) -> 14.2A Sharpness
 Interaction Pre-Registration before any C3c modeling. Prior-trajectory = optional follow-up.
+
+## EXP-032 — Phase 14.1C Full Sharpness Extraction
+
+Experiment ID: EXP-032
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (full MultiPV extraction both months; gitignored artifacts written; no
+moderation models; no new deps; nothing staged/committed)
+
+Purpose:
+Full MultiPV-5 depth-12 sharpness feature extraction over both 10+0 months, producing the
+gitignored artifacts 14.2A needs to lock sharpness thresholds.
+
+Implementation:
+- multipv_sharpness.py: added --full (all OK rows, single depth pass, no stratified sampling),
+  --combined (render cross-month report from extracted artifacts, no engine), --report-only
+  (re-render a month report from a saved artifact, no engine); full_summary +
+  render_month_full_report + render_combined_full_report; rounded report medians; NaN-safe
+  runtime cells. Pilot path preserved. +2 tests; full suite 1,729 passing, 0 regressions.
+
+Extraction (Stockfish 18, MultiPV-5, depth-12, seed 42):
+- 2024-09: 64,371/64,371 OK (61,956 non-mate, 2,415 mate-band). 2024-10: 61,868/61,868 OK
+  (59,625 non-mate, 2,243 mate-band).
+- Validation BOTH months: FEN round-trip 1.0; all-candidates-legal 1.0; median MultiPV count 5;
+  <K-legal share ~5.8% (single-legal-move forced positions); top-1 vs stored pre_sf_eval_cp
+  |Δcp| median 14 / p90 49. Only null among key features = best_second_gap_es (617/616 =
+  single-legal-move rows; expected). n_good_*/worst_top5_loss/sharp_v1 zero nulls.
+
+Feature distributions (non-mate), 2024-09 / 2024-10 — strikingly stable:
+- sharp_value_fragility_v1 0.1417 / 0.1407 (matches pilot 0.142); relaxed 0.0817/0.0836;
+  strict 0.0732/0.0744.
+- median best->2nd ES gap 0.0126/0.0124; median n_good_10es 5/5; median worst_top5_loss_es
+  0.0463/0.0465; median legal moves 34/34.
+- surface_bait_10es 0.022/0.024; best-move quiet 0.692/0.690, check 0.078/0.079, capture
+  0.258/0.260.
+- by-checkpoint sharp_v1 eases later: move_10 0.148/0.151, move_20 0.152/0.153, move_30
+  0.134/0.123, move_40 0.103/0.102 (replicated trend).
+- Month-to-month: sharp_v1 Δ 0.0010; medians identical; no anomaly before 14.2A.
+
+Runtime: awake rate ~100 ms/pos (~3.5 h both months of compute). Raw wall-clock inflated by
+overnight system sleep on battery (pmset: repeated Clamshell/Maintenance Sleep suspends) —
+suspension, not engine cost. Operational note: keep machine awake/plugged for long runs.
+
+Framing: primary v1 = OBJECTIVE value fragility; surface tags + surface-bait = EXPLORATORY,
+NOT human obviousness (Tier B deferred). Candidate composites pending 14.2A. No sharpness/
+moderation/obviousness claim. Predictive/descriptive; MultiPV fixed-depth approximates
+narrowness, not ground truth; White-to-move scope.
+
+Next step:
+14.2A — Sharpness Interaction Pre-Registration (lock feature/threshold/orientation/C3c target/
+uncertainty/criteria before any C3c/C3a/C3b modeling). Prior-trajectory = optional follow-up.

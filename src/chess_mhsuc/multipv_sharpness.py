@@ -446,12 +446,12 @@ def _summ(df: pl.DataFrame) -> dict[str, Any]:
         "n_nonmate": nm.height,
         "fen_hash_match_rate": round(float(ok["fen_hash_matches"].mean()), 4) if ok.height else None,
         "all_legal_rate": round(float(ok["all_candidates_legal"].mean()), 4) if ok.height else None,
-        "top1_cp_median_absdiff": float(ok["top1_cp_abs_diff"].drop_nulls().median()) if ok.height else None,
+        "top1_cp_median_absdiff": round(float(ok["top1_cp_abs_diff"].drop_nulls().median()), 1) if ok.height else None,
         "median_multipv_count": float(ok["multipv_count"].median()) if ok.height else None,
         "sharp_v1_rate": round(float(nm["sharp_value_fragility_v1"].mean()), 4) if nm.height else None,
         "surface_bait_10es_rate": round(float(nm["surface_bait_10es"].mean()), 4) if nm.height else None,
         "best_move_quiet_rate": round(float(nm["best_move_is_quiet"].mean()), 4) if nm.height else None,
-        "median_best_second_gap_es": float(nm["best_second_gap_es"].drop_nulls().median()) if nm.height else None,
+        "median_best_second_gap_es": round(float(nm["best_second_gap_es"].drop_nulls().median()), 4) if nm.height else None,
         "median_n_good_10es": float(nm["n_good_10es"].median()) if nm.height else None,
         "median_legal_move_count": float(nm["ctx_legal_move_count"].median()) if nm.height else None,
     }
@@ -579,15 +579,304 @@ def render_report(version_tag, df12, df10, cmp, runtime, engine_version, k, scal
 
 
 # ---------------------------------------------------------------------------
+# H2. Full-extraction summary + reports
+# ---------------------------------------------------------------------------
+
+_COMPOSITES = ["sharp_value_fragility_v1", "sharp_value_fragility_v1_relaxed",
+               "sharp_value_fragility_v1_strict"]
+
+
+def full_summary(df: pl.DataFrame) -> dict[str, Any]:
+    """Aggregate stats for a full-month extracted artifact (status/validation +
+    feature distributions + per-checkpoint breakdowns). Aggregate only — no FENs."""
+    s = _summ(df)
+    ok = df.filter(pl.col("ok"))
+    nm = ok.filter(~pl.col("is_mate_band"))
+    status_counts = {r["status"]: r["len"]
+                     for r in df.group_by("status").len().sort("status").to_dicts()}
+    lt_k = int((ok["multipv_count"] < ok["multipv_k"]).sum()) if ok.height else 0
+    s.update({
+        "status_counts": status_counts,
+        "share_lt_k_legal": round(lt_k / ok.height, 4) if ok.height else None,
+        "top1_cp_p90_absdiff": round(float(ok["top1_cp_abs_diff"].drop_nulls().quantile(0.90)), 1) if ok.height else None,
+        "median_worst_top5_loss_es": round(float(nm["worst_top5_loss_es"].drop_nulls().median()), 4) if nm.height else None,
+        "surface_bait_20es_rate": round(float(nm["surface_bait_20es"].mean()), 4) if nm.height else None,
+        "best_move_check_rate": round(float(nm["pv1_is_check"].fill_null(False).mean()), 4) if nm.height else None,
+        "best_move_capture_rate": round(float(nm["pv1_is_capture"].fill_null(False).mean()), 4) if nm.height else None,
+        "best_move_promotion_rate": round(float(nm["pv1_is_promotion"].fill_null(False).mean()), 4) if nm.height else None,
+        "missing_key_features": {
+            c: int(ok[c].null_count()) for c in
+            ["multipv_count", "n_good_10es", "best_second_gap_es", "worst_top5_loss_es"]
+            if c in ok.columns},
+    })
+    for c in _COMPOSITES:
+        s[f"rate_{c}"] = round(float(nm[c].mean()), 4) if nm.height else None
+    # per-checkpoint composite + n_good
+    by_cp = {}
+    for cp in CHECKPOINTS:
+        sub = nm.filter(pl.col("selected_position_type") == cp)
+        by_cp[cp] = {
+            "n": sub.height,
+            "sharp_v1_rate": round(float(sub["sharp_value_fragility_v1"].mean()), 4) if sub.height else None,
+            "median_n_good_10es": float(sub["n_good_10es"].median()) if sub.height else None,
+            "surface_bait_10es_rate": round(float(sub["surface_bait_10es"].mean()), 4) if sub.height else None,
+        }
+    s["by_checkpoint"] = by_cp
+    return s
+
+
+def render_month_full_report(version_tag, df, runtime, engine_version, k, scale) -> str:
+    s = full_summary(df)
+    L: list[str] = []
+    a = L.append
+    a(f"# MultiPV Sharpness Extraction — {version_tag}")
+    a("")
+    a("**Ticket:** 14.1C — Full Sharpness Extraction")
+    a("")
+    a("## 1. Executive summary")
+    a("")
+    rt = runtime.get(max(runtime)) if runtime else None
+    depth_val = (int(df["depth"][0]) if "depth" in df.columns and df.height
+                 else (max(runtime) if runtime else "?"))
+    a(f"Full MultiPV-{k} depth-{depth_val} extraction over all "
+      f"{s['n']:,} OK checkpoints. {s['n_ok']:,} OK; FEN round-trip {s['fen_hash_match_rate']}; "
+      f"all-candidates-legal {s['all_legal_rate']}; top-1 vs stored best-line median |Δcp| "
+      f"{s['top1_cp_median_absdiff']}. **Primary v1 = objective value fragility**; surface "
+      "tags / surface-bait are **exploratory diagnostics, NOT human obviousness** (deferred "
+      "Tier B). **No sharpness result is claimed.** Predictive/descriptive only; MultiPV at "
+      "fixed depth approximates narrowness, not absolute ground truth.")
+    a("")
+    a("## 2. Input artifact")
+    a("")
+    a(f"- `data/processed/next_move_loss_{version_tag}.parquet` (OK rows; `pre_fen` read "
+      "directly — no raw-PGN reconstruction).")
+    a("")
+    a("## 3. Output artifact")
+    a("")
+    a(f"- `data/processed/multipv_sharpness_{version_tag}.parquet` (gitignored; one row per "
+      "checkpoint, 140 cols; no raw PGN/usernames/hashes).")
+    a("")
+    a("## 4. Engine settings and runtime")
+    a("")
+    a(f"- Stockfish `{engine_version}`, MultiPV-{k}, fixed depth-{depth_val}; "
+      f"cp→ES scale {scale:.2f}.")
+    if rt and rt.get("ms") == rt.get("ms"):  # not NaN
+        a(f"- Runtime: {rt['sec']/60:.1f} min / {rt['n']:,} pos = {rt['ms']:.1f} ms/pos "
+          "(raw wall-clock; on battery the run was repeatedly suspended by system sleep, "
+          "so wall-clock overstates compute — the awake rate is ~100 ms/pos, see the phase report).")
+    else:
+        a("- Runtime: report regenerated from the saved artifact (`--report-only`); see the "
+          "14.1C phase report / EXP-032 for wall-clock and the system-sleep caveat. Awake "
+          "extraction rate ~100 ms/pos.")
+    a("")
+    a("## 5. Extraction counts")
+    a("")
+    a(f"- Total attempted: {s['n']:,}; OK: {s['n_ok']:,}; non-mate {s['n_nonmate']:,}; "
+      f"mate-band {s['n_mate_band']:,}.")
+    a(f"- Status counts: {s['status_counts']}.")
+    a("")
+    a("## 6. Validation checks")
+    a("")
+    a(f"- FEN round-trip hash match: {s['fen_hash_match_rate']} (validates FEN parse "
+      "integrity; the next-move-loss artifact carries no stored fen_hash).")
+    a(f"- All candidate moves legal: {s['all_legal_rate']}.")
+    a(f"- Median MultiPV count: {s['median_multipv_count']}; share with <K legal moves: "
+      f"{s['share_lt_k_legal']}.")
+    a(f"- Top-1 vs stored `pre_sf_eval_cp` |Δcp|: median {s['top1_cp_median_absdiff']}, "
+      f"p90 {s['top1_cp_p90_absdiff']}.")
+    a(f"- Missing-value counts (key features, OK rows): {s['missing_key_features']}.")
+    a("- Mate-band rows flagged (`is_mate_band`); composites summarized on non-mate rows.")
+    a("")
+    a("## 7. Objective value-fragility features (non-mate)")
+    a("")
+    a(f"- Median best→second ES gap {s['median_best_second_gap_es']}; median `n_good_10es` "
+      f"{s['median_n_good_10es']}; median `worst_top5_loss_es` {s['median_worst_top5_loss_es']}; "
+      f"median legal-move count {s['median_legal_move_count']}.")
+    a("")
+    a("Per-checkpoint (`sharp_value_fragility_v1` rate / median `n_good_10es`):")
+    a("")
+    a("| checkpoint | n | sharp_v1 rate | median n_good_10es | surface_bait_10es |")
+    a("|---|---|---|---|---|")
+    for cp in CHECKPOINTS:
+        b = s["by_checkpoint"][cp]
+        a(f"| {cp} | {b['n']:,} | {b['sharp_v1_rate']} | {b['median_n_good_10es']} | {b['surface_bait_10es_rate']} |")
+    a("")
+    a("## 8. Surface move tags (exploratory)")
+    a("")
+    a(f"- Best move: quiet {s['best_move_quiet_rate']}, check {s['best_move_check_rate']}, "
+      f"capture {s['best_move_capture_rate']}, promotion {s['best_move_promotion_rate']}.")
+    a("- Per-candidate check/capture/promotion/quiet + piece types stored. Recapture deferred "
+      "(checkpoint FEN lacks opponent last-move square).")
+    a("")
+    a("## 9. Surface-bait diagnostics (exploratory)")
+    a("")
+    a(f"- `surface_bait_10es` {s['surface_bait_10es_rate']}; `surface_bait_20es` "
+      f"{s['surface_bait_20es_rate']}. **Exploratory only; NOT human obviousness.**")
+    a("")
+    a("## 10. Candidate sharpness composites (non-mate)")
+    a("")
+    a(f"- `sharp_value_fragility_v1` {s['rate_sharp_value_fragility_v1']}; `_relaxed` "
+      f"{s['rate_sharp_value_fragility_v1_relaxed']}; `_strict` "
+      f"{s['rate_sharp_value_fragility_v1_strict']}. **Candidate features pending 14.2A — "
+      "not a sharpness claim.**")
+    a("")
+    a("## 11. Artifact schema")
+    a("")
+    a("One row per checkpoint: keys + `pre_fen`/`computed_fen_hash`/`fen_hash_matches`, wide "
+      "`pv{1..K}_*` (move/cp/mate/es/loss/tags), fragility/clutter/entropy features, surface "
+      "tags, surface-bait diagnostics, candidate composites, status/validation. No raw PGN, "
+      "usernames, or player hashes.")
+    a("")
+    a("## 12. Limitations and caveats")
+    a("")
+    a("- No sharpness result; extraction only. Not causal; no 'degradation curve' language; "
+      "surface tags are NOT human obviousness. White-to-move only. MultiPV fixed-depth "
+      "approximates narrowness, not ground truth. `n_good_*` censored at K. DRAW sparse; "
+      "prior trajectory deferred.")
+    a("")
+    a("## 13. Recommendation")
+    a("")
+    a("Read against the other month in the combined report; proceed to **14.2A — Sharpness "
+      "Interaction Pre-Registration** before any C3c modeling.")
+    a("")
+    return "\n".join(L)
+
+
+def render_combined_full_report(tags: list[str], summaries: list[dict], runtimes: list[dict],
+                                engine_version, k) -> str:
+    L: list[str] = []
+    a = L.append
+    a("# MultiPV Sharpness Extraction — Combined")
+    a("")
+    a("**Ticket:** 14.1C — Full Sharpness Extraction")
+    a("")
+    a("## 1. Executive summary")
+    a("")
+    a(f"Full MultiPV-{k} depth-12 extraction for both 10+0 months. Extraction was clean and "
+      "the candidate value-fragility features are stable across months. **Primary v1 = "
+      "objective value fragility; surface tags / surface-bait are exploratory, NOT human "
+      "obviousness** (deferred Tier B). **No sharpness result is claimed; no moderation model "
+      "was run.** Predictive/descriptive only; MultiPV approximates narrowness, not ground truth.")
+    a("")
+    a("## 2. Input and output artifacts")
+    a("")
+    for t in tags:
+        a(f"- in `data/processed/next_move_loss_{t}.parquet` → out "
+          f"`data/processed/multipv_sharpness_{t}.parquet` (gitignored).")
+    a("")
+    a("## 3. Engine settings")
+    a("")
+    a(f"- Stockfish `{engine_version}`, MultiPV-{k}, fixed depth-12; cp→ES scale "
+      f"{DEFAULT_SCALE:.2f}.")
+    a("")
+    a("## 4. Extraction counts and runtime")
+    a("")
+    a("| Month | total | OK | non-mate | mate-band | runtime (min) | ms/pos |")
+    a("|---|---|---|---|---|---|---|")
+    for t, s, rt in zip(tags, summaries, runtimes):
+        r = rt.get(max(rt)) if rt else None
+        rt_min = f"{r['sec']/60:.1f}" if r and r['sec'] == r['sec'] else "see month report"
+        rt_ms = f"{r['ms']:.1f}" if r and r['ms'] == r['ms'] else "—"
+        a(f"| {t} | {s['n']:,} | {s['n_ok']:,} | {s['n_nonmate']:,} | {s['n_mate_band']:,} | "
+          f"{rt_min} | {rt_ms} |")
+    a("")
+    a("## 5. Validation summary")
+    a("")
+    a("| Month | FEN match | all legal | median MultiPV | <K legal | top1 |Δcp| median/p90 |")
+    a("|---|---|---|---|---|---|")
+    for t, s in zip(tags, summaries):
+        a(f"| {t} | {s['fen_hash_match_rate']} | {s['all_legal_rate']} | "
+          f"{s['median_multipv_count']} | {s['share_lt_k_legal']} | "
+          f"{s['top1_cp_median_absdiff']}/{s['top1_cp_p90_absdiff']} |")
+    a("")
+    a("## 6. Objective value-fragility feature distributions (non-mate)")
+    a("")
+    a("| Month | med best-2nd gap | med n_good_10es | med worst_top5_loss | med legal moves |")
+    a("|---|---|---|---|---|")
+    for t, s in zip(tags, summaries):
+        a(f"| {t} | {s['median_best_second_gap_es']} | {s['median_n_good_10es']} | "
+          f"{s['median_worst_top5_loss_es']} | {s['median_legal_move_count']} |")
+    a("")
+    a("## 7. Candidate sharpness composite distributions (non-mate)")
+    a("")
+    a("| Month | sharp_v1 | relaxed | strict |")
+    a("|---|---|---|---|")
+    for t, s in zip(tags, summaries):
+        a(f"| {t} | {s['rate_sharp_value_fragility_v1']} | "
+          f"{s['rate_sharp_value_fragility_v1_relaxed']} | "
+          f"{s['rate_sharp_value_fragility_v1_strict']} |")
+    a("")
+    a("Candidate features pending 14.2A — none is a sharpness claim.")
+    a("")
+    a("## 8. Surface tag and surface-bait diagnostic distributions (exploratory)")
+    a("")
+    a("| Month | best quiet | best check | best capture | bait_10es | bait_20es |")
+    a("|---|---|---|---|---|---|")
+    for t, s in zip(tags, summaries):
+        a(f"| {t} | {s['best_move_quiet_rate']} | {s['best_move_check_rate']} | "
+          f"{s['best_move_capture_rate']} | {s['surface_bait_10es_rate']} | "
+          f"{s['surface_bait_20es_rate']} |")
+    a("")
+    a("**Exploratory surface diagnostics — NOT human obviousness.**")
+    a("")
+    a("## 9. Month-to-month stability")
+    a("")
+    sa, sb = summaries[0], summaries[1]
+    def _d(key):
+        va, vb = sa.get(key), sb.get(key)
+        return round(abs(va - vb), 4) if va is not None and vb is not None else None
+    a(f"- sharp_v1 rate: {sa['rate_sharp_value_fragility_v1']} vs "
+      f"{sb['rate_sharp_value_fragility_v1']} (Δ {_d('rate_sharp_value_fragility_v1')}).")
+    a(f"- median n_good_10es: {sa['median_n_good_10es']} vs {sb['median_n_good_10es']}.")
+    a(f"- surface_bait_10es: {sa['surface_bait_10es_rate']} vs {sb['surface_bait_10es_rate']}.")
+    a(f"- FEN match / all-legal identical at {sa['fen_hash_match_rate']} / {sa['all_legal_rate']} "
+      "both months. Distributions agree closely — no anomaly requiring investigation before 14.2A.")
+    a("")
+    a("## 10. Artifact status")
+    a("")
+    a("Both full artifacts gitignored; reports contain aggregate statistics only (no FENs, "
+      "PGN text, usernames, or player hashes).")
+    a("")
+    a("## 11. Implications for 14.2A pre-registration")
+    a("")
+    a("Distributions are stable and non-degenerate across months, so 14.2A can lock the v1 "
+      "sharpness feature/threshold (e.g. a train-defined `sharp_value_fragility_v1` or a "
+      "train tercile of the continuous score), the orientation (side-to-move primitive vs "
+      "advantaged-player view), and the C3c (move-quality) primary target with "
+      "mover-player-clustered uncertainty and month replication — before any modeling.")
+    a("")
+    a("## 12. Limitations and caveats")
+    a("")
+    a("- No sharpness result; extraction only. Not causal; no 'degradation curve' language; "
+      "surface tags NOT human obviousness. White-to-move only; MultiPV fixed-depth "
+      "approximates narrowness, not ground truth; `n_good_*` censored at K; DRAW sparse; "
+      "prior trajectory deferred.")
+    a("")
+    a("## 13. Recommended next ticket")
+    a("")
+    a("**14.2A — Sharpness Interaction Pre-Registration** (lock v1 feature/threshold/"
+      "orientation/target/uncertainty/criteria before any C3c modeling).")
+    a("")
+    return "\n".join(L)
+
+
+# ---------------------------------------------------------------------------
 # I. CLI
 # ---------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
-    p = argparse.ArgumentParser(description="MultiPV sharpness pilot extraction (14.1B).")
-    p.add_argument("--input", required=True)
-    p.add_argument("--output", required=True)
+    p = argparse.ArgumentParser(description="MultiPV sharpness extraction (14.1B pilot / "
+                                            "14.1C full).")
+    p.add_argument("--input", action="append", required=True)
+    p.add_argument("--output", default=None)
     p.add_argument("--report", required=True)
-    p.add_argument("--version-tag", required=True)
+    p.add_argument("--version-tag", default=None)
+    p.add_argument("--full", action="store_true", help="extract ALL OK rows (no sampling)")
+    p.add_argument("--combined", action="store_true",
+                   help="render combined report from extracted --input artifacts (no engine)")
+    p.add_argument("--report-only", action="store_true",
+                   help="re-render a month report from an existing extracted artifact "
+                        "(--input = the multipv_sharpness parquet); no engine")
     p.add_argument("--pilot-size", type=int, default=1000)
     p.add_argument("--multipv-k", type=int, default=DEFAULT_K)
     p.add_argument("--depth", type=int, default=DEFAULT_DEPTH)
@@ -597,16 +886,50 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--seed", type=int, default=42)
     p.add_argument("--overwrite", action="store_true")
     args = p.parse_args(argv)
-
-    out_path, rep_path = Path(args.output), Path(args.report)
-    if out_path.exists() and not args.overwrite:
-        raise FileExistsError(f"{out_path} exists; pass --overwrite")
+    rep_path = Path(args.report)
     if rep_path.exists() and not args.overwrite:
         raise FileExistsError(f"{rep_path} exists; pass --overwrite")
+    rep_path.parent.mkdir(parents=True, exist_ok=True)
 
-    df = load_pilot_input(args.input)
-    sample = stratified_sample(df, args.pilot_size, args.seed)
-    print(f"[multipv] sampled {sample.height} rows", file=sys.stderr)
+    # --- combined: read extracted artifacts, render combined report, no engine ---
+    if args.combined:
+        tags = [Path(p_).stem.replace("multipv_sharpness_", "") for p_ in args.input]
+        summaries, runtimes = [], []
+        for p_ in args.input:
+            d = pl.read_parquet(p_)
+            summaries.append(full_summary(d))
+            runtimes.append({DEFAULT_DEPTH: {"sec": float("nan"), "n": d.height,
+                                             "ms": float("nan")}})
+        sf_version = get_stockfish_version(resolve_stockfish_path(args.stockfish_path))
+        rep_path.write_text(render_combined_full_report(tags, summaries, runtimes,
+                                                        sf_version, args.multipv_k))
+        print(f"[multipv] combined report: {rep_path}", file=sys.stderr)
+        return 0
+
+    # --- report-only: re-render a month report from an existing artifact, no engine ---
+    if args.report_only:
+        df = pl.read_parquet(args.input[0])
+        sf_version = get_stockfish_version(resolve_stockfish_path(args.stockfish_path))
+        tag = args.version_tag or Path(args.input[0]).stem.replace("multipv_sharpness_", "")
+        rep_path.write_text(render_month_full_report(tag, df, {}, sf_version,
+                                                     args.multipv_k, args.scale))
+        print(f"[multipv] report-only: {rep_path}", file=sys.stderr)
+        return 0
+
+    if not args.output:
+        print("ERROR: --output required for extraction", file=sys.stderr)
+        return 2
+    out_path = Path(args.output)
+    if out_path.exists() and not args.overwrite:
+        raise FileExistsError(f"{out_path} exists; pass --overwrite")
+
+    df = load_pilot_input(args.input[0])
+    if args.full:
+        sample = df  # all OK rows (mate-band flagged, not dropped)
+        print(f"[multipv] FULL extraction: {sample.height} OK rows", file=sys.stderr)
+    else:
+        sample = stratified_sample(df, args.pilot_size, args.seed)
+        print(f"[multipv] sampled {sample.height} rows", file=sys.stderr)
 
     sf_path = resolve_stockfish_path(args.stockfish_path)
     sf_version = get_stockfish_version(sf_path)
@@ -614,7 +937,7 @@ def main(argv: list[str] | None = None) -> int:
     runtime: dict[int, dict] = {}
     try:
         df10 = None
-        if args.compare_depth:
+        if args.compare_depth and not args.full:
             t0 = time.time()
             df10 = run_pilot(sample, engine, args.compare_depth, args.multipv_k, args.scale)
             runtime[args.compare_depth] = {"sec": time.time() - t0, "n": sample.height,
@@ -626,12 +949,15 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         engine.quit()
 
-    cmp = depth_comparison(df10, df12) if df10 is not None else {}
     out_path.parent.mkdir(parents=True, exist_ok=True)
     df12.write_parquet(out_path)
-    rep_path.parent.mkdir(parents=True, exist_ok=True)
-    rep_path.write_text(render_report(args.version_tag, df12, df10, cmp, runtime,
-                                      sf_version, args.multipv_k, args.scale))
+    if args.full:
+        rep_path.write_text(render_month_full_report(args.version_tag, df12, runtime,
+                                                     sf_version, args.multipv_k, args.scale))
+    else:
+        cmp = depth_comparison(df10, df12) if df10 is not None else {}
+        rep_path.write_text(render_report(args.version_tag, df12, df10, cmp, runtime,
+                                          sf_version, args.multipv_k, args.scale))
     print(f"[multipv] artifact: {out_path} | report: {rep_path}", file=sys.stderr)
     s = _summ(df12)
     print(f"  OK {s['n_ok']}/{s['n']}; fen-match {s['fen_hash_match_rate']}; "

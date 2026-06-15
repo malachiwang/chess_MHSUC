@@ -255,6 +255,57 @@ def test_report_excludes_pgn_and_usernames():
     assert "1." in md and "pgn" not in md.lower().replace("pgn text", "")
 
 
+def _extracted_frame(n=8):
+    rng = np.random.default_rng(0)
+    return pl.DataFrame({
+        "game_id": [f"g{i}" for i in range(n)],
+        "selected_position_type": [ms.CHECKPOINTS[i % 4] for i in range(n)],
+        "status": ["ok"] * n, "ok": [True] * n, "is_mate_band": [False] * n,
+        "multipv_k": [5] * n, "multipv_count": [5, 5, 4, 5, 3, 5, 5, 5][:n],
+        "fen_hash_matches": [True] * n, "all_candidates_legal": [True] * n,
+        "top1_cp_abs_diff": list(rng.integers(0, 30, n)),
+        "n_good_10es": [2, 5, 1, 4, 3, 5, 2, 5][:n],
+        "best_second_gap_es": [0.02, 0.0, 0.12, 0.01, 0.05, 0.0, 0.08, 0.0][:n],
+        "worst_top5_loss_es": [0.12, 0.02, 0.30, 0.04, 0.10, 0.02, 0.15, 0.01][:n],
+        "ctx_legal_move_count": [20, 30, 12, 25, 18, 32, 15, 28][:n],
+        "sharp_value_fragility_v1": [True, False, True, False, False, False, True, False][:n],
+        "sharp_value_fragility_v1_relaxed": [True, False, True, False, False, False, True, False][:n],
+        "sharp_value_fragility_v1_strict": [False, False, True, False, False, False, False, False][:n],
+        "surface_bait_10es": [False, False, True, False, False, False, True, False][:n],
+        "surface_bait_20es": [False, False, True, False, False, False, False, False][:n],
+        "best_move_is_quiet": [True, True, False, True, False, True, True, True][:n],
+        "pv1_is_check": [False] * n, "pv1_is_capture": [False, True, False, True, False, False, True, False][:n],
+        "pv1_is_promotion": [False] * n,
+    })
+
+
+def test_full_summary_and_report():
+    df = _extracted_frame(8)
+    s = ms.full_summary(df)
+    assert s["n_ok"] == 8 and s["n_nonmate"] == 8
+    assert s["share_lt_k_legal"] == pytest.approx(2 / 8)  # two rows with count<5
+    assert "by_checkpoint" in s and set(s["by_checkpoint"]) == set(ms.CHECKPOINTS)
+    md = ms.render_month_full_report("synth_v1", df, {12: {"sec": 60.0, "n": 8, "ms": 100.0}},
+                                     "stockfish 18", 5, ms.DEFAULT_SCALE)
+    assert "Full Sharpness Extraction" in md
+    assert "human obviousness" in md.lower()  # appears only in the negated caveat
+    assert "No raw PGN" in md  # schema privacy disclaimer present
+    # no per-row FEN strings (board layouts) leak into the aggregate report
+    import re
+    assert not re.search(r"/[pnbrqkPNBRQK1-8]+/[pnbrqkPNBRQK1-8]+/", md)
+
+
+def test_combined_report_renders():
+    df = _extracted_frame(8)
+    s = ms.full_summary(df)
+    md = ms.render_combined_full_report(
+        ["2024_09_250k_v1", "2024_10_250k_v1"], [s, s],
+        [{12: {"sec": 60.0, "n": 8, "ms": 100.0}}, {12: {"sec": 60.0, "n": 8, "ms": 100.0}}],
+        "stockfish 18", 5)
+    assert "MultiPV Sharpness Extraction — Combined" in md
+    assert "NOT human obviousness" in md
+
+
 def test_cli_parses(monkeypatch, tmp_path):
     import sys as _sys
     called = {}

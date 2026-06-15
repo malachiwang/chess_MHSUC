@@ -230,10 +230,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   NOT shown; no human-obviousness claim. See
   `reports/multipv_sharpness_pilot_2024_09_250k_v1.md` +
   `reports/phase_reports/phase_14_1b_pilot_sharpness_extraction.md`.
-- **Next ticket: 14.1C — Full Sharpness Extraction** — both months, MultiPV-5 depth-12 (~3.7 h),
-  gitignored artifacts + report, reusing `multipv_sharpness.py`. Full artifacts needed so 14.2A
-  can inspect sharpness distributions before locking thresholds → then **14.2A — Sharpness
-  Interaction Pre-Registration** before any C3c modeling. Prior-trajectory extraction = optional
+- **14.1C complete (full extraction):** MultiPV-5 depth-12 over BOTH months. Added `--full` /
+  `--combined` / `--report-only` modes to `multipv_sharpness.py` (+2 tests, 1,729 total passing).
+  **2024-09 64,371/64,371 OK; 2024-10 61,868/61,868 OK; FEN round-trip 1.0; all-legal 1.0**
+  both months. Strikingly stable across months: `sharp_value_fragility_v1` 0.1417/0.1407
+  (matches pilot 0.142), identical medians (best→2nd gap 0.012, n_good_10es 5, legal_moves 34),
+  top-1 vs stored |Δcp| 14/49 median/p90. <K-legal share ~5.8% (single-legal-move positions →
+  only null is `best_second_gap_es`, expected). By-checkpoint sharp_v1 eases move_10→40
+  (0.15→0.10) both months. Awake compute ~100 ms/pos (~3.5 h both); raw wall-clock inflated by
+  overnight system sleep on battery (suspend, not engine cost). Artifacts gitignored (140 cols,
+  no PGN/usernames/hashes). Candidate composites pending 14.2A; **sharpness NOT shown; no
+  human-obviousness claim; no moderation model run.** See `reports/multipv_sharpness_combined.md`
+  + `reports/phase_reports/phase_14_1c_full_sharpness_extraction.md`.
+- **Next ticket: 14.2A — Sharpness Interaction Pre-Registration** — lock v1 sharpness
+  feature/threshold (train-defined `sharp_value_fragility_v1` or train tercile of continuous
+  score), orientation (side-to-move primitive vs advantaged-player view), the **C3c
+  (move-quality) primary target** with mover-player-clustered uncertainty + month replication +
+  success/kill criteria, BEFORE any C3c/C3a/C3b modeling. Prior-trajectory extraction = optional
   follow-up, revisited at 14.2A.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
