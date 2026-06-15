@@ -285,11 +285,24 @@ clock-residual moderation (11.0A kill condition not triggered).
   and forbidden paths (threshold relaxation, contrast switching, surface-bait headlining,
   rerun-until-pass) locked. EXP-036; PREREGISTRATION §C3c final consolidation note. No model
   run. See `reports/phase_reports/phase_14_2d_c3c_underpowered_result_consolidation.md`.
-- **Next ticket: 14.3A — Outcome/Flagging Sharpness Audit** — separate audit + fresh
-  pre-registration for whether sharpness moderates the time-forfeit/outcome channels (C3a/C3b);
-  does NOT reuse the underpowered C3c model. **Preserved alternatives (user's call):
-  14.2E — Third-Month / Pooled-Power Enrichment Audit** (revisit C3c via Path A/B) or
-  **16.0A — Final Synthesis / Public-Facing Claim Audit** (stop modeling, consolidate the arc).
+- **14.3A complete (audit, doc-only):** assessed C3a (outcome) / C3b (flagging) sharpness
+  moderation, separate from C3c. **C3a NOT recommended** — all-games C3a rediscovers the
+  flagging channel (11.2B), board-decided C3a is null-by-construction (the residual it would
+  moderate already collapsed). **C3b coherent but low-value:** `is_time_forfeit` available
+  (game-level; player-to-move flag needs a `result_class` join), TF clock gradient strongly
+  mechanical (over_180 ~12% → 60_180 ~35% → under_60 ~64–69%), but the sharp×clock INTERACTION
+  shares C3c's scarce cells (sharp×60_180 ≈348/329; sharp×under_60 ≈82/97) → likely underpowered
+  too, and a positive result = time-management/selection channel, NOT move-quality. Feasible with
+  existing artifacts (no new extraction). **RECOMMENDATION: Option C — stop sharpness modeling,
+  move to final synthesis.** EXP-037; PREREGISTRATION C3a/C3b audit note. No model run; no
+  thresholds changed; C3c stays unresolved/no-claim. See
+  `reports/phase_reports/phase_14_3a_outcome_flagging_sharpness_audit.md`.
+- **Next ticket: 16.0A — Final Synthesis / Public-Facing Claim Audit** — consolidate the settled
+  arc (C4 closed; clock = small secondary robust move-quality association + substantially the
+  flagging channel at outcome level; eval-state dominant; C3c sharpness unresolved/underpowered;
+  C3a/C3b not pursued). **Preserved fallbacks (user's call): 14.3B — Flagging Sharpness
+  Pre-Registration** (C3b-only, flagging-channel framing, never move-quality) or **14.2E —
+  Third-Month / Pooled-Power Enrichment Audit** (revisit C3c). C3a not recommended in any form.
   Prior-trajectory extraction = optional follow-up.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)

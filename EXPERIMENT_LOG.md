@@ -2084,3 +2084,48 @@ Next step:
 14.3A — Outcome/Flagging Sharpness Audit (separate C3a/C3b question; does NOT reuse the
 underpowered C3c model). Alternatives: 14.2E enrichment audit (revisit C3c) or 16.0A final
 synthesis. Prior-trajectory extraction = optional follow-up.
+
+## EXP-037 — Outcome / Flagging Sharpness Audit
+
+Experiment ID: EXP-037
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (doc/design audit; NO modeling; no thresholds/C3c-classification changed; no
+data/code/tests changed; nothing staged/committed)
+
+Purpose:
+Audit whether C3a (outcome) / C3b (flagging) sharpness moderation is worth testing, separate
+from the closed/underpowered C3c move-quality question.
+
+Definitions: C3a = sharpness moderation of outcome-level clock residuals; C3b = sharpness
+moderation of timeout/flagging-channel risk. NEITHER is next-move quality; neither rescues C3c;
+neither shows human obviousness or causal time-pressure degradation.
+
+Feasibility (read-only, no model): join on (game_id, selected_position_type), 100% coverage.
+is_time_forfeit present in next_move_loss (GAME-LEVEL — does not say who flagged; player-to-move
+flag = is_time_forfeit AND mover lost, needs result_class from feature_positions_broad).
+result_class NOT in next_move_loss but in feature table + eval_conditioned_predictions. No new
+artifacts needed.
+
+Power/cells: non-mate ~62k/60k; TF prevalence ~13.4%/13.5%; TF clock gradient strongly MECHANICAL
+(over_180 ~12% → 60_180 ~35% → under_60 ~64-69%). C3b INTERACTION cells = same scarce sharp×
+low-clock cells as C3c (sharp×60_180 ≈348/329, sharp×under_60 ≈82/97) → interaction no better
+powered than C3c (binary high-prevalence TF target gives more events = modest edge, not a fix).
+
+Relationship to 11.2B: all-games clock→outcome ≈ flagging channel; board-decided residual
+collapsed. ⇒ all-games C3a re-derives C3b (confounded); board-decided C3a is null-by-construction
+(little residual to moderate). C3b is the only coherent outcome-side extension, and it is a
+time-management/selection CHANNEL question, easily mis-told as move-quality.
+
+RECOMMENDATION: Option C — STOP sharpness modeling, move to FINAL SYNTHESIS (16.0A). C3a NOT
+recommended (confounded / null-by-construction). Fallback if channel result wanted: Option A =
+flagging-only C3b pre-registration (14.3B), strictly flagging-channel framing, player-to-move
+target via result_class join, acknowledging shared cell limit.
+
+Non-claims: C3a/C3b NOT modeled; no outcome/flagging sharpness moderation shown; do not rescue
+C3c (unresolved/no-claim); no causality; no human obviousness; surface-bait exploratory;
+Stockfish not ground truth; DRAW not solved.
+
+Next step:
+16.0A — Final Synthesis / Public-Facing Claim Audit. Fallbacks: 14.3B flagging-only pre-reg
+(C3b), or 14.2E C3c enrichment audit.

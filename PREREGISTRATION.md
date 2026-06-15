@@ -337,6 +337,18 @@ estimate. Threshold relaxation, post-hoc contrast switching, surface-bait headli
 rerun-until-a-month-passes are forbidden. Consolidation report:
 `reports/phase_reports/phase_14_2d_c3c_underpowered_result_consolidation.md`.
 
+**C3a / C3b audit note (14.3A, 2026-06-15):** the outcome (C3a) and flagging (C3b) sharpness
+channels were **audited, not modeled** (`reports/phase_reports/phase_14_3a_outcome_flagging_sharpness_audit.md`).
+They are **separate from C3c and do not rescue it** (C3c stays unresolved/no-claim). **C3a is
+not recommended** — all-games C3a re-derives the flagging channel (11.2B) and board-decided
+C3a is null-by-construction (the board-decided clock-outcome residual already collapsed). **C3b
+is coherent but low-value/likely-underpowered** — its sharp×low-clock interaction cells are the
+same scarce ones that left C3c underpowered, and a positive result would be a
+time-management/selection **channel** effect, **never** move-quality. **Any C3a/C3b analysis
+requires its own separate pre-registration before modeling.** 14.3A recommends moving to final
+synthesis (16.0A); a flagging-only C3b pre-registration is the named fallback if the channel
+question is specifically desired. No design or thresholds changed here.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures
