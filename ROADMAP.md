@@ -266,11 +266,22 @@ clock-residual moderation (11.0A kill condition not triggered).
   No causal/obviousness/outcome-flagging claim. EXP-034; PREREGISTRATION §C3c post-result note.
   See `reports/sharpness_interaction_combined.md` +
   `reports/phase_reports/phase_14_2b_sharpness_interaction_modeling.md`.
-- **Next ticket: 14.2C — Null / Power Interpretation and Roadmap Reconciliation Audit** —
-  decide: accept the underpowered C3c result and consolidate; OR enrich power (a third 10+0
-  month, or sharp-position-oversampled extraction) then re-run the LOCKED model; OR pivot to
-  C3a/C3b outcome sharpness — **without moving the locked C3c thresholds**. Prior-trajectory
-  extraction = optional follow-up.
+- **14.2C complete (audit, doc-only):** interpreted the 14.2B C3c result and reconciled the
+  roadmap. Verdict reaffirmed: **C3c not confirmed, not disproven, UNDERPOWERED / NO-CLAIM**;
+  pooled train+val interaction directional only (+0.0102). Power audit: sharp×`60_180` train+val
+  ≈290/month (60_180 cell ~2,200 × ~13% sharp), so **ordinary added months grow POOLED precision
+  but NOT the per-month cell → the locked ≥300/month gate is structurally unreachable with
+  ordinary months** (clearing it needs a fresh pooled-power pre-registration OR sharp-position
+  oversampling = a new design). Combined with the test-split sign-flip (Oct −0.0035) and the
+  small/secondary effect, **RECOMMENDATION: freeze C3c (Option E) + consolidate; enrichment is
+  the named fallback.** Threshold relaxation forbidden; C3a/C3b pivot is a separate question, not
+  a rescue. EXP-035. See `reports/phase_reports/phase_14_2c_null_power_interpretation_roadmap_audit.md`.
+- **Next ticket: 14.2D — C3c Underpowered Result Consolidation** (doc-only: final limitation
+  language; fold C3c into the move-quality arc as "directional but underpowered/no-claim"; no
+  further modeling). **FALLBACK (user's compute-budget call): 14.2D — Third-Month Power
+  Enrichment Audit** (plan-only; add +1 ordinary 10+0 month, rerun the SAME locked model, with a
+  freshly pre-registered pooled-power criterion). **14.3A — Outcome/Flagging Sharpness Audit**
+  (C3a/C3b) is a separate later option. Prior-trajectory extraction = optional follow-up.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 

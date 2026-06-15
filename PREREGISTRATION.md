@@ -315,6 +315,17 @@ moderation-shown / human-obviousness / outcome-flagging claim. Next: 14.2C decid
 consolidate the underpowered result, enrich power then re-run the **same locked model**, or
 pivot to C3a/C3b — without altering these locked thresholds.
 
+**14.2C interpretation note (2026-06-15):** the directional train+val signal exists but does
+**not** pass the locked criteria, and a power audit shows the per-month sharp×`60_180` cell is
+≈290 at the 250k-prefix scale, so **ordinary additional months grow pooled precision but not
+the per-month cell** — the locked ≥300/month gate is not reliably reachable by simply adding
+months. Therefore any future attempt to resolve C3c must be **either** a rerun of *this same
+locked model* on enriched data (acknowledging the per-month gate will likely still bind, so a
+**pooled-power verdict requires a new pre-registration**), **or** a separately pre-registered
+design (e.g. sharp-position oversampling). The locked C3c model/criteria/thresholds here are
+**not** changed. Recommended primary path (14.2C): freeze C3c as directional/underpowered/
+no-claim and consolidate; enrichment is the named fallback.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures

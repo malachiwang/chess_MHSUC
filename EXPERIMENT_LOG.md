@@ -2007,3 +2007,42 @@ solved.
 Next step:
 14.2C — Null / Power Interpretation and Roadmap Reconciliation Audit (accept underpowered &
 consolidate; OR enrich power then re-run LOCKED model; OR pivot to C3a/C3b — no threshold moves).
+
+## EXP-035 — Phase 14.2C Null / Power Interpretation and Roadmap Reconciliation Audit
+
+Experiment ID: EXP-035
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (doc/design audit; NO modeling run; no data/code/tests changed; nothing
+staged/committed)
+
+Purpose:
+Decide how to treat the 14.2B underpowered C3c result and reconcile the roadmap before any
+further modeling. No model rerun; no thresholds changed.
+
+14.2B verdict (preserved): C3c is NOT confirmed, NOT disproven, UNDERPOWERED / NO-CLAIM.
+Pooled train+val interaction directional only (+0.0102 [+0.0013,+0.0194]); failed locked
+criteria via (a) sharp×60_180 per-month cell 297/282 < 300, (b) 2024-09 CI contains 0, (c) test
+confirmation weak + 2024-10 sign-flip (−0.0035).
+
+Power audit (read-only counts): 60_180 train+val cell ~2,208/2,244 per month × ~13% sharp ⇒
+sharp×60_180 ~290/month. ORDINARY ADDED MONTHS GROW POOLED PRECISION BUT NOT THE PER-MONTH CELL
+(~290 stays <300). +1 month → ~870 pooled; +2 → ~1,160 pooled. The locked per-month ≥300 gate is
+structurally unreachable with ordinary months → clearing it requires a NEW pre-registered
+pooled-power criterion OR sharp-position oversampling (new design). Threshold relaxation
+(Option D) forbidden.
+
+Options A-F weighed. RECOMMENDATION: PRIMARY = Option E (freeze C3c "directional but
+underpowered/no-claim" + consolidate) — small/secondary effect, did NOT confirm out-of-sample
+(Oct sign-flip), per-month gate structurally unreachable with ordinary months, C4 headline
+already settled. FALLBACK = Option A (third-month power enrichment audit, plan-only; rerun SAME
+locked model on +1 ordinary month, fresh pooled-power pre-reg). Option F (C3a/C3b) = separate
+question, not a rescue.
+
+Non-claims: C3c not confirmed/not disproven/underpowered; pooled estimate directional only; no
+causality; no human obviousness; no threshold relaxation after results; no C3a/C3b claim; no
+Stockfish ground truth; DRAW not solved.
+
+Next step:
+14.2D — C3c Underpowered Result Consolidation (doc-only). Fallback (user's compute-budget call):
+14.2D Third-Month Power Enrichment Audit. C3a/C3b outcome sharpness = separate 14.3A.
