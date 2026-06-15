@@ -326,6 +326,17 @@ design (e.g. sharp-position oversampling). The locked C3c model/criteria/thresho
 **not** changed. Recommended primary path (14.2C): freeze C3c as directional/underpowered/
 no-claim and consolidate; enrichment is the named fallback.
 
+**14.2D consolidation (FINAL status, 2026-06-15):** 14.2B ran the locked model; 14.2C audited
+power; **14.2D freezes the status** — C3c is **directional but underpowered/no-claim, not
+confirmed, not disproven, not a null**, with **no threshold/model/contrast/classification
+changes**. Any future revisit must be **either** a rerun of *this same locked design* on
+enriched data (the per-month ≥300 gate will likely still bind, so a **pooled-power verdict
+requires a new pre-registration**) **or** a separately pre-registered design (e.g.
+sharp-position oversampling) — labeled as a new analysis, never retroactive proof of the 14.2B
+estimate. Threshold relaxation, post-hoc contrast switching, surface-bait headlining, and
+rerun-until-a-month-passes are forbidden. Consolidation report:
+`reports/phase_reports/phase_14_2d_c3c_underpowered_result_consolidation.md`.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures

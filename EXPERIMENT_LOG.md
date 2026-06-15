@@ -2046,3 +2046,41 @@ Stockfish ground truth; DRAW not solved.
 Next step:
 14.2D — C3c Underpowered Result Consolidation (doc-only). Fallback (user's compute-budget call):
 14.2D Third-Month Power Enrichment Audit. C3a/C3b outcome sharpness = separate 14.3A.
+
+## EXP-036 — C3c Underpowered Result Consolidation
+
+Experiment ID: EXP-036
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (doc-only consolidation; NO modeling; no thresholds/model/contrast/
+classification changed; no data/code/tests changed; nothing staged/committed)
+
+Purpose:
+Freeze the final stable C3c interpretation so future tickets don't overclaim, reclassify, or
+keep reopening the underpowered sharpness × clock move-quality result.
+
+Final C3c status (FROZEN): unresolved — directional train+val signal, UNDERPOWERED / NO-CLAIM
+under locked criteria. NOT confirmed, NOT disproven, NOT a null. 14.2B classification preserved
+verbatim. Pooled train+val interaction +0.0102 [+0.0013,+0.0194] directional only; failed locked
+criteria via per-month cell 297/282<300, 2024-09 CI contains 0, test-split weak + Oct sign-flip.
+
+Stable wording recorded (long + short form) for reuse.
+
+Future revisit conditions: Path A (same locked model on enriched ordinary months — improves
+pooled precision but per-month ≥300 gate still binds, so a pooled-power verdict needs a NEW
+pre-registration); Path B (new pooled-power enrichment design); Path C (sharp-position
+oversampling design). All keep original threshold/model/contrast fixed; new criteria = new
+labeled analyses.
+
+Forbidden: relax sharp_value_fragility_v1 threshold post-hoc; switch primary clock contrast
+post-hoc; headline surface-bait; use exploratory robustness as main claim; rerun-until-a-month-
+passes; reclassify as supported via pooled train+val alone.
+
+Non-claims: no C3c confirmed/disproven; no sharpness-moderation-shown; no causality; no human
+obviousness; surface-bait not headline; no threshold relaxation; no Stockfish ground truth;
+DRAW not solved.
+
+Next step:
+14.3A — Outcome/Flagging Sharpness Audit (separate C3a/C3b question; does NOT reuse the
+underpowered C3c model). Alternatives: 14.2E enrichment audit (revisit C3c) or 16.0A final
+synthesis. Prior-trajectory extraction = optional follow-up.

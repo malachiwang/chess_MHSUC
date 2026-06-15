@@ -276,12 +276,21 @@ clock-residual moderation (11.0A kill condition not triggered).
   small/secondary effect, **RECOMMENDATION: freeze C3c (Option E) + consolidate; enrichment is
   the named fallback.** Threshold relaxation forbidden; C3a/C3b pivot is a separate question, not
   a rescue. EXP-035. See `reports/phase_reports/phase_14_2c_null_power_interpretation_roadmap_audit.md`.
-- **Next ticket: 14.2D — C3c Underpowered Result Consolidation** (doc-only: final limitation
-  language; fold C3c into the move-quality arc as "directional but underpowered/no-claim"; no
-  further modeling). **FALLBACK (user's compute-budget call): 14.2D — Third-Month Power
-  Enrichment Audit** (plan-only; add +1 ordinary 10+0 month, rerun the SAME locked model, with a
-  freshly pre-registered pooled-power criterion). **14.3A — Outcome/Flagging Sharpness Audit**
-  (C3a/C3b) is a separate later option. Prior-trajectory extraction = optional follow-up.
+- **14.2D complete (consolidation, doc-only):** froze the final C3c interpretation so future
+  tickets don't overclaim/reopen it. **C3c status: unresolved — directional train+val signal,
+  UNDERPOWERED / NO-CLAIM under locked criteria, no threshold changes; not confirmed, not
+  disproven, not a null.** Stable long/short wording recorded; future-revisit conditions
+  (Path A same-locked-model on enriched ordinary months [per-month gate still binds → new
+  pooled-power pre-reg needed]; Path B pooled-power design; Path C sharp-oversampling design)
+  and forbidden paths (threshold relaxation, contrast switching, surface-bait headlining,
+  rerun-until-pass) locked. EXP-036; PREREGISTRATION §C3c final consolidation note. No model
+  run. See `reports/phase_reports/phase_14_2d_c3c_underpowered_result_consolidation.md`.
+- **Next ticket: 14.3A — Outcome/Flagging Sharpness Audit** — separate audit + fresh
+  pre-registration for whether sharpness moderates the time-forfeit/outcome channels (C3a/C3b);
+  does NOT reuse the underpowered C3c model. **Preserved alternatives (user's call):
+  14.2E — Third-Month / Pooled-Power Enrichment Audit** (revisit C3c via Path A/B) or
+  **16.0A — Final Synthesis / Public-Facing Claim Audit** (stop modeling, consolidate the arc).
+  Prior-trajectory extraction = optional follow-up.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 
