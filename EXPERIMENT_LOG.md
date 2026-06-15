@@ -1707,3 +1707,45 @@ Next step:
 15.1H — Phase 15 / Roadmap Reconciliation Patch (reconcile ROADMAP.md vs v11 draft, fold in C4
 claim, sequence sharpness) → 14.1A MultiPV Sharpness Feasibility/Compute Audit. Prior-trajectory
 extraction = optional follow-up.
+
+## EXP-029 — Phase 15.1H Roadmap Reconciliation Patch
+
+Experiment ID: EXP-029
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (documentation reconciliation, doc-only; no code/tests/data/models/Stockfish;
+nothing staged/committed)
+
+Purpose:
+Reconcile the roadmap docs with the post-C4 evidence chain so the project stops carrying stale
+v11 promises before the sharpness arc.
+
+Stale assumptions fixed:
+- Original v11 ordering listed Phase 14 sharpness then Phase 15 move-quality as future/unexecuted
+  — but Phase 15 was pulled earlier (11.2B) and C4 is now CLOSED.
+- Removed/annotated any implication that the board-decided outcome residual survived, that the
+  outcome signal is "not merely flagging," that prior trajectory was controlled, that the clock
+  effect is large, or that sharpness moderation was shown.
+- ROADMAP top sequence bullet annotated to point at the new reconciliation section.
+
+Changes:
+- ROADMAP.md: added "Post-C4 Reconciliation (Ticket 15.1H)" section (live claim; Phase 15 pulled
+  earlier; C4 closed; trajectory deferred; sharpness not shown / feasibility-first; Phase 12/13
+  non-blocking backlog; updated reframed sharpness sequence 14.1A→14.1B→14.2A→14.2B→14.3B). Marked
+  15.1H complete, next = 14.1A.
+- docs/roadmap_rescope_v11_draft.md: supersession note updated (15.1E→15.1H; C4 consolidated;
+  retained as historical context only).
+- PREREGISTRATION.md: added sharpness pre-arc status (untested; 14.1A feasibility first; fresh
+  14.2A pre-registration required before any sharpness modeling; C3a/C3b/C3c split stands, C3c
+  first target).
+
+Live claim (predictive/descriptive, NOT causal): outcome clock signal = substantially flagging;
+next-move ES loss dominated by eval state; small replicated robust SECONDARY controlled clock
+association after controls; prior trajectory deferred limitation.
+
+Prior-trajectory: deferred (Option A, 15.1G); required only before a causal/mediation claim.
+Sharpness: not shown; needs MultiPV features + fresh pre-registration.
+
+Next step:
+14.1A — MultiPV Sharpness Feasibility / Compute Audit. Prior-trajectory feature-extraction
+audit/impl = optional follow-up if a closer-to-causal C4 statement is later desired.

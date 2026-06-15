@@ -1,12 +1,16 @@
 # chess-MHSUC — ROADMAP Re-Scoping Proposal (v11-draft, v2-merged)
 
-**SUPERSEDED IN PART (2026-06-14, Ticket 15.1E):** this document's detailed Phase 14–15
-sequence is no longer authoritative for the live arc. After 11.2B (clock-outcome residual =
-substantially the flagging channel) and 15.1D (a small but replicated controlled C4 clock
-association on next-move quality), the live arc runs 15.1B→11.3B→15.1C/D→15.1E→15.1F
-(clock-association robustness) → C4 consolidation, then sharpness. `ROADMAP.md` is the
-authoritative live sequence; a full reconciliation patch to this file is deferred until after
-15.1F / C4 consolidation. Phases/criteria below are retained for provenance.
+**SUPERSEDED IN PART (reconciled 2026-06-14, Tickets 15.1E → 15.1H):** this v11 draft is
+retained as historical design context; its detailed Phase 14–15 sequence is no longer
+authoritative. It is superseded in part by the post-11.2B / 15.1D / 15.1F / 15.1G evidence
+chain. **The live operational roadmap is `ROADMAP.md`** (see its "Post-C4 Reconciliation
+(Ticket 15.1H)" section). In particular: Phase 15 move-quality work was **pulled earlier**
+after the board-decided outcome residual collapsed (11.2B); the **C4 result is now
+consolidated** as a descriptive/predictive move-quality finding (small, replicated, robust,
+secondary clock association; eval-state dominant), with **prior trajectory deferred** as a
+limitation; Phases 12/13 are non-blocking backlog; and **sharpness (Phase 14) has not been
+shown** and begins with a feasibility/compute audit (14.1A). Phases/criteria below are
+retained for provenance only.
 
 **Status:** ACCEPTED AND APPLIED (Ticket 11.0B, 2026-06-12), following the 11.0A
 prior-work verification (`reports/phase_reports/phase_11_0a_prior_work_novelty_rescoping_audit.md`)

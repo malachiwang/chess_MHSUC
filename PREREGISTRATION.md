@@ -285,6 +285,13 @@ recommended next).
   audit/implementation, after which the controlled + robustness models would be re-run). This
   is a documented deviation, not a silent omission; a closer-to-causal C4 statement requires
   Option B (extract trajectory first).
+- **Sharpness status (pre-arc, 15.1H):** sharpness (C3 / Phase 14) has **not been tested** —
+  no MultiPV features exist yet. The sharpness arc begins with a feasibility/compute audit
+  (14.1A) and requires a **fresh pre-registration (14.2A) before any sharpness modeling**; no
+  moderation claim may be made until those features exist and the pre-registered tests run.
+  The C3a (flagging-risk) / C3b (board-decided-outcome, cautious) / C3c (move-quality) split
+  stands, with C3c (move-quality moderation, building on the settled C4 baseline) as the
+  recommended first sharpness target.
 - **Required datasets:** both months (extraction cost permitting; one-month pilot first
   is acceptable if 15.0A's compute audit requires it, with the second month as
   confirmation).

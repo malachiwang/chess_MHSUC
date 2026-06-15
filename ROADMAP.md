@@ -25,7 +25,10 @@ clock-residual moderation (11.0A kill condition not triggered).
 - **Current arc: Phase 11 onward** — positioning/claim hardening (11), score-scale
   robustness + stronger clock controls (12), cheap difficulty layer (13), MultiPV
   sharpness (14), Constraint Atlas / move-quality curves (15), cross-time-control
-  dose-response (16), packaging (17).
+  dose-response (16), packaging (17). **⚠️ This original ordering was revised by the
+  evidence — see "Post-C4 Reconciliation (Ticket 15.1H)" below: Phase 15 move-quality
+  work was pulled earlier and is now CLOSED (C4 consolidated), Phase 12/13 are deferred/
+  non-blocking, and sharpness (14) has NOT been shown and starts with a feasibility audit.**
 - **The authoritative detailed Phase 11–17 architecture lives in
   `docs/roadmap_rescope_v11_draft.md`** (with the 11.0A §9 edits folded in). This file
   stays the high-level active roadmap.
@@ -195,11 +198,68 @@ clock-residual moderation (11.0A kill condition not triggered).
   descriptive C4 claim is closed now with trajectory as the stated headline limitation +
   recommended optional follow-up. See `reports/phase_reports/phase_15_1g_c4_claim_consolidation.md`
   and `reports/c4_move_quality_arc_summary.md`.
-- **Next ticket: 15.1H — Phase 15 / Roadmap Reconciliation Patch** — reconcile `ROADMAP.md`
-  with `docs/roadmap_rescope_v11_draft.md` (superseded-in-part since 15.1E), fold in the
-  consolidated C4 claim, and sequence the sharpness arc → then **14.1A — MultiPV Sharpness
-  Feasibility / Compute Audit**. A **prior-trajectory feature-extraction audit/impl** remains
-  the recommended optional follow-up if a closer-to-causal C4 statement is later desired.
+- **15.1H complete (reconciliation):** roadmap docs reconciled with the post-C4 evidence
+  chain (this patch). Live claim, Phase 14/15 ordering, Phase 12/13 status, and the sharpness
+  handoff are stated in "Post-C4 Reconciliation" below. v11 draft carries a supersession note.
+  See `reports/phase_reports/phase_15_1h_roadmap_reconciliation_patch.md`.
+- **Next ticket: 14.1A — MultiPV Sharpness Feasibility / Compute Audit** (sharpness arc; see
+  reconciliation below). A **prior-trajectory feature-extraction audit/impl** remains the
+  recommended optional follow-up if a closer-to-causal C4 statement is later desired.
+
+## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
+
+The live arc diverged from the original v11 sequence because the experiments learned new
+things. This section is the current source of truth; the bullet list above is the
+chronological completed-ticket log, and `docs/roadmap_rescope_v11_draft.md` is retained as
+historical design context (superseded in part).
+
+**Post-C4 live claim (predictive/descriptive, NOT causal):**
+At the final-outcome level, clock features primarily capture flagging / time-forfeit risk.
+At the next-move level, eval state is the dominant structure in expected-score loss. After
+conditioning on checkpoint, eval band, rating, month, and termination, clock retains a small,
+replicated, robust association with next-move loss. This association is predictive/descriptive,
+not causal, and is secondary to eval-band structure (~5–8× smaller). Prior trajectory remains
+deferred as an explicit limitation.
+
+**What changed vs the original v11 ordering:**
+- **Phase 15 was pulled earlier.** 11.2B collapsed/sign-reversed the board-decided outcome
+  residual (the E3→E4 clock signal is substantially the flagging channel), so the board-play
+  question moved to direct next-move-quality measurement (C4) rather than waiting behind
+  Phases 12–14.
+- **C4 is now CLOSED** as a descriptive/predictive move-quality result (15.1B descriptive →
+  11.3B player-clustered → 15.1D controlled → 15.1F robustness → 15.1G consolidation). It is
+  not an open future "mediation" phase.
+- **Prior trajectory is deferred**, not controlled. It is a stated limitation and the main
+  recommended optional follow-up (a future trajectory-extraction audit/impl); it is required
+  only before any *causal / mediation* clock claim, per the PREREGISTRATION deviation note.
+- **Sharpness (Phase 14 / C3) has NOT been shown.** No MultiPV features exist yet. The
+  sharpness arc must begin with a **feasibility / compute audit**, not implementation, and may
+  not claim moderation until features exist and pre-registered tests run.
+
+**Phase 12 / 13 status (score-scale / rich-clock / cheap-difficulty):**
+- Kept as **useful but non-blocking** backlog — they no longer gate C4 (C4 is closed).
+- Some score-scale work already happened **inside** Phase 15: C4 used expected-score loss and
+  controlled adjusted-mean move-quality modeling with rating/eval/clock/termination controls.
+- **Rich trajectory/history features (the Phase 12 E4c-style layer) remain the optional
+  follow-up** most relevant to the deferred prior-trajectory caveat.
+- Recommendation: do **not** force Phase 12/13 before 14.1A; revisit them as targeted
+  robustness/extension tickets if a specific question (e.g. trajectory) demands them.
+
+**Updated sharpness sequence (reframed):**
+1. **14.1A — MultiPV Sharpness Feasibility / Compute Audit** (next).
+2. 14.1B — Pilot Sharpness Extraction.
+3. 14.2A — Sharpness Interaction Pre-Registration (new pre-registration required before any
+   sharpness modeling).
+4. 14.2B — Implement Sharpness Interaction Tests.
+5. 14.3B — Sharpness Slice Report.
+
+Reframing for the sharpness arc: sharpness is **no longer "rescuing" the original
+board-decided outcome residual** (that collapsed). It should test whether constraint effects
+are **moderated by objective narrowness / non-obviousness**, with the **first target being
+move-quality moderation** (C3c, building on the settled C4 baseline) rather than only final
+outcomes. Any outcome-level sharpness interaction must keep the **flagging-risk channel
+distinct from board-decided results** (C3a vs C3b). No sharpness claim until MultiPV features
+exist and pre-registered tests run.
 
 ## Phase 0: Governance and setup
 
