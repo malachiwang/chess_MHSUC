@@ -292,6 +292,14 @@ recommended next).
   The C3a (flagging-risk) / C3b (board-decided-outcome, cautious) / C3c (move-quality) split
   stands, with C3c (move-quality moderation, building on the settled C4 baseline) as the
   recommended first sharpness target.
+- **Sharpness v1 framing (14.1B):** the v1 sharpness primitive is **objective value
+  fragility** (narrow viable move set, steep value drop-off outside it, legal-choice clutter),
+  defined from engine MultiPV geometry / board logic only (Tier A, anti-circular). Surface
+  move tags (check/capture/promotion/quiet/forced-evasion) and "surface-bait" diagnostics are
+  **exploratory only and are explicitly NOT a model of human obviousness** — true human
+  obviousness is a deferred Tier B layer. The 14.1B pilot extracted candidate composites
+  (`sharp_value_fragility_v1` etc.); the **final feature/threshold/orientation are still
+  locked at 14.2A**, not here, and no sharpness result has been claimed.
 - **Required datasets:** both months (extraction cost permitting; one-month pilot first
   is acceptable if 15.0A's compute audit requires it, with the second month as
   confirmation).

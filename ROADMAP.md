@@ -215,13 +215,26 @@ clock-residual moderation (11.0A kill condition not triggered).
   move-quality C3c (does the small controlled clock↔next-move-loss assoc grow in sharp
   positions); C3a/C3b outcome views secondary + separate. Sharpness NOT shown. See
   `reports/phase_reports/phase_14_1a_multipv_sharpness_feasibility_audit.md`.
-- **Next ticket: 14.1B — Pilot Sharpness Extraction** — 1,000 stratified 2024-09 positions
-  (250 each move_10/20/30/40), MultiPV-5 depth-10 then depth-12, gitignored pilot artifact +
-  report, validation (FEN-hash match, ≥min(K,legal) lines, top-1 vs existing `pre_sf_eval_cp`
-  agreement, mate-band handling). On a passing pilot, full both-months extraction (~2.3 h) is
-  pre-approved by the compute gate → then **14.2A — Sharpness Interaction Pre-Registration**
-  before any C3c modeling. Prior-trajectory extraction = optional follow-up, revisited at
-  14.2A.
+- **14.1B complete (pilot):** `multipv_sharpness.py` + 22 tests (1,727 total passing). Ran
+  MultiPV-5 pilot on 1,000 stratified 2024-09 checkpoints (250/checkpoint). **Framing revision
+  (Malachi): primary v1 = OBJECTIVE value fragility** (narrow viable set, steep drop-off,
+  legal-choice clutter); surface tags + surface-bait diagnostics are **EXPLORATORY, NOT human
+  obviousness** (deferred to a later Tier B layer). Pilot CLEAN: 1000/1000 OK, FEN round-trip
+  1.0, all-candidates-legal 1.0, median MultiPV count 5, top-1 vs stored best-line median
+  |Δcp| 15. Features non-degenerate (median best→2nd ES gap 0.012, median n_good_10es 5,
+  `sharp_value_fragility_v1` base rate 0.142). Depth-10 vs depth-12: **sharpness-composite
+  agreement 0.95** (literal top-1 move only 0.64 — expected in flat positions) → depth-12
+  preferred. Runtime: d12 ~106 ms/pos (vs 14.1A 30-pos smoke 66 ms; stratified sample has more
+  complex late positions) → **full projection ~3.7 h both months, still under 6–8 h GO gate**.
+  Pilot artifact gitignored; no PGN/usernames. Candidate composites pending 14.2A. Sharpness
+  NOT shown; no human-obviousness claim. See
+  `reports/multipv_sharpness_pilot_2024_09_250k_v1.md` +
+  `reports/phase_reports/phase_14_1b_pilot_sharpness_extraction.md`.
+- **Next ticket: 14.1C — Full Sharpness Extraction** — both months, MultiPV-5 depth-12 (~3.7 h),
+  gitignored artifacts + report, reusing `multipv_sharpness.py`. Full artifacts needed so 14.2A
+  can inspect sharpness distributions before locking thresholds → then **14.2A — Sharpness
+  Interaction Pre-Registration** before any C3c modeling. Prior-trajectory extraction = optional
+  follow-up, revisited at 14.2A.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 

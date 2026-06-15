@@ -1814,3 +1814,53 @@ human-outcome-derived); benchmark = single 30-pos run, approximate.
 Next step:
 14.1B — Pilot Sharpness Extraction → (full extraction on passing pilot) → 14.2A Sharpness
 Interaction Pre-Registration.
+
+## EXP-031 — Phase 14.1B Pilot Sharpness Extraction
+
+Experiment ID: EXP-031
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (pilot extraction; gitignored pilot artifact written; no full extraction; no
+models; no existing modules modified; no new deps; nothing staged/committed)
+
+Purpose:
+Pilot MultiPV sharpness extraction on 1,000 stratified 2024-09 checkpoints; validate, compute
+v1 objective value-fragility features + exploratory surface diagnostics, recommend full-run
+settings.
+
+FRAMING REVISION (Malachi): primary v1 sharpness = OBJECTIVE VALUE FRAGILITY (narrow viable
+set / steep drop-off / legal-choice clutter). Surface move tags (check/capture/promotion/quiet/
+forced-evasion) + surface-bait diagnostics are EXPLORATORY ONLY — NOT human obviousness (Tier B,
+deferred). No sharpness result; no obviousness modeled.
+
+Implementation:
+- multipv_sharpness.py: reads pre_fen directly (no reconstruction); engine.analyse(...,
+  multipv=K) (never engine.configure MultiPV); relative_score_to_mover (mover POV) +
+  score_to_white_pov (White POV) + expected_score (scale 348.41); pure feature fns
+  (fragility_features: n_good_{5/10/20es,30/50/100cp} censored at K, best-second/third gaps,
+  worst/mean top5 loss, max adjacent gap, cliff, softmax entropy/concentration T=0.10;
+  clutter_features: legal_move_count + viable-fraction lower bounds; move_tags; surface_bait;
+  composites: sharp_value_fragility_v1 = n_good_10es<=2 AND worst_top5_loss_es>=0.10 AND
+  legal_move_count>=8, + relaxed/strict + continuous sharp_score_candidate + exploratory
+  surface_bait_v1); stratified sampler; depth comparison; report; CLI. Reuses stockfish_eval +
+  next_move_loss helpers unchanged.
+- 22 tests (no engine); full suite 1,727 passing (+22), 0 regressions.
+
+Pilot (MultiPV-5, d10 + d12, seed 42, 1000 rows / 250 per checkpoint, Stockfish 18):
+- VALIDATION: 1000/1000 OK; FEN round-trip 1.0 (NML has no stored fen_hash -> parse-integrity
+  check); all candidates legal 1.0; median MultiPV count 5 (fewer only where legal<5); top-1 vs
+  stored pre_sf_eval_cp median |Δcp| 15; 0 mate-band sampled (non-mate plentiful; mate path
+  implemented but unexercised).
+- RUNTIME: d10 ~35 ms/pos, d12 ~106 ms/pos (> 14.1A 30-pos smoke 66 ms — stratified sample has
+  more complex late positions). Full projection ~3.7 h both months -> under 6-8 h GO gate.
+- DEPTH STABILITY: top-1 move agreement 0.64 (flat positions -> ambiguous best move), n_good_10es
+  agreement 0.88, sharp_value_fragility_v1 agreement 0.95 -> composite depth-stable, depth-12
+  preferred.
+- FEATURE SANITY: median best-2nd ES gap 0.012, median n_good_10es 5 (median NOT sharp), median
+  legal_move_count 32; sharp_v1 rate 0.142 / relaxed 0.074 / strict 0.068 / surface_bait_10es
+  0.024 / best_move_is_quiet 0.679. Non-degenerate. Candidate features pending 14.2A.
+- Artifact gitignored (140 cols, no PGN/usernames/hashes).
+
+Next step:
+14.1C — Full Sharpness Extraction (both months, MultiPV-5 d12, ~3.7 h) -> 14.2A Sharpness
+Interaction Pre-Registration before any C3c modeling. Prior-trajectory = optional follow-up.
