@@ -1749,3 +1749,68 @@ Sharpness: not shown; needs MultiPV features + fresh pre-registration.
 Next step:
 14.1A — MultiPV Sharpness Feasibility / Compute Audit. Prior-trajectory feature-extraction
 audit/impl = optional follow-up if a closer-to-causal C4 statement is later desired.
+
+## EXP-030 — Phase 14.1A MultiPV Sharpness Feasibility / Compute Audit
+
+Experiment ID: EXP-030
+Date: 2026-06-14
+Owner: Malachi Wang
+Status: complete (feasibility/design audit; read-only inspection + a tiny 30-position MultiPV
+smoke benchmark that wrote NO persistent artifact; no bulk engine job; no models; nothing
+staged/committed)
+
+Purpose:
+Audit whether MultiPV sharpness extraction is feasible and define the v1 sharpness feature set,
+orientation, schema, pilot, and compute gate before any implementation.
+
+Engine/MultiPV feasibility:
+- stockfish_eval.py is single-PV (engine.analyse(board, Limit(depth))). MultiPV is a one-line
+  change: pass multipv=K to analyse() -> list of K info dicts ordered best-first for the mover.
+  CAVEAT (confirmed in smoke): do NOT engine.configure({"MultiPV":K}) -> raises "cannot set
+  MultiPV which is automatically managed". Reuse score_to_white_pov + _fen_hash; add a relative
+  (mover-POV) extractor. Depth-12 keeps semantics consistent with 15.0C single-PV.
+
+Checkpoint universe (read-only):
+- Both months: 126,239 OK checkpoints, 121,581 OK non-mate, 4,658 mate-band. By checkpoint
+  ~24k/19k/13k/7k (move_10/20/30/40) per month. **pre_fen stored DIRECTLY** -> no raw-PGN
+  reconstruction. fen_hash + pre_sf_eval_cp present for validation. Dedup negligible (~0.1%).
+
+Compute (30-pos smoke benchmark, depth-12 single-thread, no artifacts):
+- MultiPV-3 d10 ~11 ms/pos (~0.40 h both); MultiPV-5 d10 ~28 (~1.0 h); MultiPV-3 d12 ~37
+  (~1.3 h); **MultiPV-5 d12 ~66 ms/pos -> ~70 min/month -> ~2.3 h both (RECOMMENDED)**;
+  MultiPV-10 d12 ~139 (~4.9 h). K=5 returns exactly 5 lines; top-1 stable across d10/d12.
+  GATE: MultiPV-5 d12 < 6-8 h -> GO (full extraction after 14.1B pilot).
+
+v1 design:
+- Side-to-move LOCAL narrowness (gap best-second, count-within-{30/50/100cp,5/10/20 ES-pts}
+  right-censored at K, entropy/concentration, worst-of-topk) + board-logic obviousness
+  discounts (capture/check/promotion/quiet, forced_evasion, obvious_recapture,
+  fake_sharpness_discount). Forward-line fragility + simple-trade DEFERRED.
+- Headline = train-defined binary sharp_local_v1 = (value-preserving count within 10 ES-pts <=2)
+  AND NOT (obvious_recapture OR forced_evasion), MultiPV-K>=5. Continuous gap/entropy + train
+  tercile = secondary. ES via existing 15.0C cp->ES transform (scale 348.4).
+- Orientation: store side-to-move primitive for ALL positions; advantaged-player/defensive =
+  derived views (filter by eval sign, no extra engine work). First target = move-quality C3c;
+  C3a flagging / C3b board-decided outcome secondary + kept separate.
+
+Artifact schema (gitignored, 1 row/checkpoint, joinable on game_id+selected_position_type):
+game_id, selected_position_type, checkpoint_ply, fen_hash, engine_name/version, depth,
+multipv_k, side_to_move, wide pv{1..K}_move_uci/_cp/_white_cp/_mate/_es, narrowness features,
+obviousness flags, sharp_local_binary_v1 + sharp_score_v1, status/multipv_count/is_mate_band/
+fen_hash_matches. No raw PGN/usernames; player hashes joined later from player_metadata.
+
+Pilot (14.1B): 1,000 stratified 2024-09 positions (250/checkpoint), MultiPV-5 d10 then d12,
+gitignored artifact + report, validation (fen_hash match, >=min(K,legal) lines, top-1 vs
+pre_sf_eval_cp agreement, mate-band explicit, runtime). Full extraction only after pilot.
+
+Prior trajectory: do NOT block extraction; revisit at 14.2A (sharpness result may strengthen
+the case). 14.2A must lock feature def/threshold/orientation/targets/split/clustering/
+replication/criteria/trajectory-required before any C3c modeling.
+
+Caveats: no sharpness result exists; predictive/descriptive only; White-to-move scope; MultiPV
+fixed-depth = approximation not ground truth; anti-circularity (Tier A: engine-geometry, not
+human-outcome-derived); benchmark = single 30-pos run, approximate.
+
+Next step:
+14.1B — Pilot Sharpness Extraction → (full extraction on passing pilot) → 14.2A Sharpness
+Interaction Pre-Registration.

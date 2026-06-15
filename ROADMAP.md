@@ -202,9 +202,26 @@ clock-residual moderation (11.0A kill condition not triggered).
   chain (this patch). Live claim, Phase 14/15 ordering, Phase 12/13 status, and the sharpness
   handoff are stated in "Post-C4 Reconciliation" below. v11 draft carries a supersession note.
   See `reports/phase_reports/phase_15_1h_roadmap_reconciliation_patch.md`.
-- **Next ticket: 14.1A — MultiPV Sharpness Feasibility / Compute Audit** (sharpness arc; see
-  reconciliation below). A **prior-trajectory feature-extraction audit/impl** remains the
-  recommended optional follow-up if a closer-to-causal C4 statement is later desired.
+- **14.1A complete (audit):** MultiPV sharpness extraction is **feasible and cheap**.
+  Checkpoint FENs already stored directly (`pre_fen` column in the next-move-loss artifacts)
+  → no raw-PGN reconstruction; MultiPV is a one-line change (`engine.analyse(..., multipv=K)`;
+  do NOT set MultiPV via `configure` — python-chess auto-manages it). 30-position smoke
+  benchmark: **MultiPV-5 d12 ≈ 66 ms/pos → ~70 min/month → ~2.3 h both months** (MultiPV-3 d12
+  ~1.3 h; MultiPV-10 d12 ~4.9 h) — under the 6–8 h GO gate. Universe: 126,239 OK checkpoints
+  (121,581 non-mate) both months; dedup negligible (~0.1%). v1 = side-to-move local-narrowness
+  feature set (MultiPV-5 d12) + board-logic obviousness discounts; headline = train-defined
+  binary `sharp_local_v1` (≤2 value-preserving moves within 10 ES-pts AND not obvious
+  recapture/forced evasion); forward-line fragility + simple-trade DEFERRED. First target =
+  move-quality C3c (does the small controlled clock↔next-move-loss assoc grow in sharp
+  positions); C3a/C3b outcome views secondary + separate. Sharpness NOT shown. See
+  `reports/phase_reports/phase_14_1a_multipv_sharpness_feasibility_audit.md`.
+- **Next ticket: 14.1B — Pilot Sharpness Extraction** — 1,000 stratified 2024-09 positions
+  (250 each move_10/20/30/40), MultiPV-5 depth-10 then depth-12, gitignored pilot artifact +
+  report, validation (FEN-hash match, ≥min(K,legal) lines, top-1 vs existing `pre_sf_eval_cp`
+  agreement, mate-band handling). On a passing pilot, full both-months extraction (~2.3 h) is
+  pre-approved by the compute gate → then **14.2A — Sharpness Interaction Pre-Registration**
+  before any C3c modeling. Prior-trajectory extraction = optional follow-up, revisited at
+  14.2A.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 
