@@ -1964,3 +1964,46 @@ solved; best predictor; degradation curve.
 Next step:
 14.2B — Sharpness Interaction Modeling Implementation (fit the locked model; no design changes
 without a logged deviation).
+
+## EXP-034 — Phase 14.2B Sharpness Interaction Modeling
+
+Experiment ID: EXP-034
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (modeling; pre-registered 14.2A model fit exactly; no engine; no data
+artifacts modified; nothing staged/committed)
+
+Purpose:
+Fit the locked C3c clock × sharpness move-quality moderation: does the controlled
+60_180-vs-over_180 clock association with next-move ES loss grow in sharp positions?
+
+Implementation:
+- sharpness_interaction.py: join next_move_loss ⋈ multipv_sharpness ⋈ player_metadata; validate
+  (keys unique, inner join no-multiplication, 100% coverage, EXACT sharp_value_fragility_v1
+  recompute = 0 mismatches); primary universe (non-mate, non-null, mover hash); design = car
+  controlled base + sharp main + clock×sharp interaction; fit_interaction via
+  cluster_bootstrap_refit + summarize_contrasts (mover-player, 200 reps seed 42); train+val
+  estimate + locked test confirmation; 12 robustness families; classification; reports; CLI
+  (+--smoke). Reuses cmq + car + clustered_uncertainty unchanged. 15 tests; full suite 1,744
+  passing (+15), 0 regressions. Final run ~65s.
+
+CLASSIFICATION: UNDERPOWERED / NO CLAIM (per locked 14.2A kill criterion; threshold NOT moved).
+- Primary clock=60_180 × sharp (train+val, mover-clustered): 2024-09 +0.0074 [−0.0079,+0.0217]
+  contains 0; 2024-10 +0.0131 [+0.0001,+0.0274] excl 0; pooled +0.0102 [+0.0013,+0.0194] excl 0.
+  Same-sign both months.
+- KILL TRIGGER: limiting sharp×60_180 cell on estimation split = 297 (09) / 282 (10) < 300/mo
+  (14.2A measured 348/329 on full non-mate frame; reserving test split lowers it). under_60×sharp
+  ~50/mo (exploratory).
+- Locked TEST confirmation WEAK/SIGN-FLIPS: pooled test +0.0012; 09 +0.0054; 10 −0.0035.
+- Independently, strong-support also fails (2024-09 CI contains zero; test not confirming).
+Interpretation: directionally suggestive (pooled & 2024-10 exclude zero) but NOT resolvable at
+current sample → underpowered/no-claim, an absence of resolving power, not a null finding.
+
+Non-claims: not causal; no "time pressure causes worse moves/reasoning"; NO sharpness-moderation-
+shown claim; NO human-obviousness modeled (v1 = engine-side proxy); surface-bait exploratory only;
+no C3a/C3b outcome/flagging claim; no degradation curve; Stockfish not ground truth; DRAW not
+solved.
+
+Next step:
+14.2C — Null / Power Interpretation and Roadmap Reconciliation Audit (accept underpowered &
+consolidate; OR enrich power then re-run LOCKED model; OR pivot to C3a/C3b — no threshold moves).

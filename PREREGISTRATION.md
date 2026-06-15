@@ -300,6 +300,21 @@ obviousness and **not** a complete account of practical difficulty.
 **Next implementation ticket: 14.2B** — fit this locked model; no design changes permitted
 without a logged deviation.
 
+**Post-result status (14.2B, 2026-06-15):** the locked model was run with **no design
+changes** (200 reps, seed 42; join validated, `sharp_value_fragility_v1` recompute 0
+mismatches). **Classification: UNDERPOWERED / NO CLAIM.** Pooled `clock=60_180 × sharp`
+= +0.0102 [+0.0013, +0.0194] (excl 0), same-sign both months — **but** the limiting
+sharp×`60_180` cell on the estimation split fell to **297 / 282 per month (< 300)**, the
+2024-09 month CI **contains zero** (+0.0074 [−0.0079, +0.0217]), and the **locked test
+confirmation is weak and sign-flips** (pooled test +0.0012; 09 +0.0054; 10 −0.0035). Per the
+pre-registered kill criterion this is reported as **underpowered / no claim** (an absence of
+resolving power, not a null finding); the threshold was **not** moved. Reports:
+`reports/sharpness_interaction_combined.md`,
+`reports/phase_reports/phase_14_2b_sharpness_interaction_modeling.md`. No causal / sharpness-
+moderation-shown / human-obviousness / outcome-flagging claim. Next: 14.2C decides whether to
+consolidate the underpowered result, enrich power then re-run the **same locked model**, or
+pivot to C3a/C3b — without altering these locked thresholds.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures

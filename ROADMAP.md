@@ -254,11 +254,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   (~110/mo) exploratory only. 12 robustness checks + forbidden-claims locked. NO model run; no
   human-obviousness/sharpness claim. EXP-033. See
   `reports/phase_reports/phase_14_2a_sharpness_interaction_preregistration.md`.
-- **Next ticket: 14.2B — Sharpness Interaction Modeling Implementation** — fit the locked
-  §C3c model (per-month + pooled + locked-test; mover-player-clustered bootstrap; 12 robustness
-  checks; success/weak/null/kill criteria), reusing `controlled_move_quality` +
-  `clock_association_robustness` + `clustered_uncertainty`. No design changes without a logged
-  deviation. Prior-trajectory extraction = optional follow-up.
+- **14.2B complete (modeling):** ran the locked §C3c clock × sharpness interaction
+  (`sharpness_interaction.py` + 15 tests, 1,744 total passing; reuses cmq + car + clustered
+  bootstrap; no engine; join validated, sharp recompute 0 mismatches, 100% coverage).
+  **CLASSIFICATION: UNDERPOWERED / NO CLAIM** (per the locked 14.2A kill criterion — NOT
+  stretched). Pooled `clock=60_180 × sharp` = +0.0102 [+0.0013,+0.0194] excl 0, same-sign both
+  months, BUT (a) limiting sharp×60_180 cell falls to **297/282 per month on the estimation
+  split (<300 threshold)**; (b) 2024-09 alone contains zero (+0.0074 [−0.0079,+0.0217]);
+  (c) **locked test confirmation weak/sign-flips** (pooled test +0.0012; 09 +0.0054, 10
+  −0.0035). Directionally suggestive but not resolvable at current sample; threshold NOT moved.
+  No causal/obviousness/outcome-flagging claim. EXP-034; PREREGISTRATION §C3c post-result note.
+  See `reports/sharpness_interaction_combined.md` +
+  `reports/phase_reports/phase_14_2b_sharpness_interaction_modeling.md`.
+- **Next ticket: 14.2C — Null / Power Interpretation and Roadmap Reconciliation Audit** —
+  decide: accept the underpowered C3c result and consolidate; OR enrich power (a third 10+0
+  month, or sharp-position-oversampled extraction) then re-run the LOCKED model; OR pivot to
+  C3a/C3b outcome sharpness — **without moving the locked C3c thresholds**. Prior-trajectory
+  extraction = optional follow-up.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 
