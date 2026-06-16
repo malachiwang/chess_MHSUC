@@ -1,5 +1,18 @@
 # chess-MHSUC — ROADMAP Re-Scoping Proposal (v11-draft, v2-merged)
 
+**ROADMAP RECOVERY (2026-06-15, Tickets 15.2A → 15.2B):** the project was briefly misrouted into
+a premature synthesis path (a "16.0A synthesis-readiness" / "16.0B final report" default). That
+**contradicted this draft's own phase architecture**, which 15.2A/15.2B reaffirm and `ROADMAP.md`
+now restores: **Phase 15 = Constraint Atlas / move-quality curves (still ACTIVE and UNFINISHED at
+dense move-by-move resolution — current work is checkpoint-only), Phase 16 = cross-time-control
+dose-response, Phase 17 = packaging.** The 16.0A synthesis-readiness audit is reclassified as an
+early/off-roadmap claim-architecture checkpoint, reusable under Phase 17, **not** Phase 16. The
+restored Phase 15.2–15.7 continuation lives in `ROADMAP.md` (the "Roadmap Recovery Note (Ticket
+15.2B)" section, authoritative). Numbering reconciliation: this draft's **§15.2A/B "Sharpness ×
+Clock Move-Quality Mediation" was executed under Phase 14.2A–14.2D**, final status **directional
+but underpowered/no-claim** — the restored Phase 15.2+ slots are the recovery continuation, not a
+re-run. **Dense move-by-move CP-/ES-loss analysis remains unfinished and active.**
+
 **SUPERSEDED IN PART (reconciled 2026-06-14, Tickets 15.1E → 15.1H):** this v11 draft is
 retained as historical design context; its detailed Phase 14–15 sequence is no longer
 authoritative. It is superseded in part by the post-11.2B / 15.1D / 15.1F / 15.1G evidence

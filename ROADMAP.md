@@ -308,12 +308,92 @@ clock-residual moderation (11.0A kill condition not triggered).
   ready-or-ready-pending-figure). EXP-038; PREREGISTRATION synthesis-readiness note. No model;
   no thresholds/classifications changed. See
   `reports/phase_reports/phase_16_0a_synthesis_readiness_public_claim_audit.md`.
-- **Next ticket: 16.0B — Final Report Skeleton / Claim Architecture Draft** — assemble the report
-  skeleton from `synthesis_readiness_audit.md`, generate the inventoried tables + 7 figures into
-  `reports/figures/`, consolidate the per-arc reports. **Preserved fallbacks (deliberate choice
-  only, off the default path): 14.2E — Third-Month/Pooled-Power C3c Enrichment Audit** or
-  **14.3B — C3b Flagging Sharpness Pre-Registration**. Prior-trajectory extraction = optional
-  follow-up.
+  **⚠️ RECLASSIFIED (15.2B): 16.0A is an early/off-roadmap synthesis checkpoint, reusable in
+  Phase 17 packaging — NOT Phase 16 dose-response work. It does NOT set the default next ticket
+  to final report drafting. Its claim-architecture/forbidden-claims content stays valid.**
+- **15.2A complete (roadmap recovery audit):** found the synthesis routing premature — all
+  move-quality work is checkpoint-only (`next_move_loss` has 4 `selected_position_type`,
+  ~2.67 rows/game); Phase 15 dense move-by-move curves, richer atlas, fuller sharpness panel,
+  and Phase 16 cross-TC remain unfinished; Phase 12/13 deferred. See
+  `reports/phase_reports/phase_15_2a_roadmap_recovery_dense_move_quality_architecture_audit.md`.
+- **15.2B complete (this patch):** governance docs restored to the recovered architecture
+  (below). EXP-039. See `reports/phase_reports/phase_15_2b_roadmap_recovery_patch.md`.
+- **Next ticket: 15.3A — Dense Move-by-Move Loss Feasibility Audit** (NOT final synthesis).
+  **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c
+  Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis
+  snapshot (reuse in Phase 17).**
+
+## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
+
+Ticket 15.2A identified a roadmap integrity failure: the project was prematurely routed into a
+synthesis path under Phase 16. This conflicted with the accepted v11 architecture, where
+**Phase 15 is Constraint Atlas / move-quality curves, Phase 16 is cross-time-control
+dose-response, and Phase 17 is packaging.** The 16.0A synthesis-readiness audit remains useful
+as an early claim-architecture checkpoint, but it is **not** Phase 16 work and does **not** set
+the default next ticket to final report drafting; it may be reused under Phase 17 packaging. The
+active default path is restored to Phase 15.2 onward: **15.2B Roadmap Recovery Patch → 15.3A
+Dense Move-by-Move Loss Feasibility Audit.** (Numbering note: the v11 draft's sharpness × clock
+move-quality mediation is §15.2; it was executed under Phase 14.2A–14.2D and is final-status
+**directional but underpowered/no-claim** — the restored Phase 15.2+ slots below are the
+recovery continuation, not a re-run of that work.)
+
+### Restored Phase 15 path (active)
+
+```
+Phase 15.2 — Roadmap recovery
+- 15.2A Roadmap Recovery / Dense Move-Quality Architecture Audit — complete.
+- 15.2B Roadmap Recovery Patch — complete (this ticket).
+
+Phase 15.3 — Dense Move-by-Move Loss Extraction
+- 15.3A Dense Move-by-Move Loss Feasibility Audit — NEXT.
+- 15.3B Dense Move-by-Move Loss Extraction Pilot.
+- 15.3C Full Dense Move-by-Move Loss Extraction.
+
+Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
+- 15.4A CP / ES Constraint Atlas Audit.
+- 15.4B CP / ES Constraint Atlas Implementation.
+- 15.4C Controlled Dense Move-Quality Modeling Audit.
+- 15.4D Controlled Dense Move-Quality Modeling Implementation.
+
+Phase 15.5 — Sharpness-Enriched Constraint Atlas
+- 15.5A Sharpness-Enriched Constraint Atlas Audit.
+- 15.5B Sharpness-Enriched Constraint Atlas Implementation.
+- 15.5C Sharpness Interaction Panel Audit.
+- 15.5D Sharpness Interaction Panel Implementation.
+
+Phase 15.6 — Sharpness Prediction Value
+- 15.6A Sharpness Prediction-Improvement Audit.
+- 15.6B Sharpness Prediction-Improvement Implementation.
+- 15.6C Sharpness Prediction Robustness / Interpretation Audit.
+
+Phase 15.7 — Time-Trajectory / Prior-Quality Controls
+- 15.7A Trajectory / Prior-Quality Controls Feasibility Audit.
+- 15.7B Trajectory Feature Extraction / Modeling Implementation.
+- 15.7C Trajectory-Controlled Move-Quality Modeling.
+```
+
+Metric policy (carried from 15.2A): primary = expected-score loss (mover perspective);
+secondary = clipped centipawn loss; raw centipawn loss only inside eval-band-conditioned panels;
+percent-eval-swing forbidden as a headline metric. Move-quality model ladder for Phase 15.6:
+M0 = eval + rating + phase; M1 = M0 + clock; M2 = M1 + sharpness; M3 = M2 + clock × sharpness.
+
+### Phase 16 — Cross-Time-Control Dose Response (restored; NOT synthesis)
+
+Purpose: test whether clock, move-quality, and sharpness patterns vary across time controls in a
+way consistent with bounded-resource constraints. Candidate controls: **3+0, 5+0, 10+0 (anchor),
+10+5 or 15+10 increment.** **Mandatory caveat:** Lichess rating pools differ by time control, so
+cross-control comparisons require **within-pool rating quantiles** or explicit rating-pool
+caveats. Suggested tickets: 16.1A Time-Control Selection / Feasibility Audit · 16.1B
+Cross-Time-Control Pilot Parsing / Evaluation · 16.2A Cross-Time-Control Move-Quality Audit ·
+16.2B Implementation · 16.3A Cross-Time-Control Sharpness Audit · 16.3B Implementation.
+
+### Phase 17 — Packaging / Public Report (restored)
+
+Purpose: package the project only after the empirical arcs are complete or explicitly frozen.
+The earlier 16.0A synthesis-readiness audit may be reused as Phase 17-adjacent material, but it
+was premature as a Phase 16 default endpoint. Suggested tickets: 17.0A Synthesis Readiness Audit
+· 17.0B Final Report Skeleton / Claim Architecture Draft · 17.1A/B Final Tables / Figures ·
+17.2A/B Final Report Draft · 17.3A/B Public / Outreach Package.
 
 ## Post-C4 Reconciliation (2026-06-14, Ticket 15.1H)
 
@@ -1299,5 +1379,10 @@ Phases 0–9 complete:
 - Phase 7: Calibration and probability interpretation (7.1A/B, 7.2A/B, 7.3A/B)
 - Phase 8: Fixed-depth Stockfish eval (8.1A/B); eval-conditioned modeling (8.2A/B)
 - Phase 9: 250k scale-up (9.1A/B); constraint slices (9.2A/B); cross-month replication (9.3A/B); roadmap reconciliation (9.4A/B)
+- Phase 11: prior-work/novelty (11.0A/B); claim+prereg (11.1A); termination decomposition (11.2A/B/C); player-leakage clustering (11.3A/B)
+- Phase 14: MultiPV sharpness feasibility/pilot/full extraction (14.1A/B/C); sharpness×clock checkpoint mediation = v11 §15.2, **underpowered/no-claim** (14.2A/B/C/D); outcome/flagging audit (14.3A)
+- Phase 15 (checkpoint layer): move-quality atlas audit/extraction (15.0A/B/C); descriptive Constraint Atlas (15.1A/B); controlled checkpoint move-quality modeling + robustness + C4 consolidation + reconciliation (15.1C–15.1H)
+- 16.0A synthesis-readiness audit — **early/off-roadmap synthesis checkpoint; reusable in Phase 17; NOT Phase 16 dose-response work** (reclassified by 15.2B)
+- Phase 15.2: roadmap recovery audit (15.2A); roadmap recovery patch (15.2B)
 
 Update this section after each stable commit.

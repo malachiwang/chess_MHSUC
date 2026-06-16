@@ -2179,3 +2179,39 @@ Next step:
 16.0B — Final Report Skeleton / Claim Architecture Draft (assemble skeleton + generate tables/
 figures + consolidate). Fallbacks (deliberate choice): 14.2E (C3c enrichment) or 14.3B (C3b
 flagging).
+
+## EXP-039 — Roadmap Recovery Patch
+
+Experiment ID: EXP-039
+Date: 2026-06-15
+Owner: Malachi Wang
+Status: complete (doc-only patch applying the 15.2A recovery audit; NO models, NO Stockfish, NO
+data artifacts modified, NO thresholds/classifications changed; nothing staged/committed)
+
+Purpose:
+Patch the governance docs to match the recovered v11 architecture after 15.2A found the project
+prematurely routed into a synthesis path under Phase 16.
+
+Applied (per 15.2A §14):
+- Reclassified the mistaken 16.0A synthesis-readiness audit as an early/off-roadmap claim-
+  architecture checkpoint / Phase 17-adjacent (files NOT deleted; content reusable in Phase 17).
+- Removed "16.0B — Final Report Skeleton" as the default next ticket.
+- Restored Phase 15 as active+expanded (15.2 recovery → 15.3 dense move-by-move loss extraction
+  → 15.4 CP/ES Constraint Atlas + controlled dense modeling → 15.5 sharpness-enriched atlas +
+  interaction panel → 15.6 sharpness prediction-improvement (M0 eval+rating+phase, M1 +clock,
+  M2 +sharpness, M3 +clock×sharpness) → 15.7 trajectory/prior-quality controls).
+- Restored Phase 16 = cross-time-control dose-response (3+0/5+0/10+0 anchor/increment;
+  within-pool rating-quantile caveat mandatory). Restored Phase 17 = packaging.
+- Reconciled v11 numbering: v11 §15.2A/B sharpness×clock mediation executed as 14.2A–14.2D,
+  final status directional/underpowered/no-claim.
+- Files patched: ROADMAP.md (recovery note + restored Phase 15.2–17 + completed-tickets +
+  next pointer); docs/roadmap_rescope_v11_draft.md (recovery note); PREREGISTRATION.md
+  (post-15.2A recovery note); EXPERIMENT_LOG.md (this entry).
+
+Settled findings PRESERVED unchanged: E3→E4 clock improves outcome prediction; that signal
+largely flagging channel (11.2B); eval-state dominates move quality + small robust clock residual
+(checkpoint-level); MultiPV sharpness extracted; C3c directional/underpowered/no-claim; C3a not
+recommended; C3b coherent/not-default.
+
+Next default empirical ticket: 15.3A — Dense Move-by-Move Loss Feasibility Audit (NOT synthesis).
+No thresholds/classifications changed; no causal/obviousness/sharpness-shown claims.

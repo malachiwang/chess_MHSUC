@@ -361,6 +361,16 @@ future sharpness work (C3c enrichment or C3b flagging) requires its **own** pre-
 This note **does not rewrite any locked analysis**; locked contrasts/thresholds/classifications
 stand.
 
+**Post-15.2A Roadmap Recovery Note (2026-06-15):** the synthesis-readiness audit previously
+numbered 16.0A is **reclassified as an early/off-roadmap claim-architecture checkpoint, not
+Phase 16 dose-response work**. It does not change any locked analyses or result
+classifications. The active empirical path **returns to Phase 15**: dense move-by-move
+move-quality extraction, a CP/ES-loss Constraint Atlas, sharpness-enriched move-quality
+analysis, sharpness prediction-value modeling, and trajectory/prior-quality controls. **Phase 16
+remains cross-time-control dose-response; Phase 17 remains packaging.** **C3c remains directional
+but underpowered/no-claim.** Final synthesis is **not** the default next step. No prior
+thresholds, contrasts, or classifications are changed by this note.
+
 ### Contrast 4 — Next-move quality constraint curve (Phase 15) — ELEVATED after 11.2B
 
 **Post-11.2B status: this is now the central board-play test.** C4 directly measures
