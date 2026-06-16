@@ -318,9 +318,22 @@ clock-residual moderation (11.0A kill condition not triggered).
   `reports/phase_reports/phase_15_2a_roadmap_recovery_dense_move_quality_architecture_audit.md`.
 - **15.2B complete (this patch):** governance docs restored to the recovered architecture
   (below). EXP-039. See `reports/phase_reports/phase_15_2b_roadmap_recovery_patch.md`.
-- **Next ticket: 15.3A — Dense Move-by-Move Loss Feasibility Audit** (NOT final synthesis).
-  **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c
-  Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis
+- **15.3A complete (feasibility audit):** dense per-ply move-loss extraction feasible via
+  Option A (one Stockfish eval per pre-move position, post-move reused); ~3.3–3.4M positions
+  both months, ~17–24 h @ depth 12; recommended a ~1,500-game pilot. See
+  `reports/phase_reports/phase_15_3a_dense_move_by_move_loss_feasibility_audit.md`.
+- **15.3B complete (pilot):** `dense_move_loss.py` + 30 tests (1,774 total). Pilot ran the
+  first 1,500 accepted 600+0 games of 2024-09 → 86,977 per-ply rows (both colors),
+  88,012 evals, 0 replay/eval failures, 0 dup keys, 100% player-hash join, ~40 min @ depth 12
+  (41.7 evals/s → ~22 h both months). Validation clean; mover-perspective sign correct for both
+  colors; eval-band move-loss pattern reproduces the checkpoint finding (descriptive). Pilot
+  artifact gitignored. EXP-040. See `reports/phase_reports/phase_15_3b_dense_move_loss_pilot.md`
+  and `reports/dense_move_loss_pilot_2024_09_v1.md`.
+- **Next ticket: 15.3C-A — Dense Extraction Strategy Decision Audit** (decide depth / chunking /
+  sampling and a machine-kept-awake plan before the full run; ~22 h @ depth 12 is a real compute
+  decision, so NOT an automatic full depth-12 run). Then 15.3C — Full Dense Move-by-Move Loss
+  Extraction. **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power
+  C3c Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis
   snapshot (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
@@ -345,9 +358,10 @@ Phase 15.2 — Roadmap recovery
 - 15.2B Roadmap Recovery Patch — complete (this ticket).
 
 Phase 15.3 — Dense Move-by-Move Loss Extraction
-- 15.3A Dense Move-by-Move Loss Feasibility Audit — NEXT.
-- 15.3B Dense Move-by-Move Loss Extraction Pilot.
-- 15.3C Full Dense Move-by-Move Loss Extraction.
+- 15.3A Dense Move-by-Move Loss Feasibility Audit — complete.
+- 15.3B Dense Move-by-Move Loss Extraction Pilot — complete (1,500-game 2024-09 pilot).
+- 15.3C-A Dense Extraction Strategy Decision Audit — NEXT (depth/chunking/sampling decision).
+- 15.3C Full Dense Move-by-Move Loss Extraction (gated on 15.3C-A).
 
 Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4A CP / ES Constraint Atlas Audit.

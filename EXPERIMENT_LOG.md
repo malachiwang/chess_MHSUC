@@ -2215,3 +2215,64 @@ recommended; C3b coherent/not-default.
 
 Next default empirical ticket: 15.3A — Dense Move-by-Move Loss Feasibility Audit (NOT synthesis).
 No thresholds/classifications changed; no causal/obviousness/sharpness-shown claims.
+
+## EXP-040 — Dense Move-by-Move Loss Extraction Pilot
+
+Experiment ID: EXP-040
+Date: 2026-06-16
+Owner: Malachi Wang
+Status: complete (PILOT ONLY; no full dense extraction; no models; no thresholds/classifications
+changed; pilot artifact gitignored; nothing staged/committed)
+
+Purpose:
+Implement and pilot-run dense per-ply next-move loss extraction (every ply, both colors) — the
+dense generalization of the four White-only numbered checkpoints (15.0C) — to size and validate
+the pipeline before any full both-months run.
+
+Scope:
+- Month: 2024_09. Raw cache data/raw/lichess/lichess_2024_09_first250k.pgn.
+- First 1,500 accepted 600+0 games (accepted_basic ∩ time_control==600+0); cap enforced.
+- Universe: non-terminal plies, move_number >= 5, both White and Black moves.
+- Eval strategy: Option A — one Stockfish eval per pre-move position; post-move eval reused from
+  the next position (no MultiPV, no separate best-move search). Stockfish 18 @ depth 12.
+- ES via existing train-fit cp->ES transform (scale 348.4059; not refit).
+
+Module + tests:
+- New src/chess_mhsuc/dense_move_loss.py (pilot-only; refuses caps > 2,000 without an explicit
+  override; NO full-run path). Reuses next_move_loss/stockfish_eval/constraint_atlas/
+  player_metadata helpers unmodified.
+- tests/test_dense_move_loss.py — 30 tests. Full suite 1,774 passing (1,744 prior + 30).
+
+Results:
+- 86,977 per-ply rows across 1,486 games (14 of 1,500 too short for move>=5). 53 columns.
+- 88,012 engine evals; 85,491 cache-reuse hits; 451 terminal positions resolved without engine.
+- 0 replay failures, 0 eval errors, 0 duplicate (game_id, ply) keys, 0 missing-clock rows.
+  7 think-time anomalies + 1 clock>600 flagged (not dropped). 4,874 mate-band rows flagged and
+  excluded from headline loss summaries. 100% mover/opponent player-hash join.
+- Mover colors balanced (White 43,856 / Black 43,121). Sign conversion correct for BOTH colors:
+  ES loss mean 0.0345 White vs 0.0348 Black (medians 0.0116 vs 0.0113).
+- Loss metrics (OK, non-mate-band, n=82,103): ES loss mean 0.0347, median 0.0115, p90 0.0939;
+  ES>=0.05 20.3%, ES>=0.10 9.1%. Clipped cp loss mean 59.1, median 21, p90 160; zero share 25.6%.
+  ES bounded [0, 0.788]; clipped cp never negative; raw cp negative for 18,301 rows (expected).
+- DESCRIPTIVE cross-check (no claim): median ES loss by eval band — slight 0.0175 > clear 0.0108
+  ~ near_equal 0.0108 > decided 0.0042 — reproduces the checkpoint 15.1B/15.1D eval-dominance
+  pattern on dense, both-color data.
+
+Runtime / extrapolation:
+- ~40 min wall-clock (engine 2,108.5 s); 41.7 evals/s over the full pilot position distribution.
+- Full both-months dense (~3.34M positions) extrapolated ~22.2 h @ depth 12 (~11.1 h/month) —
+  upper half of the 15.3A 17–24 h band.
+- Depth-10 timing subtest 202.8 evals/s on a 1,000-position non-distribution-matched sample
+  (first ~17 games) → optimistic ~4.6 h; realistic depth-10 ~8–12 h per 15.3A. Reliable figure is
+  the depth-12 full-pilot rate.
+
+Recommendation:
+- Next = 15.3C-A Dense Extraction Strategy Decision Audit (decide depth / chunking / sampling and
+  a machine-kept-awake plan; ~22 h depth-12 is a real compute decision → NOT an automatic full
+  depth-12 run). Validation did not fail, so 15.3B2 (pilot fixes) is not required.
+
+Non-claims:
+PILOT ONLY; no full dense run; no dense atlas; no dense controlled model; predictive/descriptive
+only; not causal; no "low clock causes blunders" / "time pressure causes worse reasoning" /
+"Stockfish is ground truth" / "human obviousness modeled" / "DRAW solved" / "best predictor".
+Does not change C4 or C3c. No thresholds/classifications changed.
