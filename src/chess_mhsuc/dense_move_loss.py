@@ -1287,10 +1287,44 @@ def render_report(
     return "\n".join(L)
 
 
+# Published, validated 2024-09 full-dense stats (15.3C / EXP-041) — used as the
+# replication baseline so the 2024-10 report does not re-read the 156 MB artifact.
+_M_2024_09_STATS = {
+    "rows": 1_496_890, "rows_per_game": 58.4, "mate_band_share": 0.054,
+    "es_mean": 0.0346, "es_median": 0.0114, "es_p90": 0.0926,
+    "es_ge_0_05": 0.20, "es_ge_0_10": 0.0903,
+    "cp_ge_100": 0.175, "cp_ge_200": 0.072,
+}
+
+
+def _compare_to_2024_09(summary: dict) -> str:
+    """Markdown comparison block: 2024-10 (live summary) vs the published 2024-09
+    full-dense baseline."""
+    b = _M_2024_09_STATS
+    e = summary.get("es_loss", {})
+    rows = summary.get("rows", 0)
+    games = summary.get("unique_games", 0)
+    rpg = round(rows / games, 1) if games else None
+    mb = round(summary.get("rows_mate_band", 0) / rows, 3) if rows else None
+    L = [
+        "| Metric | 2024-09 | 2024-10 |",
+        "|---|---|---|",
+        f"| Rows | {b['rows']:,} | {rows:,} |",
+        f"| Rows/game | {b['rows_per_game']} | {rpg} |",
+        f"| Mate-band share | {b['mate_band_share']} | {mb} |",
+        f"| ES loss mean | {b['es_mean']} | {e.get('mean')} |",
+        f"| ES loss median | {b['es_median']} | {e.get('median')} |",
+        f"| ES loss p90 | {b['es_p90']} | {e.get('p90')} |",
+        f"| ES >= 0.10 | {b['es_ge_0_10']} | {e.get('ge_0_10')} |",
+    ]
+    return "\n".join(L)
+
+
 def render_full_month_report(
     month: str, depth: int, chunk_size: int, counters: dict, summary: dict,
     failed_games: list[dict], coverage: dict, out_path: str, chunk_dir: str,
     sf_version: str, preflight: dict | None,
+    compare_block: str | None = None, next_recommendation: str | None = None,
 ) -> str:
     s = summary
     t = s["throughput"]
@@ -1414,13 +1448,25 @@ def render_full_month_report(
     else:
         a("- player metadata not provided; hash columns null.")
     a("")
-    a("## 16. Comparison to 15.3B pilot")
-    a("- 15.3B pilot (first 1,500 games): 86,977 rows, 88,012 evals, ES mean 0.0347, "
-      "median 0.0115. This full-month run extends the same pipeline to all accepted "
-      "games; per-row distributions are expected to be consistent with the pilot.")
+    if compare_block:
+        a("## 16. Comparison to 2024-09 full dense extraction")
+        a(compare_block)
+        a("")
+        a("Both months use the identical pipeline and the same train-fit ES transform; "
+          "matching per-row distributions are the cross-month replication check.")
+    else:
+        a("## 16. Comparison to 15.3B pilot")
+        a("- 15.3B pilot (first 1,500 games): 86,977 rows, 88,012 evals, ES mean 0.0347, "
+          "median 0.0115. This full-month run extends the same pipeline to all accepted "
+          "games; per-row distributions are expected to be consistent with the pilot.")
     a("")
     a("## 17. Known limitations")
-    a("- 2024-09 only; 2024-10 dense extraction NOT run; no cross-time-control data.")
+    if month == "2024_10":
+        a("- 2024-10 10+0 only; this completes the SECOND 10+0 anchor month (with "
+          "2024-09); no cross-time-control data; no other time controls extracted.")
+    else:
+        a("- 2024-09 10+0 only; the 2024-10 replication month is a separate run; "
+          "no cross-time-control data.")
     a("- No visual atlas; no dense controlled model.")
     a("- Depth-parity (mover-to-move vs opponent-to-move, same depth) acknowledged "
       "(15.0C benign); re-check recommended.")
@@ -1432,8 +1478,11 @@ def render_full_month_report(
     a("")
     a("## 18. Recommendation for next step")
     a(f"- Artifact: `{out_path}` (gitignored under `data/`; not staged).")
-    a("- Recommend **15.3D — Full Dense Move-by-Move Loss Extraction Replication Month "
-      "(2024-10)** before any dense atlas, so final claims use both monthly samples.")
+    if next_recommendation:
+        a(f"- {next_recommendation}")
+    else:
+        a("- Recommend **15.3D — Full Dense Move-by-Move Loss Extraction Replication Month "
+          "(2024-10)** before any dense atlas, so final claims use both monthly samples.")
     a("")
     return "\n".join(L)
 
@@ -1474,6 +1523,10 @@ def main(argv: list[str] | None = None) -> int:
                    action="store_true",
                    help="run the FULL 2024-09 10+0 dense extraction (no game cap); "
                         "restricted to month==2024_09, depth==12, 600+0")
+    p.add_argument("--allow-full-month-2024-10", dest="allow_full_month_2024_10",
+                   action="store_true",
+                   help="run the FULL 2024-10 10+0 dense extraction (no game cap); "
+                        "restricted to month==2024_10, depth==12, 600+0")
     p.add_argument("--chunk-size", type=int, default=5000)
     p.add_argument("--chunk-dir", default=None)
     p.add_argument("--resume", action="store_true")
@@ -1484,11 +1537,26 @@ def main(argv: list[str] | None = None) -> int:
     args = p.parse_args(argv)
 
     # --- full-month safety gate (must be evaluated before any pilot-cap logic) ---
+    # Each month-specific flag is restricted to its own month; there is no
+    # both-month / all-month path. Supported full-month combos: 2024_09 and
+    # 2024_10, each at depth 12 and 600+0 only.
+    full_month_flag_month = None
+    if args.allow_full_month_2024_09 and args.allow_full_month_2024_10:
+        print("ERROR: cannot set both --allow-full-month-2024-09 and "
+              "--allow-full-month-2024-10; there is no both-month mode. Run each month "
+              "separately.", file=sys.stderr)
+        return 2
     if args.allow_full_month_2024_09:
-        if args.month != "2024_09":
-            print(f"ERROR: --allow-full-month-2024-09 is restricted to month==2024_09; "
-                  f"got {args.month!r}. This ticket does NOT run 2024-10 or any other "
-                  "month.", file=sys.stderr)
+        full_month_flag_month = "2024_09"
+    elif args.allow_full_month_2024_10:
+        full_month_flag_month = "2024_10"
+
+    is_full_month = full_month_flag_month is not None
+    if is_full_month:
+        if args.month != full_month_flag_month:
+            print(f"ERROR: --allow-full-month-{full_month_flag_month.replace('_', '-')} is "
+                  f"restricted to month=={full_month_flag_month}; got {args.month!r}. Use "
+                  "the flag that matches the requested month.", file=sys.stderr)
             return 2
         if args.depth != 12:
             print(f"ERROR: full-month mode is locked to depth 12 (continuity with the "
@@ -1500,16 +1568,17 @@ def main(argv: list[str] | None = None) -> int:
             return 2
 
     # --- pilot-cap safety (only when NOT full-month and NOT preflight) ---
-    if not args.allow_full_month_2024_09 and not args.preflight:
+    if not is_full_month and not args.preflight:
         if args.max_accepted_games <= 0:
             print("ERROR: --max-accepted-games must be a positive pilot cap.", file=sys.stderr)
             return 2
         if (args.max_accepted_games > PILOT_HARD_MAX_GAMES
                 and not args.pilot_override_allow_large):
             print(f"ERROR: --max-accepted-games {args.max_accepted_games} exceeds the pilot "
-                  f"cap of {PILOT_HARD_MAX_GAMES}. Use --allow-full-month-2024-09 for the "
-                  "approved full 2024-09 run, or --pilot-override-allow-large to raise the "
-                  "pilot cap (still capped).", file=sys.stderr)
+                  f"cap of {PILOT_HARD_MAX_GAMES}. Use --allow-full-month-2024-09 / "
+                  "--allow-full-month-2024-10 for an approved full month run, or "
+                  "--pilot-override-allow-large to raise the pilot cap (still capped).",
+                  file=sys.stderr)
             return 2
 
     # --- common setup ---
@@ -1541,32 +1610,52 @@ def main(argv: list[str] | None = None) -> int:
             args.raw_pgn, args.month, accepted_meta, sf_path, args.depth,
             PILOT_DEFAULT_MAX_GAMES, args.min_move_number, es_scale)
         df, _cov = finalize_frame(rows, args.player_metadata)
-        n_rows, n_games, n_evals = df.height, int(df["game_id"].n_unique()), counters["engine_evals"]
-        targets = {"rows": 86977, "games": 1486, "evals": 88012}
-        ok = (n_rows == targets["rows"] and n_games == targets["games"])
-        verdict = "PASS" if ok else "MISMATCH"
-        print(f"\n=== 15.3C preflight (first {PILOT_DEFAULT_MAX_GAMES} games) ===")
-        print(f"  rows={n_rows} (target {targets['rows']}) | games={n_games} "
-              f"(target {targets['games']}) | evals={n_evals} (target {targets['evals']}) "
-              f"| replay_fail={counters['games_replay_failed']} "
-              f"dups={df.height - df.select(_KEY).unique().height} -> {verdict}")
+        n_rows = df.height
+        n_games = int(df["game_id"].n_unique())
+        n_evals = counters["engine_evals"]
+        dups = df.height - df.select(_KEY).unique().height
+        colors = set(df["mover_color"].unique().to_list())
+        tc_ok = (df["time_control_raw"].unique().to_list() == ["600+0"]
+                 and df["initial_time_s"].unique().to_list() == [600]
+                 and df["increment_s"].unique().to_list() == [0])
+        no_user = not ({"white", "black", "White", "Black"} & set(df.columns))
+        hash_full = df.filter(pl.col("mover_player_hash").is_null()).height == 0
+        print(f"\n=== preflight {args.month} (first {PILOT_DEFAULT_MAX_GAMES} games) ===")
+        if args.month == "2024_09":
+            # exact reproduction of the 15.3B pilot
+            ok = (n_rows == 86977 and n_games == 1486)
+            print(f"  rows={n_rows} (target 86977) | games={n_games} (target 1486) | "
+                  f"evals={n_evals} (target 88012) | replay_fail="
+                  f"{counters['games_replay_failed']} dups={dups} -> "
+                  f"{'PASS' if ok else 'MISMATCH'}")
+        else:
+            # broad sanity for a new month (no exact target)
+            ok = (80_000 <= n_rows <= 110_000 and counters["games_replay_failed"] == 0
+                  and counters.get("engine_evals", 0) > 0 and dups == 0
+                  and colors == {"white", "black"} and tc_ok and no_user and hash_full
+                  and df.filter(pl.col("status") != _STATUS_OK).height == 0)
+            print(f"  rows={n_rows} (~80k-100k expected) | games={n_games} | "
+                  f"evals={n_evals} | replay_fail={counters['games_replay_failed']} | "
+                  f"dups={dups} | colors={sorted(colors)} | tc_600_0={tc_ok} | "
+                  f"hash_full={hash_full} | no_username={no_user} -> "
+                  f"{'PASS' if ok else 'FAIL'}")
         if not ok:
-            print("  ERROR: preflight did not reproduce 15.3B counts; investigate before "
-                  "the full run.", file=sys.stderr)
+            print("  ERROR: preflight did not pass; investigate before the full run.",
+                  file=sys.stderr)
             return 3
         return 0
 
     # =====================================================================
-    # MODE: full 2024-09 dense extraction (chunked, resumable)
+    # MODE: full-month dense extraction (chunked, resumable) — 2024_09 / 2024_10
     # =====================================================================
-    if args.allow_full_month_2024_09:
+    if is_full_month:
         out = Path(args.out)
         report = Path(args.report)
         if out.exists() and not args.overwrite and not args.resume:
             raise FileExistsError(f"{out} exists; pass --overwrite or --resume")
         chunk_dir = Path(args.chunk_dir
                          or f"data/processed/dense_move_loss_{version_tag}_chunks")
-        print(f"  [dense] FULL-MONTH 2024-09: ~{len(accepted_meta):,} games, "
+        print(f"  [dense] FULL-MONTH {args.month}: ~{len(accepted_meta):,} games, "
               f"depth {args.depth}, chunk_size {args.chunk_size}, chunk_dir {chunk_dir}",
               file=sys.stderr)
 
@@ -1588,10 +1677,22 @@ def main(argv: list[str] | None = None) -> int:
         summary = summarize(df, counters)
         summary["min_move_number"] = args.min_move_number
 
+        # 2024-10 replication: compare to the 2024-09 full artifact + recommend 15.4A
+        compare_block = None
+        next_recommendation = None
+        if args.month == "2024_10":
+            compare_block = _compare_to_2024_09(summary)
+            next_recommendation = (
+                "Recommend **15.4A — CP/ES Constraint Atlas Visualization Audit**: both "
+                "10+0 anchor months (2024-09 + 2024-10) now have full dense artifacts, so "
+                "the dense visual atlas can be designed (then implemented in 15.4B). Do not "
+                "skip the 15.4A audit.")
+
         report.parent.mkdir(parents=True, exist_ok=True)
         report.write_text(render_full_month_report(
             args.month, args.depth, args.chunk_size, counters, summary, failed,
-            coverage, str(out), str(chunk_dir), sf_version, preflight=None))
+            coverage, str(out), str(chunk_dir), sf_version, preflight=None,
+            compare_block=compare_block, next_recommendation=next_recommendation))
 
         if args.cleanup_chunks:
             for cf in chunk_files:
@@ -1599,7 +1700,7 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  [dense] cleaned up {len(chunk_files)} chunk files", file=sys.stderr)
 
         t = summary["throughput"]
-        print(f"\n=== 15.3C full dense 2024-09 ===")
+        print(f"\n=== full dense {args.month} ===")
         print(f"  games={counters['games_accepted']} rows={df.height} "
               f"chunks={counters.get('n_chunks')} evals={t['engine_evals']} "
               f"runtime={counters['runtime_s']}s eps={t['evals_per_second']}")

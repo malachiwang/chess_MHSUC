@@ -2345,3 +2345,71 @@ Non-claims:
 model; predictive/descriptive only; not causal; no "low clock causes blunders" / "time pressure
 causes worse reasoning" / "Stockfish is ground truth" / "human obviousness modeled" / "DRAW solved"
 / "best predictor". Does not change C4 or C3c. No thresholds/classifications changed.
+
+## EXP-042 — Full Dense Move-by-Move Loss Extraction: 2024-10 Replication Month
+
+Experiment ID: EXP-042
+Date: 2026-06-17
+Owner: Malachi Wang
+Status: complete (2024-10 ONLY; second 10+0 anchor month; no cross-time-control; no figures; no
+models; no thresholds/classifications changed; ES transform reused not refit; artifact + chunks
+gitignored; nothing staged/committed)
+
+Purpose:
+Replicate the 15.3C full dense per-ply next-move loss extraction for the second 10+0 anchor month
+(2024-10), so the future dense Constraint Atlas rests on two independent monthly samples.
+
+Scope:
+- Month: 2024_10 only; 600+0 only; depth 12. Both colors, move_number >= 5.
+- Universe: all accepted 600+0 games (accepted_basic; 24,842 available) — no game cap.
+- Eval strategy: Option A (one Stockfish eval per pre-move position; post-move reused).
+- ES via existing train-fit transform scale 348.4059 (NOT refit). Chunk_size 5,000, --resume,
+  caffeinate. Stockfish 18.
+
+Module + tests:
+- dense_move_loss.py: added --allow-full-month-2024-10 (LOCKED month==2024_10/depth==12/600+0);
+  generalized the full-month gate (each month flag restricted to its month; NO both-month mode;
+  refuses cross-month/other-depth/other-TC/uncapped-without-flag); month-generic full-month branch
+  with 2024-09 comparison block + 15.4A recommendation; preflight broad-sanity for new months;
+  month-aware §17 in the report renderer. +7 tests (53 in file). Full suite 1,797 passing.
+
+Preflight (broad-sanity gate, new month):
+- First 1,500 games: 88,052 rows, 1,473 games, 89,066 evals, 0 replay fail, 0 dups, both colors,
+  TC 600+0/600/0, full hash coverage, no usernames -> PASS.
+
+Results:
+- 24,842 accepted games -> 1,436,866 rows across 24,552 games with usable move>=5 rows (290 too
+  short). 65 columns. 144 MB parquet; 5 chunks.
+- 1,454,008 engine evals; runtime ~8.8 h (31,770 s); 46.1 evals/s.
+- 0 replay failures, 0 eval errors, 0 duplicate (game_id, ply) keys, 0 missing-clock rows.
+  109 clock>600 + 125 negative-think rows flagged (Lichess clock artifacts), never dropped.
+  74,407 mate-band rows (5.2%) flagged and excluded from headline. 100% player-hash coverage; no
+  raw usernames.
+- Sign correct BOTH colors: ES loss mean 0.0347 White / 0.0345 Black. ES bounded [0, 0.881];
+  clipped cp never negative; raw cp negative share 0.209.
+- Loss (OK, non-mate): ES mean 0.0346, median 0.0114, p90 0.0926; ES>=0.05 0.201, ES>=0.10 0.090;
+  clipped cp mean 58.9, median 21, p90 158, >=100 0.175, >=200 0.072.
+- Coverage: under_60 44,802 / 60_180 94,299 / over_180 1,297,765; result_class WHITE_WIN 671,935 /
+  BLACK_WIN 655,079 / DRAW 109,852. TC fields uniform 600+0/no_increment/rapid; increment_buffer
+  100% null; clock_fraction [0, 6.20].
+
+Cross-month replication (2024-09 vs 2024-10) — essentially exact:
+- rows 1,496,890 vs 1,436,866; rows/game 58.4 vs 58.5; mate-band 5.4% vs 5.2%;
+- ES mean 0.0346 vs 0.0346; median 0.0114 vs 0.0114; p90 0.0926 vs 0.0926; ES>=0.10 0.0903 vs
+  0.0902; cp>=100 0.175 vs 0.175.
+
+Operational note (15.3D-Hotfix):
+- A mid-run duplicate-launch incident occurred: two extra overnight wrapper chains ([overnight]
+  preflight + a dormant [guard] launcher, both started outside this agent) were detected and
+  terminated; the single authoritative run was preserved and never collided on the data/ chunk dir
+  (the duplicates were in preflight / dormant, writing only to /tmp). Final artifact is clean.
+
+Recommendation:
+- Next = 15.4A CP/ES Constraint Atlas Visualization Audit (both anchor months ready). Implementation
+  in 15.4B; do not skip the audit.
+
+Non-claims:
+2024-10 10+0 ONLY (second anchor month); no cross-time-control; no visual atlas; no dense controlled
+model; predictive/descriptive only; not causal; no "low clock causes blunders" / "time pressure
+causes worse reasoning" / "Stockfish is ground truth" / "human obviousness modeled" / "DRAW solved"
+/ "best predictor". Does not change C4 or C3c. No thresholds/classifications changed.

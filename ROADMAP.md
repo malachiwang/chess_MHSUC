@@ -341,12 +341,25 @@ clock-residual moderation (11.0A kill condition not triggered).
   ES mean 0.0346); time-control-aware schema added (all 600+0/no_increment/rapid). Artifact +
   chunks gitignored. EXP-041. See `reports/phase_reports/phase_15_3c_full_dense_move_loss_extraction.md`
   and `reports/dense_move_loss_2024_09_250k_v1.md`. **2024-10 dense extraction is still PENDING.**
-- **Next ticket: 15.3D — Full Dense Move-by-Move Loss Extraction Replication Month (2024-10)**
-  (same depth-12 chunked/resumable full dense for 2024-10, before any dense Constraint Atlas, so
-  atlas claims use both monthly samples). Then 15.4A — CP/ES Constraint Atlas Visualization Audit.
-  **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c Enrichment
-  Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis snapshot (reuse in
-  Phase 17).**
+- **15.3D complete (2024-10 full dense extraction — replication month):** all 24,842 accepted
+  600+0 games → **1,436,866 per-ply rows** (24,552 games, both colors), depth 12, 5 chunks,
+  1,454,008 evals, ~8.8 h under `caffeinate`. Preflight broad-sanity PASS. **Cross-month
+  replication essentially exact vs 2024-09** (ES mean 0.0346 / median 0.0114 / p90 0.0926
+  identical; rows/game 58.5 vs 58.4; mate-band 5.2% vs 5.4%). Clean validation (0 replay/eval
+  failures, 0 dup keys, 100% player-hash, sign correct both colors); TC-aware schema uniform
+  (600+0/no_increment/rapid). A mid-run duplicate-launch incident was resolved under
+  **15.3D-Hotfix** (two stray overnight wrapper chains terminated; single authoritative run
+  preserved, no chunk-dir collision). Artifact + chunks gitignored. EXP-042. See
+  `reports/phase_reports/phase_15_3d_full_dense_move_loss_replication_month.md` and
+  `reports/dense_move_loss_2024_10_250k_v1.md`. **Dense 10+0 substrate now exists for BOTH anchor
+  months (2024-09 + 2024-10).**
+- **Next ticket: 15.4A — CP/ES Constraint Atlas Visualization Audit** (design the dense visual
+  atlas: raw rating bins primary + within-TC percentile optional; clock as absolute/fraction/
+  increment-buffer; eval-band conditioning mandatory; game-level + mover-player-clustered
+  bootstrap CIs; existing cell-count policy). Implementation follows in 15.4B; do not skip the
+  audit. **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c
+  Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis snapshot
+  (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -374,7 +387,8 @@ Phase 15.3 — Dense Move-by-Move Loss Extraction
 - 15.3B Dense Move-by-Move Loss Extraction Pilot — complete (1,500-game 2024-09 pilot).
 - 15.3C-A Dense Extraction Strategy Decision Audit — complete (one-month-first depth-12 full dense).
 - 15.3C Full Dense Move-by-Move Loss Extraction — complete (2024-09: 1,496,890 rows).
-- 15.3D Full Dense Move-by-Move Loss Extraction Replication Month (2024-10) — NEXT.
+- 15.3D Full Dense Move-by-Move Loss Extraction Replication Month — complete (2024-10: 1,436,866 rows).
+  Both 10+0 anchor months now extracted; next = 15.4A (see Phase 15.4 below).
 
 Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4A CP / ES Constraint Atlas Audit.

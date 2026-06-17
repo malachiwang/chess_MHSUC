@@ -462,6 +462,79 @@ def test_pilot_path_still_refuses_uncapped_without_full_month(tmp_path, capsys):
     assert "exceeds the pilot cap" in err
 
 
+# --- 15.3D: 2024-10 full-month flag safety ---
+
+def test_full_month_2024_10_flag_accepts_2024_10(tmp_path):
+    # the 2024-10 flag passes the gate for month 2024_10 (then fails later on the
+    # missing PGN / stockfish — we only assert it gets past the gate, not rc==2 gate).
+    with pytest.raises(Exception):
+        dense_main([
+            "--raw-pgn", "nonexistent.pgn", "--month", "2024_10",
+            "--allow-full-month-2024-10", "--depth", "12", "--time-control", "600+0",
+            "--stockfish-path", "/nonexistent/stockfish",
+            "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+        ])
+
+
+def test_full_month_2024_10_flag_refuses_2024_09(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--allow-full-month-2024-10",
+        "--depth", "12", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "restricted to month==2024_10" in capsys.readouterr().err
+
+
+def test_full_month_2024_10_refuses_non_depth_12(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_10", "--allow-full-month-2024-10",
+        "--depth", "10", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "depth 12" in capsys.readouterr().err
+
+
+def test_full_month_2024_10_refuses_non_600_0(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_10", "--allow-full-month-2024-10",
+        "--depth", "12", "--time-control", "300+2",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "600+0" in capsys.readouterr().err
+
+
+def test_no_both_month_mode(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--allow-full-month-2024-09",
+        "--allow-full-month-2024-10", "--depth", "12",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "both" in capsys.readouterr().err.lower()
+
+
+def test_2024_09_flag_still_refuses_2024_10(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_10", "--allow-full-month-2024-09",
+        "--depth", "12", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "restricted to month==2024_09" in capsys.readouterr().err
+
+
+def test_compare_to_2024_09_block():
+    from chess_mhsuc.dense_move_loss import _compare_to_2024_09
+    summary = {"rows": 1500000, "unique_games": 25000, "rows_mate_band": 81000,
+               "es_loss": {"mean": 0.035, "median": 0.011, "p90": 0.093, "ge_0_10": 0.09}}
+    block = _compare_to_2024_09(summary)
+    assert "2024-09" in block and "2024-10" in block
+    assert "1,496,890" in block  # the published 2024-09 baseline row count
+
+
 # --- time-control parsing (Tasks 8-19) ---
 
 def test_parse_time_control():
