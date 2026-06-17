@@ -2276,3 +2276,72 @@ PILOT ONLY; no full dense run; no dense atlas; no dense controlled model; predic
 only; not causal; no "low clock causes blunders" / "time pressure causes worse reasoning" /
 "Stockfish is ground truth" / "human obviousness modeled" / "DRAW solved" / "best predictor".
 Does not change C4 or C3c. No thresholds/classifications changed.
+
+## EXP-041 — Full Dense Move-by-Move Loss Extraction: 2024-09
+
+Experiment ID: EXP-041
+Date: 2026-06-17
+Owner: Malachi Wang
+Status: complete (2024-09 ONLY; one-month full dense; no 2024-10 run; no figures; no models; no
+thresholds/classifications changed; ES transform reused not refit; artifact + chunks gitignored;
+nothing staged/committed)
+
+Purpose:
+Run the approved full dense per-ply next-move loss extraction for 2024-09 10+0 (the 15.3C-A
+strategy decision): one month first, depth 12, full population, both colors, chunked/resumable
+under caffeinate, with the time-control-aware schema added now.
+
+Scope:
+- Month: 2024_09 only; 600+0 only; depth 12. Both colors, move_number >= 5.
+- Universe: all accepted 600+0 games (accepted_basic; 25,945 available) — no game cap.
+- Eval strategy: Option A (one Stockfish eval per pre-move position; post-move reused).
+- ES via existing train-fit transform scale 348.4059 (NOT refit).
+- Execution: chunk_size 5,000, --resume, caffeinate -dimsu. Stockfish 18.
+
+Module + tests:
+- dense_move_loss.py extended: full-month mode (--allow-full-month-2024-09; LOCKED to
+  month==2024_09, depth==12, 600+0; refuses 2024-10/other depth/other TC), chunked+resumable
+  runner (chunk_NNNN.parquet shards + manifest.json; resume skips game_ids already in chunks;
+  concat at end), 12 time-control-aware fields, preflight mode, extended validation. Pilot path +
+  cap enforcement preserved.
+- tests/test_dense_move_loss.py +16 (46 in file). Full suite 1,790 passing.
+
+Preflight (gate before full run):
+- First 1,500 games reproduced the 15.3B pilot EXACTLY: 86,977 rows / 1,486 games / 88,012 evals,
+  0 replay failures, 0 dup keys -> PASS. Confirms the full-month code path == pilot path.
+
+Results:
+- 25,945 accepted games processed -> 1,496,890 per-ply rows across 25,611 games with usable
+  move>=5 rows (334 too short). 65 columns. 156 MB parquet; 6 chunks.
+- 1,514,689 engine evals; 1,471,279 cache-reuse hits; 7,812 terminal positions.
+- Runtime 45,831.8 s (~12.7 h); 33.4 evals/s (below pilot 41.7 — full distribution has more long
+  late-game positions).
+- 0 replay failures, 0 eval errors, 0 duplicate (game_id, ply) keys, 0 missing-clock rows.
+  132 clock>600 + 133 negative-think rows flagged (Lichess clock artifacts), never dropped.
+  80,577 mate-band rows (5.4%) flagged and excluded from headline. 100% mover/opponent player-hash
+  coverage; no raw usernames.
+- Sign correct BOTH colors: ES loss mean 0.0347 White / 0.0344 Black. ES bounded [0, 0.838];
+  clipped cp never negative; raw cp negative share 0.222 (expected).
+- Loss (OK, non-mate): ES mean 0.0346, median 0.0114, p90 0.0926; ES>=0.05 ~0.20, ES>=0.10 0.090;
+  clipped cp >=100 0.175, >=200 0.072.
+- Coverage: under_60 46,195 / 60_180 95,862 / over_180 1,354,833 (dense gives ~18x the checkpoint
+  low-clock observations); result_class WHITE_WIN 705,097 / BLACK_WIN 679,788 / DRAW 112,005.
+
+Time-control-aware schema (validated uniform for 10+0):
+- time_control_raw 600+0; initial_time_s 600; increment_s 0; family no_increment; speed rapid;
+  clock_fraction range [0.0, 11.94] (upper tail = the 132 flagged clock artifacts);
+  increment_buffer 100% null (correct for no-increment); think_time_net == gross; low_increment_
+  buffer_flag null. Forward-compatible for later time controls without re-extraction.
+
+Comparison to 15.3B pilot:
+- rows/game 58.4 (pilot 58.5); mate-band 5.4% (5.6%); ES mean 0.0346 (0.0347); distributions match.
+
+Recommendation:
+- Next = 15.3D Full Dense Move-by-Move Loss Extraction Replication Month (2024-10) before any dense
+  Constraint Atlas, so atlas claims use both monthly samples. Then 15.4A visualization audit.
+
+Non-claims:
+2024-09 ONLY; 2024-10 NOT run; no cross-time-control data; no visual atlas; no dense controlled
+model; predictive/descriptive only; not causal; no "low clock causes blunders" / "time pressure
+causes worse reasoning" / "Stockfish is ground truth" / "human obviousness modeled" / "DRAW solved"
+/ "best predictor". Does not change C4 or C3c. No thresholds/classifications changed.

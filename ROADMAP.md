@@ -329,12 +329,24 @@ clock-residual moderation (11.0A kill condition not triggered).
   colors; eval-band move-loss pattern reproduces the checkpoint finding (descriptive). Pilot
   artifact gitignored. EXP-040. See `reports/phase_reports/phase_15_3b_dense_move_loss_pilot.md`
   and `reports/dense_move_loss_pilot_2024_09_v1.md`.
-- **Next ticket: 15.3C-A — Dense Extraction Strategy Decision Audit** (decide depth / chunking /
-  sampling and a machine-kept-awake plan before the full run; ~22 h @ depth 12 is a real compute
-  decision, so NOT an automatic full depth-12 run). Then 15.3C — Full Dense Move-by-Move Loss
-  Extraction. **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power
-  C3c Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis
-  snapshot (reuse in Phase 17).**
+- **15.3C-A complete (strategy decision audit):** chose one-month-first depth-12 full dense
+  (continuity with the depth-12 ES transform), full population (not stratified), chunked/resumable
+  + `caffeinate`, time-control-aware schema added now, raw rating bins primary + percentile
+  optional, Phase 16 cross-TC plan preserved. See
+  `reports/phase_reports/phase_15_3c_a_dense_extraction_strategy_visualization_architecture_audit.md`.
+- **15.3C complete (2024-09 full dense extraction):** all 25,945 accepted 600+0 games →
+  **1,496,890 per-ply rows** (25,611 games, both colors), depth 12, 6 chunks, 1,514,689 evals,
+  ~12.7 h under `caffeinate`. Preflight reproduced the 15.3B pilot exactly (86,977 rows). Clean
+  validation (0 replay/eval failures, 0 dup keys, 100% player-hash, sign correct both colors,
+  ES mean 0.0346); time-control-aware schema added (all 600+0/no_increment/rapid). Artifact +
+  chunks gitignored. EXP-041. See `reports/phase_reports/phase_15_3c_full_dense_move_loss_extraction.md`
+  and `reports/dense_move_loss_2024_09_250k_v1.md`. **2024-10 dense extraction is still PENDING.**
+- **Next ticket: 15.3D — Full Dense Move-by-Move Loss Extraction Replication Month (2024-10)**
+  (same depth-12 chunked/resumable full dense for 2024-10, before any dense Constraint Atlas, so
+  atlas claims use both monthly samples). Then 15.4A — CP/ES Constraint Atlas Visualization Audit.
+  **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c Enrichment
+  Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis snapshot (reuse in
+  Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -360,8 +372,9 @@ Phase 15.2 — Roadmap recovery
 Phase 15.3 — Dense Move-by-Move Loss Extraction
 - 15.3A Dense Move-by-Move Loss Feasibility Audit — complete.
 - 15.3B Dense Move-by-Move Loss Extraction Pilot — complete (1,500-game 2024-09 pilot).
-- 15.3C-A Dense Extraction Strategy Decision Audit — NEXT (depth/chunking/sampling decision).
-- 15.3C Full Dense Move-by-Move Loss Extraction (gated on 15.3C-A).
+- 15.3C-A Dense Extraction Strategy Decision Audit — complete (one-month-first depth-12 full dense).
+- 15.3C Full Dense Move-by-Move Loss Extraction — complete (2024-09: 1,496,890 rows).
+- 15.3D Full Dense Move-by-Move Loss Extraction Replication Month (2024-10) — NEXT.
 
 Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4A CP / ES Constraint Atlas Audit.

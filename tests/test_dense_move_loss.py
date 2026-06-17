@@ -19,20 +19,27 @@ from chess_mhsuc.dense_move_loss import (
     build_move_records,
     clock_bucket_coarse,
     clock_flags,
+    clock_fraction_for,
+    completed_game_ids_from_chunks,
+    concatenate_chunks,
     cp_loss_clipped,
     cp_loss_raw,
     es_loss,
     finalize_frame,
+    increment_buffer_for,
     main as dense_main,
     mover_result_label,
     parse_clk_seconds,
+    parse_time_control,
     phase_for,
     rating_bin,
     render_report,
+    speed_category_for,
     summarize,
     terminal_white_eval,
     think_time,
     think_time_bucket,
+    time_control_family_for,
 )
 from chess_mhsuc.next_move_loss import expected_score
 
@@ -407,3 +414,174 @@ def test_min_move_number_filter_excludes_opening():
     # only moves with move_number >= 3 (White Bb5 move 3, Black a6 move 3)
     assert all(r["move_number"] >= 3 for r in recs)
     assert len(recs) == 2
+
+
+# ===========================================================================
+# 15.3C — full-month mode, chunking, time-control-aware schema
+# ===========================================================================
+
+# --- full-month flag safety (Tasks 1-3) ---
+
+def test_full_month_refuses_2024_10(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_10", "--allow-full-month-2024-09",
+        "--depth", "12", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "restricted to month==2024_09" in capsys.readouterr().err
+
+
+def test_full_month_refuses_non_depth_12(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--allow-full-month-2024-09",
+        "--depth", "10", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "depth 12" in capsys.readouterr().err
+
+
+def test_full_month_refuses_non_600_0(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--allow-full-month-2024-09",
+        "--depth", "12", "--time-control", "180+2",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "600+0" in capsys.readouterr().err
+
+
+def test_pilot_path_still_refuses_uncapped_without_full_month(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--max-accepted-games", "999999",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    err = capsys.readouterr().err
+    assert "exceeds the pilot cap" in err
+
+
+# --- time-control parsing (Tasks 8-19) ---
+
+def test_parse_time_control():
+    assert parse_time_control("600+0") == (600, 0)
+    assert parse_time_control("180+2") == (180, 2)
+    assert parse_time_control("900") == (900, 0)
+    assert parse_time_control("-") == (None, None)
+    assert parse_time_control(None) == (None, None)
+
+
+def test_time_control_family():
+    assert time_control_family_for(0) == "no_increment"
+    assert time_control_family_for(2) == "increment"
+    assert time_control_family_for(None) is None
+
+
+def test_speed_category_convention():
+    assert speed_category_for(600, 0) == "rapid"   # 10+0
+    assert speed_category_for(60, 0) == "bullet"    # 1+0
+    assert speed_category_for(180, 0) == "blitz"    # 3+0
+    assert speed_category_for(900, 10) == "rapid"    # 15+10: est 900+400=1300 -> rapid
+    assert speed_category_for(1800, 0) == "classical"
+
+
+def test_clock_fraction():
+    assert clock_fraction_for(300.0, 600) == 0.5
+    assert clock_fraction_for(600.0, 600) == 1.0
+    assert clock_fraction_for(None, 600) is None
+    assert clock_fraction_for(300.0, None) is None
+
+
+def test_increment_buffer_no_increment_is_null():
+    assert increment_buffer_for(60.0, 0) is None   # no-increment -> null
+    assert increment_buffer_for(60.0, 2) == 30.0   # increment game
+    assert increment_buffer_for(None, 2) is None
+
+
+def test_assemble_row_time_control_fields_for_10_0():
+    row = assemble_row("g", "2024_09", _rec(20, 11, True), _META,
+                       _eval(50), _eval(20), depth=12, es_scale=348.41)
+    assert row["time_control_raw"] == "600+0"
+    assert row["initial_time_s"] == 600
+    assert row["increment_s"] == 0
+    assert row["time_control_family"] == "no_increment"
+    assert row["speed_category"] == "rapid"
+    assert row["clock_fraction"] == 300.0 / 600  # _rec clock_before_s=300
+    assert row["increment_buffer"] is None
+    assert row["think_time_gross_s"] == row["think_time_net_s"]  # no increment
+    assert row["low_increment_buffer_flag"] is None
+    assert row["low_clock_absolute_flag"] is False  # 300s not < 60
+
+
+def test_assemble_row_increment_fixture():
+    meta_inc = {**_META, "time_control": "180+2"}
+    rec = _rec(20, 11, True)
+    rec["clock_before_s"] = 5.0   # low clock
+    rec["think_time_s"] = 1.0
+    row = assemble_row("g", "2024_09", rec, meta_inc, _eval(0), _eval(0),
+                       depth=12, es_scale=348.41)
+    assert row["initial_time_s"] == 180
+    assert row["increment_s"] == 2
+    assert row["time_control_family"] == "increment"
+    assert row["increment_buffer"] == 2.5            # 5 / 2
+    assert row["think_time_net_s"] == 3.0            # gross 1 + increment 2
+    assert row["low_increment_buffer_flag"] is True  # 2.5 < 3
+    assert row["low_clock_absolute_flag"] is True    # 5 < 60
+
+
+def test_low_clock_fraction_flag():
+    rec = _rec(20, 11, True)
+    rec["clock_before_s"] = 30.0  # 30/600 = 0.05 < 0.10
+    row = assemble_row("g", "2024_09", rec, _META, _eval(0), _eval(0), 12, 348.41)
+    assert row["low_clock_fraction_flag"] is True
+
+
+def test_expanded_schema_has_no_username_cols():
+    rows = [assemble_row("g", "2024_09", _rec(20, 11, True), _META, _eval(10), _eval(5), 12, 348.41)]
+    df, _ = finalize_frame(rows, None)
+    forbidden = {"white", "black", "White", "Black", "white_user", "black_user"}
+    assert not (forbidden & set(df.columns))
+    # new TC fields present
+    for c in ["time_control_raw", "initial_time_s", "increment_s", "clock_fraction",
+              "increment_buffer", "think_time_net_s", "low_clock_absolute_flag"]:
+        assert c in df.columns
+
+
+# --- chunking + resume (Tasks 2, 4-7) ---
+
+def _mk_rows(game_id, plies):
+    return [assemble_row(game_id, "2024_09", _rec(p, 5 + p, p % 2 == 0), _META,
+                         _eval(10), _eval(5), 12, 348.41) for p in plies]
+
+
+def test_chunk_naming_and_concatenation(tmp_path):
+    cdir = tmp_path / "chunks"
+    cdir.mkdir()
+    df0, _ = finalize_frame(_mk_rows("g1", [10, 11]), None)
+    df1, _ = finalize_frame(_mk_rows("g2", [10, 11]), None)
+    df0.write_parquet(cdir / "chunk_0000.parquet")
+    df1.write_parquet(cdir / "chunk_0001.parquet")
+    files = sorted(cdir.glob("chunk_*.parquet"))
+    assert [f.name for f in files] == ["chunk_0000.parquet", "chunk_0001.parquet"]
+    final = concatenate_chunks(files, tmp_path / "final.parquet")
+    assert final.height == 4
+    assert (tmp_path / "final.parquet").exists()
+
+
+def test_resume_skip_detects_completed_game_ids(tmp_path):
+    cdir = tmp_path / "chunks"
+    cdir.mkdir()
+    df0, _ = finalize_frame(_mk_rows("gA", [10, 11]) + _mk_rows("gB", [10]), None)
+    df0.write_parquet(cdir / "chunk_0000.parquet")
+    done, next_idx = completed_game_ids_from_chunks(cdir)
+    assert done == {"gA", "gB"}
+    assert next_idx == 1
+
+
+def test_completed_ids_empty_when_no_chunks(tmp_path):
+    cdir = tmp_path / "chunks"
+    cdir.mkdir()
+    done, next_idx = completed_game_ids_from_chunks(cdir)
+    assert done == set()
+    assert next_idx == 0

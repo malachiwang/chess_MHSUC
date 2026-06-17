@@ -49,6 +49,7 @@ import re
 import statistics
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 import chess
@@ -114,6 +115,19 @@ _OUTPUT_SCHEMA: dict[str, pl.PolarsDataType] = {
     "black_clock_before_s":   pl.Float64,
     "white_clock_after_s":    pl.Float64,
     "black_clock_after_s":    pl.Float64,
+    # Time-control-aware fields (15.3C-A; forward-compatible — all 600+0 today).
+    "time_control_raw":       pl.Utf8,
+    "initial_time_s":         pl.Int64,
+    "increment_s":            pl.Int64,
+    "time_control_family":    pl.Utf8,
+    "speed_category":         pl.Utf8,
+    "clock_fraction":         pl.Float64,
+    "increment_buffer":       pl.Float64,
+    "think_time_gross_s":     pl.Float64,
+    "think_time_net_s":       pl.Float64,
+    "low_clock_absolute_flag": pl.Boolean,
+    "low_clock_fraction_flag": pl.Boolean,
+    "low_increment_buffer_flag": pl.Boolean,
     "white_elo":              pl.Int64,
     "black_elo":              pl.Int64,
     "mover_elo":              pl.Int64,
@@ -242,6 +256,60 @@ def clock_bucket_coarse(clock_s: float | None) -> str | None:
             "over_180s": "over_180"}[tb]
 
 
+# Low-clock thresholds (documented; constraint-state flags, not claims).
+LOW_CLOCK_ABS_S = 60.0          # absolute remaining-clock low-state
+LOW_CLOCK_FRACTION = 0.10       # relative (clock_before / initial_time) low-state
+LOW_INCREMENT_BUFFER = 3.0      # remaining clock < this many increments (increment games)
+
+
+def parse_time_control(tc_raw: str | None) -> tuple[int | None, int | None]:
+    """Parse a PGN TimeControl string `initial+increment` -> (initial_s, increment_s).
+    Returns (None, None) for missing/unparseable/`-` (correspondence/unlimited)."""
+    if not tc_raw or tc_raw in ("-", "?"):
+        return None, None
+    try:
+        if "+" in tc_raw:
+            base, inc = tc_raw.split("+", 1)
+            return int(base), int(inc)
+        return int(tc_raw), 0
+    except (ValueError, AttributeError):
+        return None, None
+
+
+def time_control_family_for(increment_s: int | None) -> str | None:
+    if increment_s is None:
+        return None
+    return "no_increment" if increment_s == 0 else "increment"
+
+
+def speed_category_for(initial_time_s: int | None, increment_s: int | None) -> str | None:
+    """Lichess-style category by estimated duration = initial + 40*increment
+    (ultrabullet folded into bullet; documented). 600+0 -> rapid."""
+    if initial_time_s is None or increment_s is None:
+        return None
+    est = initial_time_s + 40 * increment_s
+    if est < 180:
+        return "bullet"
+    if est < 480:
+        return "blitz"
+    if est < 1500:
+        return "rapid"
+    return "classical"
+
+
+def clock_fraction_for(clock_before_s: float | None, initial_time_s: int | None) -> float | None:
+    if clock_before_s is None or not initial_time_s:
+        return None
+    return clock_before_s / initial_time_s
+
+
+def increment_buffer_for(clock_before_s: float | None, increment_s: int | None) -> float | None:
+    """clock_before / increment for increment games; None for no-increment."""
+    if clock_before_s is None or not increment_s:  # increment_s 0 or None -> None
+        return None
+    return clock_before_s / increment_s
+
+
 def clip_cp(value: int | None, cap: int = MOVE_QUALITY_CP_CAP) -> int | None:
     if value is None:
         return None
@@ -328,7 +396,8 @@ def load_accepted_game_meta(
 
     meta: dict[str, dict] = {}
     for r in acc.select(
-        ["game_id", "result_class", "termination", "white_elo", "black_elo"]
+        ["game_id", "result_class", "termination", "white_elo", "black_elo",
+         "time_control"]
     ).iter_rows(named=True):
         gid = r["game_id"]
         meta[gid] = {
@@ -337,6 +406,7 @@ def load_accepted_game_meta(
             "is_time_forfeit": r["termination"] == "Time forfeit",
             "white_elo": r["white_elo"],
             "black_elo": r["black_elo"],
+            "time_control": r["time_control"],
             "split_set": assignments.get(gid, "unknown"),
         }
     return meta
@@ -528,6 +598,18 @@ def assemble_row(
     opp_elo = black_elo if mover_is_white else white_elo
     elo_diff = (mover_elo - opp_elo) if (mover_elo is not None and opp_elo is not None) else None
 
+    # Time-control-aware fields (forward-compatible; all 600+0 today).
+    tc_raw = game_meta.get("time_control", "600+0")
+    init_s, inc_s = parse_time_control(tc_raw)
+    cb = rec["clock_before_s"]
+    clk_frac = clock_fraction_for(cb, init_s)
+    inc_buf = increment_buffer_for(cb, inc_s)
+    tt_gross = rec["think_time_s"]                         # raw clock drop
+    tt_net = (tt_gross + inc_s) if (tt_gross is not None and inc_s is not None) else None
+    low_abs = (cb < LOW_CLOCK_ABS_S) if cb is not None else None
+    low_frac = (clk_frac < LOW_CLOCK_FRACTION) if clk_frac is not None else None
+    low_inc_buf = (inc_buf < LOW_INCREMENT_BUFFER) if inc_buf is not None else None
+
     return {
         "game_id": game_id,
         "month": month,
@@ -545,6 +627,18 @@ def assemble_row(
         "black_clock_before_s": rec["black_clock_before_s"],
         "white_clock_after_s": rec["white_clock_after_s"],
         "black_clock_after_s": rec["black_clock_after_s"],
+        "time_control_raw": tc_raw,
+        "initial_time_s": init_s,
+        "increment_s": inc_s,
+        "time_control_family": time_control_family_for(inc_s),
+        "speed_category": speed_category_for(init_s, inc_s),
+        "clock_fraction": clk_frac,
+        "increment_buffer": inc_buf,
+        "think_time_gross_s": tt_gross,
+        "think_time_net_s": tt_net,
+        "low_clock_absolute_flag": low_abs,
+        "low_clock_fraction_flag": low_frac,
+        "low_increment_buffer_flag": low_inc_buf,
         "white_elo": white_elo,
         "black_elo": black_elo,
         "mover_elo": mover_elo,
@@ -584,7 +678,37 @@ def assemble_row(
 
 
 # ---------------------------------------------------------------------------
-# F. Pilot extraction loop (capped; streams PGN in order)
+# F. Per-game extraction (shared by pilot + full-month chunked runners)
+# ---------------------------------------------------------------------------
+
+def extract_game_rows(
+    engine: chess.engine.SimpleEngine,
+    game: chess.pgn.Game,
+    game_id: str,
+    game_meta: dict,
+    month: str,
+    depth: int,
+    min_move_number: int,
+    es_scale: float | None,
+    counters: dict,
+) -> tuple[list[dict], str | None]:
+    """Replay one game, evaluate its emitted positions (one eval per distinct
+    pre-move FEN, post-move reused via per-game cache), and return
+    (rows, replay_failure_reason). Updates engine/cache/terminal counters."""
+    records, _fens, replay_fail = build_move_records(game, game_meta, min_move_number)
+    cache: dict[str, dict] = {}
+    rows: list[dict] = []
+    t_eng = time.time()
+    for rec in records:
+        eb = eval_white_pov(engine, rec["pre_fen"], depth, cache, counters)
+        ea = eval_white_pov(engine, rec["post_fen"], depth, cache, counters)
+        rows.append(assemble_row(game_id, month, rec, game_meta, eb, ea, depth, es_scale))
+    counters["engine_seconds"] += time.time() - t_eng
+    return rows, replay_fail
+
+
+# ---------------------------------------------------------------------------
+# F2. Pilot extraction loop (capped; streams PGN in order)
 # ---------------------------------------------------------------------------
 
 def run_pilot(
@@ -628,21 +752,14 @@ def run_pilot(
                     continue
 
                 gmeta = accepted_meta[gid]
-                records, _fens, replay_fail = build_move_records(
-                    game, gmeta, min_move_number)
+                game_rows, replay_fail = extract_game_rows(
+                    engine, game, gid, gmeta, month, depth, min_move_number,
+                    es_scale, counters)
                 if replay_fail is not None:
                     counters["games_replay_failed"] += 1
                     failed_games.append({"game_id": gid, "reason": replay_fail,
-                                         "rows_kept": len(records)})
-
-                cache: dict[str, dict] = {}
-                t_eng = time.time()
-                for rec in records:
-                    eb = eval_white_pov(engine, rec["pre_fen"], depth, cache, counters)
-                    ea = eval_white_pov(engine, rec["post_fen"], depth, cache, counters)
-                    rows.append(assemble_row(gid, month, rec, gmeta, eb, ea,
-                                             depth, es_scale))
-                counters["engine_seconds"] += time.time() - t_eng
+                                         "rows_kept": len(game_rows)})
+                rows.extend(game_rows)
 
                 counters["games_accepted"] += 1
                 counters["rows"] = len(rows)
@@ -658,6 +775,159 @@ def run_pilot(
     counters["runtime_s"] = round(time.time() - t0, 1)
     counters["engine_seconds"] = round(counters["engine_seconds"], 1)
     return rows, counters, failed_games
+
+
+# ---------------------------------------------------------------------------
+# F3. Full-month chunked, resumable extraction
+# ---------------------------------------------------------------------------
+
+def _chunk_path(chunk_dir: Path, idx: int) -> Path:
+    return chunk_dir / f"chunk_{idx:04d}.parquet"
+
+
+def completed_game_ids_from_chunks(chunk_dir: Path) -> tuple[set[str], int]:
+    """Source-of-truth resume state: union of game_ids already in chunk files, and
+    the next chunk index (== number of existing chunk_*.parquet files)."""
+    chunks = sorted(chunk_dir.glob("chunk_*.parquet"))
+    done: set[str] = set()
+    for cf in chunks:
+        done |= set(pl.read_parquet(cf, columns=["game_id"])["game_id"].to_list())
+    return done, len(chunks)
+
+
+def run_full_month_chunked(
+    raw_pgn: str,
+    month: str,
+    accepted_meta: dict[str, dict],
+    stockfish_path: str,
+    depth: int,
+    min_move_number: int,
+    es_scale: float | None,
+    chunk_size: int,
+    chunk_dir: str | Path,
+    player_metadata_path: str | Path | None,
+    resume: bool,
+    progress_every: int = 500,
+) -> tuple[dict, list[dict], list[Path]]:
+    """
+    Stream the full month, evaluating EVERY accepted game (no game cap), flushing a
+    finalized chunk parquet every ``chunk_size`` processed games. Resumable: on
+    ``resume`` it skips game_ids already present in completed chunk files and
+    continues chunk numbering. Returns (counters, failed_games, chunk_files).
+    """
+    chunk_dir = Path(chunk_dir)
+    chunk_dir.mkdir(parents=True, exist_ok=True)
+
+    completed_ids: set[str] = set()
+    next_chunk_idx = 0
+    if resume:
+        completed_ids, next_chunk_idx = completed_game_ids_from_chunks(chunk_dir)
+        if completed_ids:
+            print(f"  [dense] resume: {len(completed_ids):,} games already in "
+                  f"{next_chunk_idx} chunk(s); skipping them", file=sys.stderr)
+
+    counters = {
+        "games_scanned": 0, "games_accepted": 0, "games_skipped_resume": 0,
+        "games_replay_failed": 0, "engine_evals": 0, "eval_cache_hits": 0,
+        "terminal_positions": 0, "rows": 0, "engine_seconds": 0.0,
+        "accepted_available": len(accepted_meta),
+    }
+    failed_games: list[dict] = []
+    buffer_rows: list[dict] = []
+    games_in_buffer = 0
+
+    def _flush(idx: int) -> Path:
+        frame, _cov = finalize_frame(buffer_rows, player_metadata_path)
+        path = _chunk_path(chunk_dir, idx)
+        frame.write_parquet(path, compression="snappy")
+        print(f"  [dense] wrote {path.name} ({frame.height:,} rows)", file=sys.stderr)
+        return path
+
+    engine = chess.engine.SimpleEngine.popen_uci(stockfish_path)
+    t0 = time.time()
+    try:
+        for stream in open_pgn_stream(raw_pgn):
+            while True:
+                try:
+                    game = chess.pgn.read_game(stream)
+                except Exception:
+                    continue
+                if game is None:
+                    break
+                counters["games_scanned"] += 1
+                gid = _game_id_from_site(game.headers.get("Site", ""))
+                if gid is None or gid not in accepted_meta:
+                    continue
+                if gid in completed_ids:
+                    counters["games_skipped_resume"] += 1
+                    continue
+
+                gmeta = accepted_meta[gid]
+                game_rows, replay_fail = extract_game_rows(
+                    engine, game, gid, gmeta, month, depth, min_move_number,
+                    es_scale, counters)
+                if replay_fail is not None:
+                    counters["games_replay_failed"] += 1
+                    failed_games.append({"game_id": gid, "reason": replay_fail,
+                                         "rows_kept": len(game_rows)})
+                buffer_rows.extend(game_rows)
+                games_in_buffer += 1
+                counters["games_accepted"] += 1
+
+                if games_in_buffer >= chunk_size:
+                    _flush(next_chunk_idx)
+                    next_chunk_idx += 1
+                    buffer_rows.clear()
+                    games_in_buffer = 0
+
+                if (progress_every and counters["games_accepted"]
+                        and counters["games_accepted"] % progress_every == 0):
+                    print(f"  [dense] processed {counters['games_accepted']:,} games "
+                          f"| evals={counters['engine_evals']:,} "
+                          f"| chunk={next_chunk_idx}", file=sys.stderr)
+            break  # only the first stream context is needed
+        if buffer_rows:
+            _flush(next_chunk_idx)
+            next_chunk_idx += 1
+    finally:
+        engine.quit()
+
+    counters["runtime_s"] = round(time.time() - t0, 1)
+    counters["engine_seconds"] = round(counters["engine_seconds"], 1)
+    chunk_files = sorted(chunk_dir.glob("chunk_*.parquet"))
+    counters["n_chunks"] = len(chunk_files)
+    return counters, failed_games, chunk_files
+
+
+def concatenate_chunks(chunk_files: list[Path], out_path: str | Path) -> pl.DataFrame:
+    """Concatenate finalized chunk parquets into the final month artifact."""
+    if not chunk_files:
+        raise ValueError("no chunk files to concatenate")
+    frame = pl.concat([pl.read_parquet(cf) for cf in chunk_files], how="vertical")
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    frame.write_parquet(out_path, compression="snappy")
+    return frame
+
+
+def write_chunk_manifest(
+    chunk_dir: Path, chunk_files: list[Path], month: str, depth: int,
+    chunk_size: int, counters: dict,
+) -> Path:
+    """Write a human-readable chunk manifest (gitignored under data/)."""
+    manifest = {
+        "month": month, "depth": depth, "chunk_size": chunk_size,
+        "n_chunks": len(chunk_files),
+        "chunk_files": [cf.name for cf in chunk_files],
+        "games_accepted": counters.get("games_accepted"),
+        "games_skipped_resume": counters.get("games_skipped_resume"),
+        "rows_total": counters.get("rows"),
+        "engine_evals": counters.get("engine_evals"),
+        "written_at_utc": datetime.now(timezone.utc).isoformat(),
+    }
+    path = chunk_dir / "manifest.json"
+    path.write_text(json.dumps(manifest, indent=2))
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -747,6 +1017,31 @@ def summarize(df: pl.DataFrame, counters: dict) -> dict:
     s["rows_by_clock_bucket"] = _counts("clock_bucket")
     s["rows_by_rating_bucket"] = _counts("rating_bucket")
     s["rows_by_eval_band"] = _counts("eval_band")
+    s["rows_by_result_class"] = _counts("result_class")
+
+    # clock/think anomaly detail (flagged, never dropped)
+    s["clock_over_start_rows"] = int(
+        df.filter((pl.col("clock_before_s") > _TEN_ZERO_START_S)
+                  | (pl.col("clock_after_s") > _TEN_ZERO_START_S)).height)
+    s["negative_think_rows"] = int(df.filter(pl.col("think_time_s") < 0).height)
+
+    # time-control-aware schema validation (10+0 should be uniform)
+    if df.height:
+        s["time_control"] = {
+            "time_control_raw": _counts("time_control_raw"),
+            "initial_time_s": _counts("initial_time_s"),
+            "increment_s": _counts("increment_s"),
+            "time_control_family": _counts("time_control_family"),
+            "speed_category": _counts("speed_category"),
+            "clock_fraction_min": round(float(df["clock_fraction"].min()), 4)
+                if df["clock_fraction"].drop_nulls().len() else None,
+            "clock_fraction_max": round(float(df["clock_fraction"].max()), 4)
+                if df["clock_fraction"].drop_nulls().len() else None,
+            "increment_buffer_null_share": round(
+                df["increment_buffer"].null_count() / df.height, 4),
+            "low_increment_buffer_flag_null_share": round(
+                df["low_increment_buffer_flag"].null_count() / df.height, 4),
+        }
 
     # loss metrics (OK, non-mate-band)
     if ok_nonmate.height:
@@ -772,6 +1067,27 @@ def summarize(df: pl.DataFrame, counters: dict) -> dict:
                 "ge_100": round(sum(1 for x in cp if x >= 100) / len(cp), 4),
                 "ge_200": round(sum(1 for x in cp if x >= 200) / len(cp), 4),
             }
+        raw = sorted(v for v in ok_nonmate["cp_loss_raw"].to_list() if v is not None)
+        if raw:
+            s["cp_loss_raw"] = {
+                "n": len(raw), "min": int(raw[0]), "max": int(raw[-1]),
+                "mean": round(statistics.mean(raw), 1),
+                "median": float(statistics.median(raw)),
+                "p90": _pctile([float(x) for x in raw], 0.90),
+                "negative_share": round(sum(1 for x in raw if x < 0) / len(raw), 4),
+            }
+        # both-color orientation sanity (means/medians should be close)
+        s["by_color"] = {}
+        for col in ("white", "black"):
+            sub = ok_nonmate.filter(pl.col("mover_color") == col)
+            if sub.height:
+                s["by_color"][col] = {
+                    "n": sub.height,
+                    "es_mean": round(float(sub["expected_score_loss"].mean()), 4),
+                    "es_median": round(float(sub["expected_score_loss"].median()), 4),
+                    "cp_mean": round(float(sub["cp_loss_clipped"].mean()), 1),
+                    "cp_median": float(sub["cp_loss_clipped"].median()),
+                }
 
     # throughput + extrapolation
     eng_s = counters.get("engine_seconds", 0.0) or 0.0
@@ -971,14 +1287,167 @@ def render_report(
     return "\n".join(L)
 
 
+def render_full_month_report(
+    month: str, depth: int, chunk_size: int, counters: dict, summary: dict,
+    failed_games: list[dict], coverage: dict, out_path: str, chunk_dir: str,
+    sf_version: str, preflight: dict | None,
+) -> str:
+    s = summary
+    t = s["throughput"]
+    L: list[str] = []
+    a = L.append
+    a(f"# Dense Move Loss — {month.replace('_', '-')} Full 10+0 Extraction")
+    a("")
+    a("**Ticket:** 15.3C — Full Dense Move-by-Move Loss Extraction (2024-09 only)")
+    a(f"**Engine:** {sf_version} @ depth {depth}")
+    a("")
+    a("## 1. Executive summary")
+    a("")
+    a(f"Full dense per-ply next-move loss extraction for **{month.replace('_', '-')} "
+      f"10+0 (600+0) only** — every accepted game, both colors, move_number >= "
+      f"{summary.get('min_move_number', 5)}. {counters['games_accepted']:,} accepted "
+      f"games processed → **{s['rows']:,} per-ply rows** in {t['engine_evals']:,} "
+      "engine evals. One Stockfish eval per pre-move position (Option A); post-move "
+      "eval reused. Primary metric: expected-score loss, mover perspective; secondary: "
+      "clipped centipawn loss. **2024-10 has NOT been run; no visual atlas; no dense "
+      "controlled model.** Predictive/descriptive only — not causal, not a degradation "
+      "curve; Stockfish eval is objective context, not absolute ground truth.")
+    a("")
+    a("## 2. Extraction scope")
+    a(f"- Month: {month} (10+0 / 600+0 only). Depth {depth}. Both colors, "
+      f"move_number >= {summary.get('min_move_number', 5)}.")
+    a(f"- Accepted 600+0 games available: {counters.get('accepted_available', 'NA'):,}; "
+      f"processed: {counters['games_accepted']:,}.")
+    a("- Eval strategy: Option A (one eval per pre-move position; post-move reused).")
+    a("")
+    a("## 3. Command and environment")
+    a(f"- Stockfish: {sf_version}; depth {depth}; ES transform scale reused (not refit).")
+    a("- Run under `caffeinate -dimsu` (machine-awake); chunked + resumable.")
+    a("")
+    a("## 4. Chunking and resumability")
+    a(f"- Chunk size: {chunk_size:,} accepted games/chunk; chunks: {counters.get('n_chunks')}.")
+    a(f"- Chunk dir: `{chunk_dir}` (gitignored). Games skipped on resume: "
+      f"{counters.get('games_skipped_resume', 0):,}.")
+    a("- Final artifact = vertical concat of chunk parquets; chunks retained (no auto-delete).")
+    a("")
+    a("## 5. Runtime and throughput")
+    a(f"- Wall-clock: {t['runtime_s']} s; engine seconds: {t['engine_seconds']} s.")
+    a(f"- Engine evals: {t['engine_evals']:,}; cache reuse: {t['eval_cache_hits']:,}; "
+      f"terminal: {t['terminal_positions']:,}.")
+    a(f"- Throughput: {t['evals_per_second']} evals/s.")
+    a("")
+    a("## 6. Preflight reproduction")
+    if preflight:
+        a(f"- Preflight (first 1,500 games): rows {preflight['rows']} "
+          f"(target 86,977), games {preflight['games']} (target 1,486), "
+          f"evals {preflight['evals']} (target 88,012) → **{preflight['verdict']}**.")
+    else:
+        a("- (preflight run separately before this extraction; see phase report.)")
+    a("")
+    a("## 7. Replay validation")
+    a(f"- Rows: {s['rows']:,}; unique games: {s['unique_games']:,}; "
+      f"duplicate (game_id, ply) keys: {s['duplicate_key_count']}.")
+    a(f"- Replay failures (partial rows kept): {counters['games_replay_failed']}.")
+    a("")
+    a("## 8. Evaluation validation")
+    a(f"- OK rows: {s['rows_ok']:,}; eval-error rows: {s['rows_eval_error']}; "
+      f"mate-band (flagged, excluded from headline): {s['rows_mate_band']:,}.")
+    if "cp_loss_raw" in s:
+        a(f"- raw cp loss negative share: {s['cp_loss_raw']['negative_share']} "
+          "(actual move beat prior static eval; expected).")
+    a("")
+    a("## 9. Clock and think-time validation")
+    a(f"- Missing-clock rows: {s['missing_clock_rows']}; clock-anomaly (no bucket): "
+      f"{s['clock_anomaly_rows']}; think-anomaly (no bucket): {s['think_anomaly_rows']}.")
+    a(f"- clock > start (600 s) rows: {s['clock_over_start_rows']}; negative think-time "
+      f"rows: {s['negative_think_rows']} (flagged, not dropped).")
+    a("")
+    a("## 10. Time-control-aware schema validation")
+    if "time_control" in s:
+        tc = s["time_control"]
+        a(f"- time_control_raw: {tc['time_control_raw']}")
+        a(f"- initial_time_s: {tc['initial_time_s']}; increment_s: {tc['increment_s']}; "
+          f"family: {tc['time_control_family']}; speed: {tc['speed_category']}.")
+        a(f"- clock_fraction range: [{tc['clock_fraction_min']}, {tc['clock_fraction_max']}].")
+        a(f"- increment_buffer null share: {tc['increment_buffer_null_share']} "
+          f"(1.0 expected for 10+0); low_increment_buffer_flag null share: "
+          f"{tc['low_increment_buffer_flag_null_share']}.")
+    a("")
+    a("## 11. Row schema validation")
+    a(f"- No raw-username columns: {s['no_username_cols']}; columns: "
+      f"{len(_OUTPUT_SCHEMA) + len(_HASH_COLS)} (typed schema + player hashes).")
+    a("")
+    a("## 12. Loss metric summary")
+    if "es_loss" in s:
+        e = s["es_loss"]
+        a(f"- ES loss (OK, non-mate, n={e['n']:,}): mean {e['mean']} | median {e['median']} "
+          f"| p90 {e['p90']} | zero share {e['zero_share']}.")
+    if "cp_loss_clipped" in s:
+        c = s["cp_loss_clipped"]
+        a(f"- clipped cp loss: mean {c['mean']} | median {c['median']} | p90 {c['p90']}.")
+    if "by_color" in s and s["by_color"]:
+        bc = s["by_color"]
+        a(f"- Both-color orientation: White ES mean {bc.get('white', {}).get('es_mean')} / "
+          f"Black ES mean {bc.get('black', {}).get('es_mean')} (close ⇒ sign correct).")
+    a("")
+    a("## 13. Large-loss rates")
+    if "es_loss" in s:
+        e = s["es_loss"]
+        a(f"- ES loss >= 0.05: {e['ge_0_05']} | >= 0.10: {e['ge_0_10']}.")
+    if "cp_loss_clipped" in s:
+        c = s["cp_loss_clipped"]
+        a(f"- clipped cp >= 100: {c['ge_100']} | >= 200: {c['ge_200']}.")
+    a("")
+    a("## 14. Coverage by color / phase / eval / clock / rating")
+    a(f"- mover color: {s['rows_by_mover_color']}")
+    a(f"- phase: {s['rows_by_phase']}")
+    a(f"- eval band: {s['rows_by_eval_band']}")
+    a(f"- clock bucket: {s['rows_by_clock_bucket']}")
+    a(f"- result class: {s['rows_by_result_class']}")
+    a(f"- rating bucket: {s['rows_by_rating_bucket']}")
+    a("")
+    a("## 15. Player-hash coverage and privacy")
+    if coverage.get("available"):
+        a(f"- mover_player_hash match fraction: {coverage['match_fraction']} "
+          f"({coverage['n_matched']:,}/{coverage['n_rows']:,}); one-way hashes only; "
+          "no raw usernames written.")
+    else:
+        a("- player metadata not provided; hash columns null.")
+    a("")
+    a("## 16. Comparison to 15.3B pilot")
+    a("- 15.3B pilot (first 1,500 games): 86,977 rows, 88,012 evals, ES mean 0.0347, "
+      "median 0.0115. This full-month run extends the same pipeline to all accepted "
+      "games; per-row distributions are expected to be consistent with the pilot.")
+    a("")
+    a("## 17. Known limitations")
+    a("- 2024-09 only; 2024-10 dense extraction NOT run; no cross-time-control data.")
+    a("- No visual atlas; no dense controlled model.")
+    a("- Depth-parity (mover-to-move vs opponent-to-move, same depth) acknowledged "
+      "(15.0C benign); re-check recommended.")
+    a("- Mate-band rows flagged and excluded from headline; loss right-skewed "
+      "(medians/percentiles reported with means).")
+    a("- No pre-move trajectory / prior-quality control (stated limitation).")
+    a("- Stockfish eval is objective context, not absolute ground truth; "
+      "predictive/descriptive, not causal.")
+    a("")
+    a("## 18. Recommendation for next step")
+    a(f"- Artifact: `{out_path}` (gitignored under `data/`; not staged).")
+    a("- Recommend **15.3D — Full Dense Move-by-Move Loss Extraction Replication Month "
+      "(2024-10)** before any dense atlas, so final claims use both monthly samples.")
+    a("")
+    return "\n".join(L)
+
+
 # ---------------------------------------------------------------------------
 # J. CLI
 # ---------------------------------------------------------------------------
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(
-        description="Dense move-by-move loss extraction — PILOT ONLY (Ticket 15.3B). "
-                    "Capped by accepted-game count; no full-run path.")
+        description="Dense move-by-move loss extraction. Default = capped pilot "
+                    "(15.3B). --allow-full-month-2024-09 runs the approved full 2024-09 "
+                    "10+0 depth-12 extraction (chunked/resumable); no other month or "
+                    "depth is permitted through that flag.")
     p.add_argument("--raw-pgn", required=True)
     p.add_argument("--month", required=True, help="e.g. 2024_09")
     p.add_argument("--version-tag", default=None,
@@ -998,25 +1467,52 @@ def main(argv: list[str] | None = None) -> int:
                    help=f"required to exceed the {PILOT_HARD_MAX_GAMES}-game pilot cap")
     p.add_argument("--timing-subtest-depth", type=int, default=None)
     p.add_argument("--timing-subtest-games", type=int, default=100)
+    # --- 15.3C full-month / chunking / preflight ---
+    p.add_argument("--time-control", default=None,
+                   help="full-month mode requires 600+0 (or unset)")
+    p.add_argument("--allow-full-month-2024-09", dest="allow_full_month_2024_09",
+                   action="store_true",
+                   help="run the FULL 2024-09 10+0 dense extraction (no game cap); "
+                        "restricted to month==2024_09, depth==12, 600+0")
+    p.add_argument("--chunk-size", type=int, default=5000)
+    p.add_argument("--chunk-dir", default=None)
+    p.add_argument("--resume", action="store_true")
+    p.add_argument("--cleanup-chunks", action="store_true",
+                   help="delete chunk files AFTER a successful concatenation")
+    p.add_argument("--preflight", action="store_true",
+                   help="reproduce the 15.3B 1,500-game pilot counts and exit")
     args = p.parse_args(argv)
 
-    # --- hard safety: pilot cap, no full-run path ---
-    if args.max_accepted_games <= 0:
-        print("ERROR: --max-accepted-games must be a positive pilot cap.", file=sys.stderr)
-        return 2
-    if (args.max_accepted_games > PILOT_HARD_MAX_GAMES
-            and not args.pilot_override_allow_large):
-        print(f"ERROR: --max-accepted-games {args.max_accepted_games} exceeds the pilot "
-              f"cap of {PILOT_HARD_MAX_GAMES}. This module is pilot-only and has no "
-              "full-run mode. Pass --pilot-override-allow-large to raise the cap "
-              "(still capped; not a full run).", file=sys.stderr)
-        return 2
+    # --- full-month safety gate (must be evaluated before any pilot-cap logic) ---
+    if args.allow_full_month_2024_09:
+        if args.month != "2024_09":
+            print(f"ERROR: --allow-full-month-2024-09 is restricted to month==2024_09; "
+                  f"got {args.month!r}. This ticket does NOT run 2024-10 or any other "
+                  "month.", file=sys.stderr)
+            return 2
+        if args.depth != 12:
+            print(f"ERROR: full-month mode is locked to depth 12 (continuity with the "
+                  f"depth-12 ES transform); got depth {args.depth}.", file=sys.stderr)
+            return 2
+        if args.time_control not in (None, "600+0"):
+            print(f"ERROR: full-month mode is restricted to 600+0; got "
+                  f"{args.time_control!r}.", file=sys.stderr)
+            return 2
 
-    out = Path(args.out)
-    report = Path(args.report)
-    if out.exists() and not args.overwrite:
-        raise FileExistsError(f"{out} exists; pass --overwrite")
+    # --- pilot-cap safety (only when NOT full-month and NOT preflight) ---
+    if not args.allow_full_month_2024_09 and not args.preflight:
+        if args.max_accepted_games <= 0:
+            print("ERROR: --max-accepted-games must be a positive pilot cap.", file=sys.stderr)
+            return 2
+        if (args.max_accepted_games > PILOT_HARD_MAX_GAMES
+                and not args.pilot_override_allow_large):
+            print(f"ERROR: --max-accepted-games {args.max_accepted_games} exceeds the pilot "
+                  f"cap of {PILOT_HARD_MAX_GAMES}. Use --allow-full-month-2024-09 for the "
+                  "approved full 2024-09 run, or --pilot-override-allow-large to raise the "
+                  "pilot cap (still capped).", file=sys.stderr)
+            return 2
 
+    # --- common setup ---
     version_tag = args.version_tag or f"{args.month}_250k_v1"
     es_scale = None
     if args.expected_score_transform:
@@ -1034,8 +1530,94 @@ def main(argv: list[str] | None = None) -> int:
           file=sys.stderr)
 
     accepted_meta = load_accepted_game_meta(version_tag, args.game_records, args.splits)
-    print(f"  [dense] accepted 600+0 games available: {len(accepted_meta):,}; "
-          f"pilot cap {args.max_accepted_games:,}", file=sys.stderr)
+    print(f"  [dense] accepted 600+0 games available: {len(accepted_meta):,}",
+          file=sys.stderr)
+
+    # =====================================================================
+    # MODE: preflight — reproduce the 15.3B 1,500-game pilot counts, then exit
+    # =====================================================================
+    if args.preflight:
+        rows, counters, failed = run_pilot(
+            args.raw_pgn, args.month, accepted_meta, sf_path, args.depth,
+            PILOT_DEFAULT_MAX_GAMES, args.min_move_number, es_scale)
+        df, _cov = finalize_frame(rows, args.player_metadata)
+        n_rows, n_games, n_evals = df.height, int(df["game_id"].n_unique()), counters["engine_evals"]
+        targets = {"rows": 86977, "games": 1486, "evals": 88012}
+        ok = (n_rows == targets["rows"] and n_games == targets["games"])
+        verdict = "PASS" if ok else "MISMATCH"
+        print(f"\n=== 15.3C preflight (first {PILOT_DEFAULT_MAX_GAMES} games) ===")
+        print(f"  rows={n_rows} (target {targets['rows']}) | games={n_games} "
+              f"(target {targets['games']}) | evals={n_evals} (target {targets['evals']}) "
+              f"| replay_fail={counters['games_replay_failed']} "
+              f"dups={df.height - df.select(_KEY).unique().height} -> {verdict}")
+        if not ok:
+            print("  ERROR: preflight did not reproduce 15.3B counts; investigate before "
+                  "the full run.", file=sys.stderr)
+            return 3
+        return 0
+
+    # =====================================================================
+    # MODE: full 2024-09 dense extraction (chunked, resumable)
+    # =====================================================================
+    if args.allow_full_month_2024_09:
+        out = Path(args.out)
+        report = Path(args.report)
+        if out.exists() and not args.overwrite and not args.resume:
+            raise FileExistsError(f"{out} exists; pass --overwrite or --resume")
+        chunk_dir = Path(args.chunk_dir
+                         or f"data/processed/dense_move_loss_{version_tag}_chunks")
+        print(f"  [dense] FULL-MONTH 2024-09: ~{len(accepted_meta):,} games, "
+              f"depth {args.depth}, chunk_size {args.chunk_size}, chunk_dir {chunk_dir}",
+              file=sys.stderr)
+
+        counters, failed, chunk_files = run_full_month_chunked(
+            args.raw_pgn, args.month, accepted_meta, sf_path, args.depth,
+            args.min_move_number, es_scale, args.chunk_size, chunk_dir,
+            args.player_metadata, args.resume)
+
+        df = concatenate_chunks(chunk_files, out)
+        counters["rows"] = df.height
+        write_chunk_manifest(chunk_dir, chunk_files, args.month, args.depth,
+                             args.chunk_size, counters)
+
+        # coverage from final frame
+        matched = int(df.filter(pl.col("mover_player_hash").is_not_null()).height)
+        coverage = {"available": args.player_metadata is not None,
+                    "n_rows": df.height, "n_matched": matched,
+                    "match_fraction": round(matched / df.height, 4) if df.height else 0.0}
+        summary = summarize(df, counters)
+        summary["min_move_number"] = args.min_move_number
+
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(render_full_month_report(
+            args.month, args.depth, args.chunk_size, counters, summary, failed,
+            coverage, str(out), str(chunk_dir), sf_version, preflight=None))
+
+        if args.cleanup_chunks:
+            for cf in chunk_files:
+                cf.unlink()
+            print(f"  [dense] cleaned up {len(chunk_files)} chunk files", file=sys.stderr)
+
+        t = summary["throughput"]
+        print(f"\n=== 15.3C full dense 2024-09 ===")
+        print(f"  games={counters['games_accepted']} rows={df.height} "
+              f"chunks={counters.get('n_chunks')} evals={t['engine_evals']} "
+              f"runtime={counters['runtime_s']}s eps={t['evals_per_second']}")
+        if "es_loss" in summary:
+            e = summary["es_loss"]
+            print(f"  ES loss: mean={e['mean']} median={e['median']} p90={e['p90']} "
+                  f">=0.10={e['ge_0_10']}")
+        print(f"  artifact: {out} | report: {report}")
+        return 0
+
+    # =====================================================================
+    # MODE: pilot (default; capped)
+    # =====================================================================
+    out = Path(args.out)
+    report = Path(args.report)
+    if out.exists() and not args.overwrite:
+        raise FileExistsError(f"{out} exists; pass --overwrite")
+    print(f"  [dense] pilot cap {args.max_accepted_games:,}", file=sys.stderr)
 
     rows, counters, failed = run_pilot(
         args.raw_pgn, args.month, accepted_meta, sf_path, args.depth,
@@ -1047,7 +1629,6 @@ def main(argv: list[str] | None = None) -> int:
     subtest = None
     if args.timing_subtest_depth is not None:
         fens = [r["pre_fen"] for r in rows][: args.timing_subtest_games * 40]
-        # cap the subtest to ~ timing_subtest_games games' worth of positions
         subtest = depth_timing_subtest(
             fens, sf_path, args.timing_subtest_depth,
             max_positions=min(len(fens), args.timing_subtest_games * 40))
