@@ -2654,3 +2654,50 @@ Conditional/predictive only; NOT causal; no "low clock causes blunders"/"time pr
 reasoning"/"clock proves cognitive degradation"/"Stockfish is ground truth"/"human obviousness"/
 "sharpness moderation confirmed-or-disproven"/"DRAW solved". C4 & C3c unchanged; ES transform not
 refit; dense artifacts not modified.
+
+## EXP-047 — Sharpness-Enriched Constraint Atlas Audit
+
+Experiment ID: EXP-047
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (DESIGN-ONLY audit; no Stockfish/MultiPV run; no models; no figures; no data
+artifacts; no source/test code changed; nothing staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Audit whether existing MultiPV sharpness artifacts can support a sharpness-enriched dense
+move-quality atlas/model (Phase 15.5), i.e. whether the small fragile 15.4D clock residual
+localizes to objective positional value fragility.
+
+Read-only findings:
+- Sharpness artifacts: multipv_sharpness_2024_09 (64,371) / 2024_10 (61,868) checkpoint rows
+  (~126k), 140 cols, key game_id+checkpoint_ply{20,40,60,80}+selected_position_type,
+  side_to_move=WHITE for all rows, MultiPV-5 depth-12. sharp_value_fragility_v1 rate 0.142.
+- Dense artifacts: 2,778,772 headline rows, key game_id+ply, both colors.
+- CORRECT join = dense.ply = checkpoint_ply + 1 (the White move played FROM the checkpoint
+  position; naive ply==checkpoint_ply wrongly matches the Black move INTO the checkpoint).
+- Coverage (corrected): 121,165 matched = 4.36% of dense headline, ALL WHITE mover, checkpoint-
+  overlap only (4 plies/game). NOT dense-wide, NOT both colors.
+- Cell power: sharp x 60_180 ~675 pooled (~350/mo) -> exploratory/underpowered (the same corner
+  that left C3c unresolved); sharp x under_60 <300 -> no-claim. Marginal sharp-vs-nonsharp by
+  eval/clock have tens of thousands of rows (headline-capable).
+- Full dense MultiPV-5 d12 over 2.78M rows ~51-82h -> PROHIBITIVE.
+
+Prior C3c status PRESERVED: sharpness = objective value fragility (NOT human obviousness); C3c
+clock x sharpness move-quality moderation directional/underpowered; train+val pooled positive,
+test near zero, key cells underpowered; NOT confirmed, NOT disproven.
+
+Recommendation (Option D):
+- 15.5B = existing-sharpness CHECKPOINT-OVERLAP (White-to-move) join + atlas + EXPLORATORY
+  clock x sharpness model (new module sharpness_enriched_atlas.py; join dense.ply=checkpoint_ply+1;
+  game/player-clustered bootstrap). NO MultiPV/Stockfish. sharp x clock interaction labelled
+  exploratory/no-claim; headline only well-powered marginal sharpness contrasts. Label all figures
+  "checkpoint-overlap, White-to-move".
+- Do NOT run full dense MultiPV. Defer stratified dense sharpness extraction to a later ticket only
+  if 15.5B is inconclusive-but-promising.
+- Phase 15.5 sequence: 15.5A (done) -> 15.5B -> 15.5C consolidation/C3c update. Do not move to
+  Phase 16 until Phase 15.5 resolved or explicitly parked.
+
+Non-claims:
+Design-only; not causal; not human difficulty/obviousness; MultiPV/Stockfish not ground truth; no
+"sharp positions cause blunders"; no "sharpness moderation confirmed-or-disproven"; not dense-wide
+sharpness; not cross-time-control; no synthesis. C4 & C3c unchanged. No code/models/figures/data.

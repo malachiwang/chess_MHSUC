@@ -409,10 +409,22 @@ clock-residual moderation (11.0A kill condition not triggered).
   steeper low-clock buckets survive board-decided. Residual concentrates in slight-eval/middlegame/
   time-forfeit. Clipped-cp + ES≥0.10 LPM agree; logistic sign agrees. EXP-046. See
   `reports/phase_reports/phase_15_4d_controlled_dense_move_quality_modeling_implementation.md`.
-- **Next ticket: 15.5A — Sharpness-Enriched Constraint Atlas Audit** (design joining the MultiPV
-  sharpness layer to the dense atlas/model; C3c move-quality-first). NOT Phase 16 cross-TC, NOT
-  synthesis. **Preserved fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis
-  snapshot (reuse in Phase 17).**
+- **15.5A complete (Sharpness-Enriched Constraint Atlas Audit, doc-only):** audited dense↔sharpness
+  join feasibility. **KEY: existing MultiPV sharpness is CHECKPOINT-ONLY (move_10/20/30/40) and
+  WHITE-TO-MOVE only** (~126k rows, sharp_value_fragility_v1 rate 0.142). **Correct join =
+  `dense.ply = checkpoint_ply + 1`** (naive ply==checkpoint_ply matches the wrong Black move) →
+  **121,165 matched rows = 4.36% of dense headline, all White mover, checkpoint-overlap only — NOT
+  dense-wide.** Sharp×60_180 cell ~675 pooled (~350/mo) → still EXPLORATORY/underpowered (same
+  corner that left C3c unresolved); sharp×under_60 <300 → no-claim. Full dense MultiPV ~51–82h →
+  PROHIBITIVE. **Recommend Option D:** 15.5B = existing checkpoint-overlap sharpness atlas +
+  EXPLORATORY clock×sharpness model (NO MultiPV); sharp×clock labelled no-claim; sampled dense
+  extraction deferred. C3c status preserved (not confirmed, not disproven). EXP-047. See
+  `reports/phase_reports/phase_15_5a_sharpness_enriched_constraint_atlas_audit.md`.
+- **Next ticket: 15.5B — Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model**
+  (new module `sharpness_enriched_atlas.py`; join on `dense.ply=checkpoint_ply+1`; checkpoint-
+  overlap White-to-move atlas + exploratory clock×sharpness; NO MultiPV/Stockfish). Then 15.5C
+  consolidation / C3c claim update. NOT Phase 16, NOT synthesis. **Preserved fallbacks (deliberate
+  choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -449,11 +461,10 @@ Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4C Controlled Dense Move-Quality Modeling Audit — complete (controlled model designed).
 - 15.4D Controlled Dense Move-Quality Modeling Implementation — complete (focal 60_180 +0.0009, refines 15.1D).
 
-Phase 15.5 — Sharpness-Enriched Constraint Atlas
-- 15.5A Sharpness-Enriched Constraint Atlas Audit.
-- 15.5B Sharpness-Enriched Constraint Atlas Implementation.
-- 15.5C Sharpness Interaction Panel Audit.
-- 15.5D Sharpness Interaction Panel Implementation.
+Phase 15.5 — Sharpness-Enriched Constraint Atlas (existing sharpness = checkpoint-overlap, White-to-move only)
+- 15.5A Sharpness-Enriched Constraint Atlas Audit — complete (checkpoint-overlap join, 4.36% coverage, Option D).
+- 15.5B Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model — NEXT (no MultiPV).
+- 15.5C Sharpness Result Consolidation / C3c Claim Update (and decide whether stratified dense sharpness extraction is warranted).
 
 Phase 15.6 — Sharpness Prediction Value
 - 15.6A Sharpness Prediction-Improvement Audit.
