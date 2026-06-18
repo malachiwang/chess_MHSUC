@@ -420,11 +420,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   EXPLORATORY clock×sharpness model (NO MultiPV); sharp×clock labelled no-claim; sampled dense
   extraction deferred. C3c status preserved (not confirmed, not disproven). EXP-047. See
   `reports/phase_reports/phase_15_5a_sharpness_enriched_constraint_atlas_audit.md`.
-- **Next ticket: 15.5B — Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model**
-  (new module `sharpness_enriched_atlas.py`; join on `dense.ply=checkpoint_ply+1`; checkpoint-
-  overlap White-to-move atlas + exploratory clock×sharpness; NO MultiPV/Stockfish). Then 15.5C
-  consolidation / C3c claim update. NOT Phase 16, NOT synthesis. **Preserved fallbacks (deliberate
-  choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot (reuse in Phase 17).**
+- **15.5B complete (Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model):** new
+  module `sharpness_enriched_atlas.py` + 14 tests (1,845 total). Joined existing MultiPV sharpness
+  to dense on the corrected key `dense.ply = checkpoint_ply+1` → 121,165 headline matched (4.36%,
+  **White-mover only, checkpoint-overlap only**); 6 PNG figures + report
+  `reports/sharpness_enriched_constraint_atlas_10plus0_2024_09_2024_10_v1.md`; ~7 s, NO MultiPV.
+  **RESULT (descriptive, not causal):** sharp main effect (net of controls) **+0.0214
+  [+0.0198,+0.0231]** replicated (partly MECHANICAL — flag embeds worst_top5_loss threshold);
+  focal **clock 60_180×sharp +0.0104 [+0.0018,+0.0194] pooled BUT both per-month CIs contain 0**
+  (Sep +0.0095, Oct +0.0113) and board-decided +0.0056 (contains 0) → **EXPLORATORY, does NOT
+  cleanly replicate**; lower-clock×sharp cells sparse (no-claim). **C3c UNCHANGED (not confirmed,
+  not disproven)** — matches the original ~+0.010 underpowered/month-fragile C3c. EXP-048. See
+  `reports/phase_reports/phase_15_5b_existing_sharpness_checkpoint_overlap_implementation.md`.
+- **Next ticket: 15.5C — Sharpness Result Consolidation / C3c Claim Update** (consolidate the
+  checkpoint-overlap result; keep C3c not-confirmed/not-disproven; decide whether a stratified
+  dense sharpness extraction is warranted to power the interaction). NOT Phase 16, NOT synthesis.
+  **Preserved fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot
+  (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -463,8 +475,8 @@ Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 
 Phase 15.5 — Sharpness-Enriched Constraint Atlas (existing sharpness = checkpoint-overlap, White-to-move only)
 - 15.5A Sharpness-Enriched Constraint Atlas Audit — complete (checkpoint-overlap join, 4.36% coverage, Option D).
-- 15.5B Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model — NEXT (no MultiPV).
-- 15.5C Sharpness Result Consolidation / C3c Claim Update (and decide whether stratified dense sharpness extraction is warranted).
+- 15.5B Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model — complete (4.36% White-mover overlap; sharp main effect replicated; clock×sharp exploratory/no-claim; C3c unchanged).
+- 15.5C Sharpness Result Consolidation / C3c Claim Update — NEXT (and decide whether stratified dense sharpness extraction is warranted).
 
 Phase 15.6 — Sharpness Prediction Value
 - 15.6A Sharpness Prediction-Improvement Audit.

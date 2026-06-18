@@ -2701,3 +2701,61 @@ Non-claims:
 Design-only; not causal; not human difficulty/obviousness; MultiPV/Stockfish not ground truth; no
 "sharp positions cause blunders"; no "sharpness moderation confirmed-or-disproven"; not dense-wide
 sharpness; not cross-time-control; no synthesis. C4 & C3c unchanged. No code/models/figures/data.
+
+## EXP-048 — Existing-Sharpness Checkpoint-Overlap Join + Atlas / Exploratory Model
+
+Experiment ID: EXP-048
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (analysis only; NO Stockfish/MultiPV; no artifacts modified; nothing
+staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Implement the 15.5A checkpoint-overlap sharpness enrichment: join existing MultiPV sharpness to
+dense move-quality (corrected key), produce a sharp-vs-non-sharp atlas + EXPLORATORY clock x
+sharpness model. Ask whether the small fragile 15.4D clock residual localizes to objective value
+fragility.
+
+Inputs:
+- dense_move_loss_2024_09/10 (read-only) + multipv_sharpness_2024_09/10 (read-only).
+
+Module + tests:
+- NEW src/chess_mhsuc/sharpness_enriched_atlas.py (corrected join dense.ply=checkpoint_ply+1;
+  validate_join asserts White-mover only and rejects the wrong ply==checkpoint_ply join; build_design
+  with clock+sharp+clock×sharp, mover_color omitted (constant White), constant-column drop; reuse
+  dense_controlled_model.ols_cluster_bootstrap + clustered_uncertainty.summarize_contrasts; 6 matplotlib
+  figures). 14 tests; full suite 1,845 passing.
+
+Join / coverage:
+- Corrected join matched 126,239 rows (headline 121,165) = 4.36% of dense headline, WHITE-MOVER ONLY,
+  checkpoint-overlap only (4 plies/game). sharp rate 0.1414. NOT dense-wide.
+
+RESULTS (descriptive/predictive, NOT causal; game-clustered 95% CI, 500 draws, seed 20240617):
+- Sharp main effect (net of controls, at over_180): +0.0214 [+0.0198,+0.0231]; replicated
+  (Sep +0.0213, Oct +0.0215). PARTLY MECHANICAL: sharp_value_fragility_v1 embeds worst_top5_loss_es
+  >= 0.10, so sharp positions have a worse achievable downside by construction -> descriptive
+  localization, not a behavioral surprise.
+- Focal clock 60_180 x sharp: +0.0104 [+0.0018,+0.0194] POOLED (CI excl 0), BUT both per-month CIs
+  CONTAIN 0 (Sep +0.0095 [-0.0024,+0.0236]; Oct +0.0113 [-0.0008,+0.0232]); board-decided-only
+  +0.0056 [-0.0046,+0.0155] contains 0. Lower-clock x sharp cells sparse (<200) -> no-claim.
+  EXPLORATORY; does NOT cleanly replicate.
+- clock 60_180 (non-sharp base): +0.0010 [-0.0006,+0.0028] (consistent w/ 15.4D small base).
+
+Cell power: sharp x 60_180 = 675 (exploratory); sharp x 30_60/10_30/under_10 = 113/49/17 (sparse).
+Same underpowered corner that left C3c unresolved; dense substrate doesn't fix it (checkpoint-
+limited, White-only sharpness coverage).
+
+C3c status: UNCHANGED — not confirmed, not disproven. Pooled +0.0104 matches the original Phase 14
+C3c train+val pooled ~+0.010, with the same month-fragile/underpowered character.
+
+Recommendation:
+- Next = 15.5C Sharpness Result Consolidation / C3c Claim Update (keep C3c not-confirmed/not-
+  disproven; decide whether a stratified dense sharpness extraction is warranted to power the
+  interaction). NOT Phase 16; NOT synthesis.
+- Future diagnostic (NOT this ticket): Think-Time Loss-Rate / Flagging Signature Diagnostic.
+
+Non-claims:
+Predictive/descriptive; not causal; no "sharp positions cause blunders"/"low clock causes blunders"/
+"time pressure causes worse reasoning"; sharpness = objective value fragility, NOT human obviousness/
+difficulty; MultiPV/Stockfish not ground truth; checkpoint-overlap White-mover only, NOT dense-wide;
+no "sharpness moderation confirmed/disproven". C4 & C3c unchanged; no threshold/ES-transform change.
