@@ -353,13 +353,28 @@ clock-residual moderation (11.0A kill condition not triggered).
   `reports/phase_reports/phase_15_3d_full_dense_move_loss_replication_month.md` and
   `reports/dense_move_loss_2024_10_250k_v1.md`. **Dense 10+0 substrate now exists for BOTH anchor
   months (2024-09 + 2024-10).**
-- **Next ticket: 15.4A — CP/ES Constraint Atlas Visualization Audit** (design the dense visual
-  atlas: raw rating bins primary + within-TC percentile optional; clock as absolute/fraction/
-  increment-buffer; eval-band conditioning mandatory; game-level + mover-player-clustered
-  bootstrap CIs; existing cell-count policy). Implementation follows in 15.4B; do not skip the
-  audit. **Preserved fallbacks (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c
-  Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration; the 16.0A synthesis snapshot
-  (reuse in Phase 17).**
+- **15.4A complete (CP/ES Constraint Atlas Visualization Audit, doc-only):** dense atlas DESIGNED
+  (no figures/code). Locked design: ES loss PRIMARY / clipped cp secondary (median/p75/p90) / raw
+  cp diagnostic-only; headline excludes mate-band, both colors, anomalies flagged-not-dropped;
+  **every headline plot month-replicated** (Sep+Oct separate or pooled+replication table); 9 plot
+  families A–I (clock×ES, clock×cp, large-loss prob, rating×clock heatmap, eval-band curves,
+  phase/move-number, think-time, termination-channel, month-replication); clock axis absolute
+  seconds primary (7 buckets, collapse sub-10s when faceted) + clock_fraction secondary/future;
+  rating 200-Elo headline (collapse <1000/≥2200 tails) + 100-Elo marginal-only + within-TC
+  percentile deferred; eval_band conditioning mandatory. **Schema fully ready — all conditioning
+  fields precomputed in the dense artifact incl. termination/is_time_forfeit (NO joins needed).**
+  **Naming catch: `constraint_atlas.py` already exists (15.1B checkpoint atlas) → 15.4B must use
+  `dense_constraint_atlas.py`.** EXP-043. See
+  `reports/phase_reports/phase_15_4a_cp_es_constraint_atlas_visualization_audit.md`. 5 design
+  questions raised for Malachi (rating bin width, clock axis, figure format, termination panels
+  now-vs-later, report register).
+- **Next ticket: 15.4B — CP/ES Constraint Atlas Visualization Implementation** (new module
+  `dense_constraint_atlas.py` + tests; generate families A–I figures + tables for both months
+  with month replication; write `reports/constraint_atlas_10plus0_2024_09_2024_10_v1.md`; figures
+  under `reports/figures/phase_15_4_constraint_atlas/` only; dense artifacts untouched). NOT Phase
+  15.5 sharpness, NOT Phase 16 cross-TC. **Preserved fallbacks (deliberate choice only): 14.2E —
+  Third-Month/Pooled-Power C3c Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration;
+  the 16.0A synthesis snapshot (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -391,8 +406,8 @@ Phase 15.3 — Dense Move-by-Move Loss Extraction
   Both 10+0 anchor months now extracted; next = 15.4A (see Phase 15.4 below).
 
 Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
-- 15.4A CP / ES Constraint Atlas Audit.
-- 15.4B CP / ES Constraint Atlas Implementation.
+- 15.4A CP / ES Constraint Atlas Visualization Audit — complete (dense atlas designed).
+- 15.4B CP / ES Constraint Atlas Visualization Implementation — NEXT.
 - 15.4C Controlled Dense Move-Quality Modeling Audit.
 - 15.4D Controlled Dense Move-Quality Modeling Implementation.
 

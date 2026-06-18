@@ -2413,3 +2413,65 @@ Non-claims:
 model; predictive/descriptive only; not causal; no "low clock causes blunders" / "time pressure
 causes worse reasoning" / "Stockfish is ground truth" / "human obviousness modeled" / "DRAW solved"
 / "best predictor". Does not change C4 or C3c. No thresholds/classifications changed.
+
+## EXP-043 — CP / ES Constraint Atlas Visualization Audit
+
+Experiment ID: EXP-043
+Date: 2026-06-17
+Owner: Malachi Wang
+Status: complete (DESIGN-ONLY audit; no figures generated; no models run; no data artifacts
+created; no source/test code changed; nothing staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Design the dense CP/ES Constraint Atlas before implementation (15.4B), using the 2024-09 + 2024-10
+dense move-loss artifacts as the ready 10+0 substrate.
+
+Substrate (ready):
+- 2024-09: 1,496,890 rows; 2024-10: 1,436,866 rows; combined 2,933,756 rows, 65 columns, both
+  colors, move_number>=5, depth 12, 600+0. Cross-month replicated (ES mean 0.0346/median 0.0114/
+  p90 0.0926 both months). All conditioning fields precomputed in the artifact (clock_bucket,
+  rating_bucket, eval_band, phase, think_time_bucket, clock_fraction, termination, is_time_forfeit,
+  result_class) -> NO joins needed for 15.4B.
+
+Locked design:
+- Metrics: PRIMARY expected_score_loss (mover-perspective); SECONDARY clipped cp loss
+  (median/p75/p90); DIAGNOSTIC-only raw cp loss; large-loss panels ES>=0.05/0.10, cp>=100/200;
+  %-eval-swing forbidden headline.
+- Filtering: status ok; exclude mate-band from headline (5.3% combined; kept as diagnostic);
+  both colors (already mover-perspective); anomalies (clock>600 ~0.2k/mo, neg-think ~0.13k/mo)
+  flagged not dropped, optional-exclude variant.
+- Month replication: every headline plot Sep+Oct separately OR pooled + replication table;
+  pooled-only NOT allowed as primary.
+- Plot families A–I: clock×ES, clock×clipped-cp, large-loss-prob×clock, rating×clock heatmap,
+  eval-band-conditioned curves, phase/move-number curves, think-time curves, termination-channel
+  diagnostics (board-decided vs time-forfeit; fields present), month-replication panels.
+- Clock axis: absolute seconds primary (0_5/5_10/10_30/30_60/60_180/180_300/300+; sub-10s sparse
+  ~14k combined -> collapse when faceted); clock_fraction secondary/future (co-linear /600 in 10+0).
+- Rating: 200-Elo headline (8 bins; collapse <1000 & >=2200 tails when faceted — grounded by cell
+  counts); 100-Elo marginal-only; within-TC percentile deferred to cross-TC work; raw bins never
+  hidden.
+- Eval band: precomputed near_equal/slight/clear/decided + mate_band diagnostic; conditioning
+  mandatory (eval state dominates loss, 15.1B/15.1D).
+- Phase: move-number buckets 5_10/11_20/21_30/31_40/41_60/61+ or `phase`; facet vs clock to avoid
+  conflating low-clock with late-game.
+- Think-time: gross==net (10+0); buckets 0_1/1_2/2_5/5_10/10_30/30+; anomaly caveat (not
+  deliberation quality).
+- Cell-count policy reused: hide <50 / descriptive 50-299 / CI >=300; game-level + mover-player-
+  clustered bootstrap (reuse clustered_uncertainty.py).
+
+Implementation guidance for 15.4B:
+- NEW module src/chess_mhsuc/dense_constraint_atlas.py (constraint_atlas.py ALREADY EXISTS = 15.1B
+  checkpoint atlas; must not clobber). matplotlib. CLI proposed. Output figures under
+  reports/figures/phase_15_4_constraint_atlas/; report reports/constraint_atlas_10plus0_2024_09_
+  2024_10_v1.md. Validation list specified. Forbidden-in-15.4B list specified (no cross-TC, no
+  sharpness, no MultiPV, no regressions, no causal language, no threshold/ES-transform changes,
+  no artifact modification, no public synthesis).
+
+5 design questions raised for Malachi (rating bin width 200 vs adaptive; clock seconds vs fraction
+primary; PNG vs PNG+SVG; termination panels now vs later; report technical vs partly human-readable).
+
+Non-claims:
+Design-only; predictive/descriptive, not causal; Stockfish not ground truth; no human obviousness;
+no cross-time-control yet; no sharpness yet; not final/public report; no model selection; no "low
+clock causes blunders"/"time pressure causes worse reasoning"/"DRAW solved". C4 & C3c unchanged.
+No figures, models, data artifacts, or code produced.
