@@ -432,11 +432,24 @@ clock-residual moderation (11.0A kill condition not triggered).
   cleanly replicate**; lower-clock×sharp cells sparse (no-claim). **C3c UNCHANGED (not confirmed,
   not disproven)** — matches the original ~+0.010 underpowered/month-fragile C3c. EXP-048. See
   `reports/phase_reports/phase_15_5b_existing_sharpness_checkpoint_overlap_implementation.md`.
-- **Next ticket: 15.5C — Sharpness Result Consolidation / C3c Claim Update** (consolidate the
-  checkpoint-overlap result; keep C3c not-confirmed/not-disproven; decide whether a stratified
-  dense sharpness extraction is warranted to power the interaction). NOT Phase 16, NOT synthesis.
-  **Preserved fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot
-  (reuse in Phase 17).**
+- **15.5C complete (Sharpness Result Consolidation / C3c Claim Update, doc-only):** consolidated
+  Phase 14 + 15.5B sharpness evidence. **SETTLED:** (a) sharpness MAIN EFFECT clear + replicated
+  (+0.0214 [+0.0198,+0.0231]; Sep +0.0213 / Oct +0.0215) but PARTLY MECHANICAL (flag embeds
+  worst_top5_loss threshold) → descriptive localization, NOT human difficulty; (b) clock×sharpness
+  moderation pooled-positive (60_180×sharp +0.0104) but **month-fragile (both per-month CIs contain
+  0) + board-decided-fragile (+0.0056 contains 0) + sparse low-clock cells** → EXPLORATORY; (c)
+  **C3c UNRESOLVED — not confirmed, not disproven** (matches Phase-14 +0.0102 train+val, test ~0);
+  (d) existing sharpness = checkpoint-overlap, White-mover only (4.36%) — NOT dense-wide. **DECISION:
+  bound C3c, proceed to Phase 16; stratified dense sharpness (optional 15.5D, ~3-9h) + think-time
+  loss-rate/flagging diagnostic recorded as optional later branches.** Safe-claim + forbidden-claim
+  language locked. EXP-049. See
+  `reports/phase_reports/phase_15_5c_sharpness_result_consolidation_c3c_claim_update.md`.
+- **Next ticket: 16.1A — Time-Control Selection / Feasibility Audit** (Phase 16 cross-time-control
+  dose-response; within-pool rating-quantile caveat mandatory). C3c bounded as unresolved; sharpness
+  arc closed for now. **Optional later branches (only if prioritized): 15.5D Stratified Dense
+  Sharpness Extraction Feasibility Audit; a Think-Time Loss-Rate / Flagging Signature Diagnostic.**
+  **Preserved fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot (reuse
+  in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -476,7 +489,7 @@ Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 Phase 15.5 — Sharpness-Enriched Constraint Atlas (existing sharpness = checkpoint-overlap, White-to-move only)
 - 15.5A Sharpness-Enriched Constraint Atlas Audit — complete (checkpoint-overlap join, 4.36% coverage, Option D).
 - 15.5B Existing-Sharpness Checkpoint-Overlap Join + Atlas/Exploratory Model — complete (4.36% White-mover overlap; sharp main effect replicated; clock×sharp exploratory/no-claim; C3c unchanged).
-- 15.5C Sharpness Result Consolidation / C3c Claim Update — NEXT (and decide whether stratified dense sharpness extraction is warranted).
+- 15.5C Sharpness Result Consolidation / C3c Claim Update — complete (C3c bounded UNRESOLVED; proceed to Phase 16; stratified dense sharpness = optional later branch).
 
 Phase 15.6 — Sharpness Prediction Value
 - 15.6A Sharpness Prediction-Improvement Audit.

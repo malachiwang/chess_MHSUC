@@ -2759,3 +2759,50 @@ Predictive/descriptive; not causal; no "sharp positions cause blunders"/"low clo
 "time pressure causes worse reasoning"; sharpness = objective value fragility, NOT human obviousness/
 difficulty; MultiPV/Stockfish not ground truth; checkpoint-overlap White-mover only, NOT dense-wide;
 no "sharpness moderation confirmed/disproven". C4 & C3c unchanged; no threshold/ES-transform change.
+
+## EXP-049 — Sharpness Result Consolidation / C3c Claim Update
+
+Experiment ID: EXP-049
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (REPORT-ONLY claim update; no code/models/figures; no Stockfish/MultiPV; no data
+artifacts; nothing staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Consolidate Phase 14 + Phase 15.5 sharpness evidence into a project-level claim boundary for C3c.
+
+Evidence reviewed:
+- Phase 14 C3c (phase_14_1a/b/c, 14_2a-d, 14_3a); 15.5A audit; 15.5B implementation + report;
+  15.4D dense controlled model; ROADMAP/EXPERIMENT_LOG/PREREGISTRATION.
+
+Sharpness main effect:
+- Clear + replicated: net of controls +0.0214 [+0.0198,+0.0231] (Sep +0.0213 / Oct +0.0215). PARTLY
+  MECHANICAL — sharp_value_fragility_v1 embeds worst_top5_loss_es>=0.10 (downside availability), so
+  higher realized loss is expected by construction. Descriptive localization, NOT human difficulty.
+
+Clock x sharpness moderation:
+- Checkpoint-overlap pooled focal 60_180 x sharp +0.0104 [+0.0018,+0.0194] (excl 0) but per-month
+  Sep +0.0095 [-0.0024,+0.0236] / Oct +0.0113 [-0.0008,+0.0232] BOTH contain 0; board-decided
+  +0.0056 [-0.0046,+0.0155] contains 0; low-clock sharp cells sparse (sharp×60_180=675; lower <200).
+  EXPLORATORY. Directionally consistent with Phase-14 train+val +0.0102 (test ~0).
+
+C3c CLAIM STATUS: UNRESOLVED — not confirmed, not disproven; pooled-positive/directionally
+suggestive; month-fragile; board-decided-fragile; underpowered key cells; limited to checkpoint-
+overlap White-mover rows (4.36%, NOT dense-wide).
+
+Coverage/power limitations: existing sharpness = checkpoint-only (move_10/20/30/40), White-mover
+only, ~4.36% of dense headline; matched subset not representative (no Black, no non-checkpoint
+plies, low-clock under-sampled); sparse sharp×low-clock cells.
+
+Decision / next: bound C3c as unresolved; PROCEED TO PHASE 16 (16.1A Time-Control Selection /
+Feasibility Audit). Stratified dense sharpness extraction (optional 15.5D, ~3-9h sampled MultiPV,
+both colors, stratified) and a Think-Time Loss-Rate / Flagging Signature diagnostic recorded as
+OPTIONAL LATER BRANCHES (full dense MultiPV ~51-82h NOT recommended).
+
+Safe-claim language locked (report §9); forbidden-claim list locked (§10).
+
+Non-claims:
+Report-only; not causal; sharpness = objective value fragility NOT human obviousness/difficulty;
+MultiPV/Stockfish not ground truth; checkpoint-overlap White-mover only NOT dense-wide; no
+"sharpness moderation confirmed/disproven"; no "sharp positions cause blunders"; no "low clock
+causes blunders". C4 & C3c unchanged. No code/models/figures/data.
