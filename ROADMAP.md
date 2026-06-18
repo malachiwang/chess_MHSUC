@@ -395,12 +395,24 @@ clock-residual moderation (11.0A kill condition not triggered).
   primary 50,106 clusters; mover-player robustness 31,381).** train+val fit / test=locked
   confirmation / month replication; no model selection. 5 open Qs (defaults set). EXP-045. See
   `reports/phase_reports/phase_15_4c_controlled_dense_move_quality_modeling_audit.md`.
-- **Next ticket: 15.4D — Controlled Dense Move-Quality Modeling Implementation** (new module
-  `dense_controlled_model.py` + tests; primary ES-loss model + S1–S5 + interactions + R1–R10
-  robustness; report `reports/dense_controlled_move_quality_model_10plus0_2024_09_2024_10_v1.md`;
-  dense artifacts untouched). Then Phase 15.5 sharpness. NOT Phase 16, NOT synthesis. **Preserved
-  fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot (reuse in Phase
-  17).**
+- **15.4D complete (Controlled Dense Move-Quality Modeling Implementation):** new module
+  `dense_controlled_model.py` + 16 tests (1,831 total). numpy-OLS adjusted-mean on ES loss over
+  2,778,772 headline rows, net of eval/phase/rating/month/color/termination, with fast game-clustered
+  sufficient-statistics bootstrap (500 draws, 50,106 clusters) + mover-player robustness (31,381).
+  ~61 s, read-only (no Stockfish). Report `reports/dense_controlled_move_quality_model_10plus0_2024_09_2024_10_v1.md`.
+  **RESULT (conditional association, NOT causal):** eval state DOMINATES (positive control: slight
+  +0.0306 / near_equal +0.0222 / clear +0.0165 vs decided, all CI excl 0); clean MONOTONE clock
+  gradient vs over_180 (under_10 +0.0083 / 10_30 +0.0045 / 30_60 +0.0030 / **60_180 +0.0009**, all
+  CI excl 0, month-replicated + player-clustered). REFINES (not just confirms) 15.1D: focal 60_180
+  ~4× SMALLER than checkpoint (+0.0009 vs +0.0034) and FRAGILE — attenuates to ~0 under continuous-
+  eval control (+0.0001, contains 0) and borderline board-decided-only (+0.0004, contains 0), while
+  steeper low-clock buckets survive board-decided. Residual concentrates in slight-eval/middlegame/
+  time-forfeit. Clipped-cp + ES≥0.10 LPM agree; logistic sign agrees. EXP-046. See
+  `reports/phase_reports/phase_15_4d_controlled_dense_move_quality_modeling_implementation.md`.
+- **Next ticket: 15.5A — Sharpness-Enriched Constraint Atlas Audit** (design joining the MultiPV
+  sharpness layer to the dense atlas/model; C3c move-quality-first). NOT Phase 16 cross-TC, NOT
+  synthesis. **Preserved fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis
+  snapshot (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -435,7 +447,7 @@ Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4A CP / ES Constraint Atlas Visualization Audit — complete (dense atlas designed).
 - 15.4B CP / ES Constraint Atlas Visualization Implementation — complete (9 figures + report).
 - 15.4C Controlled Dense Move-Quality Modeling Audit — complete (controlled model designed).
-- 15.4D Controlled Dense Move-Quality Modeling Implementation — NEXT.
+- 15.4D Controlled Dense Move-Quality Modeling Implementation — complete (focal 60_180 +0.0009, refines 15.1D).
 
 Phase 15.5 — Sharpness-Enriched Constraint Atlas
 - 15.5A Sharpness-Enriched Constraint Atlas Audit.

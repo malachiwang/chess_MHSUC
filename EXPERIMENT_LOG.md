@@ -2591,3 +2591,66 @@ Non-claims:
 Design-only; conditional association NOT causal; no "low clock causes blunders"/"time pressure
 causes worse reasoning"/"Stockfish is ground truth"/"human obviousness"/"sharpness moderation
 confirmed-or-disproven"/"DRAW solved". C4 & C3c unchanged. No models/figures/data/code produced.
+
+## EXP-046 — Controlled Dense Move-Quality Modeling Implementation
+
+Experiment ID: EXP-046
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (modeling only; no Stockfish; no figures; no data artifacts modified; nothing
+staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Implement the 15.4C controlled dense per-ply move-quality model: estimate the CONDITIONAL
+ASSOCIATION between clock state and next-move ES loss net of eval/phase/rating/month/color/
+termination, on the dense 2024-09+2024-10 substrate. Dense analogue of 15.1D/15.1F.
+
+Inputs:
+- data/processed/dense_move_loss_2024_09_250k_v1.parquet (1,496,890) + 2024_10 (1,436,866),
+  read-only; counts validated; no usernames.
+
+Module + tests:
+- NEW src/chess_mhsuc/dense_controlled_model.py (numpy OLS adjusted-mean; explicit one-hot
+  build_design with fixed refs + constant-column drop; fast GAME-clustered sufficient-statistics
+  bootstrap via per-cluster XtX/Xty + bincount-weighted resample; reuse clustered_uncertainty
+  _cluster_index/summarize_contrasts + dense_constraint_atlas bucket helpers; sklearn logistic
+  sign-check). 16 tests; full suite 1,831 passing.
+- NOTE: naive row-resampling refit was too slow at 2.78M rows (killed, exit 144); replaced with
+  sufficient-statistics bincount bootstrap (~61 s whole run).
+
+Validation/filtering:
+- headline = status ok & ~mate-band & both colors = 2,778,772 rows; board-decided 2,387,377;
+  time-forfeit 391,395; 50,106 game clusters; 31,381 mover-player clusters. anomalies flagged
+  (clock>600 ~100/mo, neg-think ~130/mo).
+
+RESULTS (conditional association, NOT causal; game-clustered 95% CI; 500 draws, seed 20240617):
+- Eval positive control DOMINATES: vs decided, slight +0.0306 / near_equal +0.0222 / clear +0.0165
+  (all excl 0) — ~3-30x the clock coefficients.
+- Clock gradient vs over_180 (monotone, all excl 0): under_10 +0.0083 / 10_30 +0.0045 /
+  30_60 +0.0030 / FOCAL 60_180 +0.0009 [+0.0005,+0.0014].
+- Month replication strong: 60_180 0.0010 (09) / 0.0009 (10); under_10 0.0079/0.0086.
+- Mover-player-clustered: 60_180 +0.0009 [+0.0005,+0.0013] excl 0.
+- Board-decided-only: 60_180 +0.0004 [-0.0001,+0.0009] CONTAINS 0 (borderline); under_10 +0.0079*,
+  10_30 +0.0024*, 30_60 +0.0027* survive.
+- Continuous-eval control: 60_180 +0.0001 [-0.0004,+0.0006] CONTAINS 0 (attenuates ~0 -> within-band
+  eval confounding for the smallest contrast).
+- Clipped cp: monotone +16.2/+8.7/+6.0/+2.15 cp (all excl 0). ES>=0.10 LPM 60_180 +0.0058* (logistic
+  sign agrees +0.069); ES>=0.05 LPM +0.0011 contains 0.
+- rating_z +0.0011*; anomaly-excluded +0.0009*.
+- Interactions: residual concentrates in slight-eval (+0.0025*), middlegame (+0.0024*), time-forfeit
+  (+0.0011*); ~0 elsewhere.
+
+Comparison to 15.1D/15.1F:
+- Same sign + structure (eval dominates; small positive clock residual; survives clustering) but
+  dense focal 60_180 ~4x SMALLER (+0.0009 vs +0.0034) and MORE FRAGILE (attenuates under continuous
+  eval; borderline board-decided). REFINES, not just confirms. Reported honestly, not forced to match.
+
+Recommendation:
+- Next = 15.5A Sharpness-Enriched Constraint Atlas Audit (C3c move-quality-first). NOT Phase 16;
+  NOT synthesis.
+
+Non-claims:
+Conditional/predictive only; NOT causal; no "low clock causes blunders"/"time pressure causes worse
+reasoning"/"clock proves cognitive degradation"/"Stockfish is ground truth"/"human obviousness"/
+"sharpness moderation confirmed-or-disproven"/"DRAW solved". C4 & C3c unchanged; ES transform not
+refit; dense artifacts not modified.
