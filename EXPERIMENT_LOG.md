@@ -2475,3 +2475,62 @@ Design-only; predictive/descriptive, not causal; Stockfish not ground truth; no 
 no cross-time-control yet; no sharpness yet; not final/public report; no model selection; no "low
 clock causes blunders"/"time pressure causes worse reasoning"/"DRAW solved". C4 & C3c unchanged.
 No figures, models, data artifacts, or code produced.
+
+## EXP-044 — CP / ES Constraint Atlas Visualization Implementation
+
+Experiment ID: EXP-044
+Date: 2026-06-17
+Owner: Malachi Wang
+Status: complete (visualization only; no models; no Stockfish; no data artifacts modified; figures
+under reports/figures/ only; nothing staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Implement the dense CP/ES Constraint Atlas designed in 15.4A: render descriptive per-ply
+move-quality figures + tables over the dense 10+0 substrate (2024-09 + 2024-10).
+
+Inputs:
+- data/processed/dense_move_loss_2024_09_250k_v1.parquet (1,496,890 rows)
+- data/processed/dense_move_loss_2024_10_250k_v1.parquet (1,436,866 rows)
+- read-only; row counts validated against 15.3C/15.3D.
+
+Module + tests:
+- NEW src/chess_mhsuc/dense_constraint_atlas.py (separate from constraint_atlas.py = 15.1B
+  checkpoint atlas, NOT clobbered). Pure bucket/aggregation/bootstrap helpers + matplotlib (Agg)
+  renderers + report writer + CLI. Game-clustered bootstrap via per-cluster sums (fast).
+- tests/test_dense_constraint_atlas.py 18 tests; full suite 1,815 passing.
+
+Validation:
+- all required columns; NO raw-username columns; ES in [0,1]; clipped cp >= 0; time control
+  uniformly 600+0/600/0/rapid; per-month counts match. Headline = status ok & not mate-band &
+  both colors = 2,778,772 rows; mate-band excluded 154,984 (5.3%). Anomalies flagged not dropped
+  (clock>600 116/91; neg-think 133/125; missing-clock 0/0).
+
+Filtering/metric policy:
+- PRIMARY expected_score_loss; SECONDARY clipped cp (median/p75/p90); raw cp diagnostic-only;
+  large-loss ES>=0.05/0.10, cp>=100/200; %-eval-swing not headline.
+
+Outputs:
+- 9 PNG figures under reports/figures/phase_15_4_constraint_atlas/ (clock×ES with game-clustered
+  95% CI; clock×clipped-cp; large-loss prob; rating×clock heatmap; eval-band curves; phase×clock;
+  think-time; termination-channel board-decided-vs-TF; month-replication). Bootstrap 500 draws,
+  seed 20240617. Runtime ~8 s (read-only; no Stockfish).
+- reports/constraint_atlas_10plus0_2024_09_2024_10_v1.md.
+
+KEY DESCRIPTIVE (month-replicated; MARGINAL, not controlled):
+- Eval state DOMINATES: ES mean slight 0.044 > near_equal 0.033 ~ clear 0.031 > decided 0.017
+  (~2.6x spread), reproducing 15.1B/15.1D.
+- Marginal ES-loss-by-clock is U-shaped: highest at 300+ (0.0358 both months), mildly elevated at
+  0-5s (~0.034), lowest 60-180s (~0.0288). Marginally low-clock is NOT worse (confounded with
+  phase/eval band). The controlled C4 result (15.1D/15.1F: small clock association AFTER controls)
+  remains the inferential statement; the atlas is the descriptive map around it.
+- Patterns replicate near-exactly across 2024-09 and 2024-10.
+
+Recommendation:
+- Next = 15.4C Controlled Dense Move-Quality Modeling Audit (per ROADMAP restored Phase 15.4
+  sequence: controlled per-ply model net of eval/phase/rating/termination + mover-player clustering;
+  then 15.4D; then Phase 15.5 sharpness). NOT Phase 16; NOT synthesis.
+
+Non-claims:
+Predictive/descriptive only; not causal; no "low clock causes blunders"/"time pressure causes worse
+reasoning"/"Stockfish is ground truth"/"human obviousness modeled"/"DRAW solved". No sharpness, no
+cross-time-control, no model fitting/selection. C4 & C3c unchanged. Dense artifacts not modified.

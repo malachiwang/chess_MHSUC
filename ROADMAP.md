@@ -368,13 +368,25 @@ clock-residual moderation (11.0A kill condition not triggered).
   `reports/phase_reports/phase_15_4a_cp_es_constraint_atlas_visualization_audit.md`. 5 design
   questions raised for Malachi (rating bin width, clock axis, figure format, termination panels
   now-vs-later, report register).
-- **Next ticket: 15.4B — CP/ES Constraint Atlas Visualization Implementation** (new module
-  `dense_constraint_atlas.py` + tests; generate families A–I figures + tables for both months
-  with month replication; write `reports/constraint_atlas_10plus0_2024_09_2024_10_v1.md`; figures
-  under `reports/figures/phase_15_4_constraint_atlas/` only; dense artifacts untouched). NOT Phase
-  15.5 sharpness, NOT Phase 16 cross-TC. **Preserved fallbacks (deliberate choice only): 14.2E —
-  Third-Month/Pooled-Power C3c Enrichment Audit; 14.3B — C3b Flagging Sharpness Pre-Registration;
-  the 16.0A synthesis snapshot (reuse in Phase 17).**
+- **15.4B complete (CP/ES Constraint Atlas Visualization Implementation):** new module
+  `dense_constraint_atlas.py` + 18 tests (1,815 total). Read both dense months (2,933,756 rows →
+  2,778,772 headline after status-ok/¬mate-band), rendered **9 PNG figures** (clock×ES, clock×cp,
+  large-loss prob, rating×clock heatmap, eval-band curves, phase×clock, think-time, termination
+  channel, month-replication) + report `reports/constraint_atlas_10plus0_2024_09_2024_10_v1.md`;
+  figures under `reports/figures/phase_15_4_constraint_atlas/` (committable PNGs). ~8 s, read-only
+  (no Stockfish/models). Game-clustered 500-draw bootstrap CIs on headline clock curve.
+  **KEY DESCRIPTIVE (month-replicated):** eval state DOMINATES (ES mean slight 0.044 > near_equal
+  0.033 ≈ clear 0.031 > decided 0.017, ~2.6× spread); MARGINAL clock curve is U-shaped (highest at
+  300+ 0.0358, mildly elevated 0–5s ~0.034, lowest 60–180s ~0.0288) → marginally low-clock is NOT
+  worse (confounded w/ phase/eval); controlled C4 (15.1D/15.1F small clock assoc after controls)
+  remains the inferential statement. EXP-044. See
+  `reports/phase_reports/phase_15_4b_cp_es_constraint_atlas_visualization_implementation.md`.
+- **Next ticket: 15.4C — Controlled Dense Move-Quality Modeling Audit** (design the per-ply
+  controlled model reproducing the C4 small-clock-association result on the dense substrate, net of
+  eval band / phase / rating / termination, with mover-player clustering; then 15.4D implementation,
+  then Phase 15.5 sharpness enrichment). NOT Phase 16 cross-TC, NOT synthesis. **Preserved fallbacks
+  (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c Enrichment Audit; 14.3B — C3b
+  Flagging Sharpness Pre-Registration; the 16.0A synthesis snapshot (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -407,8 +419,8 @@ Phase 15.3 — Dense Move-by-Move Loss Extraction
 
 Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4A CP / ES Constraint Atlas Visualization Audit — complete (dense atlas designed).
-- 15.4B CP / ES Constraint Atlas Visualization Implementation — NEXT.
-- 15.4C Controlled Dense Move-Quality Modeling Audit.
+- 15.4B CP / ES Constraint Atlas Visualization Implementation — complete (9 figures + report).
+- 15.4C Controlled Dense Move-Quality Modeling Audit — NEXT.
 - 15.4D Controlled Dense Move-Quality Modeling Implementation.
 
 Phase 15.5 — Sharpness-Enriched Constraint Atlas
