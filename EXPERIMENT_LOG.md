@@ -2806,3 +2806,52 @@ Report-only; not causal; sharpness = objective value fragility NOT human obvious
 MultiPV/Stockfish not ground truth; checkpoint-overlap White-mover only NOT dense-wide; no
 "sharpness moderation confirmed/disproven"; no "sharp positions cause blunders"; no "low clock
 causes blunders". C4 & C3c unchanged. No code/models/figures/data.
+
+## EXP-050 — Time-Control Selection / Feasibility Audit
+
+Experiment ID: EXP-050
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (DESIGN-ONLY audit; no Stockfish/dense extraction/models/figures; no data
+artifacts; no source/test code changed; nothing staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Select feasible, scientifically-useful time controls for Phase 16 cross-time-control dose-response,
+before any extraction.
+
+KEY FEASIBILITY (read-only):
+- Raw caches lichess_2024_09/10_first250k.pgn already contain ALL time controls (game_records were
+  parser-filtered to 600+0). Per-month cache TimeControl counts: 3+0 ~52k, 5+0 ~33k, 10+0 ~26k,
+  3+2 ~20k, 5+3 ~11k, 10+5 ~4.8k, 15+10 ~1.3k, 1+0 ~73k. NO new download needed for 3+0/5+0/10+0.
+- Pipeline gap: dense_move_loss.py hardcodes 600+0 acceptance (load_accepted_game_meta filters
+  time_control=='600+0') + month/TC-locked full-month flags. Schema is already TC-aware
+  (parse_time_control, clock_fraction, increment_buffer, think_time_net). 16.1B must generalize
+  acceptance to a chosen --time-control (derive accepted set from raw cache headers) + safety-gate.
+
+Selection:
+- First wave (no-increment speed dose-response): 3+0, 5+0, 10+0 (abundant, same months, lowest
+  pipeline risk). Increment contrast better powered at blitz (5+0 vs 5+3 / 3+0 vs 3+2) than rare
+  10+5/15+10 (deferred). 1+0 bullet = separate later regime.
+
+Mandatory design:
+- Rating pools NOT cross-comparable -> within-time-control rating QUANTILES primary, raw bins
+  within-control secondary. Clock: within-control absolute seconds; cross-control clock_fraction;
+  increment-aware increment_buffer = clock_before/max(increment,1). Termination: track all /
+  board-decided / time-forfeit + termination RATES by control. Metric: ES loss primary (reuse 10+0
+  ES transform across controls as documented assumption, not refit). Depth 12, both months.
+
+Compute: anchors 10+0 ~1.5M rows/~12.7h (33eps) & ~1.44M/8.8h (46eps); pilot ~1.5k games ~25-40min.
+Full per-control multi-day -> chunked/resumable/caffeinate; PILOT first (Option D -> B).
+
+Recommendation / next: 16.1B Cross-Time-Control Pilot Dense Extraction (3+0, 5+0) — generalize
+pipeline to --time-control + tests; pilots ~1,500 accepted games/control/month; report rows /
+clock-fraction / termination-rate / rating-quantile / runtime; NO full extraction yet.
+
+Optional later branches: Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D Stratified
+Dense Sharpness Extraction Audit; increment-rapid (10+5/15+10) if larger slice acquired; 1+0 bullet.
+
+Non-claims:
+Design-only; cross-control = descriptive/conditional, NOT causal; raw ratings NOT cross-pool
+comparable; Stockfish not ground truth; no "faster time controls cause worse chess"/"increment
+causes better reasoning"/"time pressure causes worse reasoning"/"low clock causes blunders"; no
+sharpness claims; no "DRAW solved". C4 & C3c unchanged. No code/extraction/models/figures/data.

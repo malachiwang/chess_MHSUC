@@ -444,12 +444,26 @@ clock-residual moderation (11.0A kill condition not triggered).
   loss-rate/flagging diagnostic recorded as optional later branches.** Safe-claim + forbidden-claim
   language locked. EXP-049. See
   `reports/phase_reports/phase_15_5c_sharpness_result_consolidation_c3c_claim_update.md`.
-- **Next ticket: 16.1A — Time-Control Selection / Feasibility Audit** (Phase 16 cross-time-control
-  dose-response; within-pool rating-quantile caveat mandatory). C3c bounded as unresolved; sharpness
-  arc closed for now. **Optional later branches (only if prioritized): 15.5D Stratified Dense
-  Sharpness Extraction Feasibility Audit; a Think-Time Loss-Rate / Flagging Signature Diagnostic.**
-  **Preserved fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot (reuse
-  in Phase 17).**
+- **16.1A complete (Time-Control Selection / Feasibility Audit, doc-only):** chose the Phase 16
+  cross-time-control set. **KEY FEASIBILITY: existing raw caches `lichess_2024_09/10_first250k.pgn`
+  already contain ALL time controls** (game_records were merely parser-filtered to 600+0) — per
+  month ~52k 3+0, ~33k 5+0, ~26k 10+0, ~20k 3+2, ~11k 5+3, ~4.8k 10+5, ~1.3k 15+10, ~73k 1+0. So
+  **no new download needed** for the recommended **first wave = 3+0 / 5+0 / 10+0** (no-increment
+  speed dose-response, all abundant); increment contrast better powered at blitz (5+0 vs 5+3 /
+  3+0 vs 3+2) than the rare 10+5/15+10 (deferred). **Mandatory: within-time-control rating
+  QUANTILES primary** (pools not cross-comparable); cross-control clock axis = clock_fraction;
+  increment-aware = increment_buffer. ES transform reused across controls (documented assumption).
+  **Code gap: dense_move_loss hardcodes 600+0 acceptance + month/TC-locked flags → 16.1B must
+  generalize to a `--time-control` filter.** Reuse depth 12, both months, chunked/resumable; PILOT
+  first (Option D→B). EXP-050. See
+  `reports/phase_reports/phase_16_1a_time_control_selection_feasibility_audit.md`.
+- **Next ticket: 16.1B — Cross-Time-Control Pilot Dense Extraction (3+0, 5+0)** (generalize the
+  dense pipeline to a safety-gated `--time-control` filter + tests; pilot ~1,500 accepted games/
+  control/month for 3+0 & 5+0; pilot reports with rows / clock-fraction / termination-rate /
+  rating-quantile / runtime; NO full multi-control extraction yet). **Optional later branches: 15.5D
+  Stratified Dense Sharpness Extraction Audit; Think-Time Loss-Rate / Flagging Signature Diagnostic;
+  increment-rapid (10+5/15+10) if a larger slice is acquired.** **Preserved fallbacks: 14.2E; 14.3B;
+  the 16.0A synthesis snapshot (reuse in Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -513,9 +527,11 @@ Purpose: test whether clock, move-quality, and sharpness patterns vary across ti
 way consistent with bounded-resource constraints. Candidate controls: **3+0, 5+0, 10+0 (anchor),
 10+5 or 15+10 increment.** **Mandatory caveat:** Lichess rating pools differ by time control, so
 cross-control comparisons require **within-pool rating quantiles** or explicit rating-pool
-caveats. Suggested tickets: 16.1A Time-Control Selection / Feasibility Audit · 16.1B
-Cross-Time-Control Pilot Parsing / Evaluation · 16.2A Cross-Time-Control Move-Quality Audit ·
-16.2B Implementation · 16.3A Cross-Time-Control Sharpness Audit · 16.3B Implementation.
+caveats. Tickets: 16.1A Time-Control Selection / Feasibility Audit — **complete** (first wave
+3+0/5+0/10+0 selected; all abundant in existing caches; within-control rating quantiles
+mandatory) · **16.1B Cross-Time-Control Pilot Dense Extraction (3+0, 5+0) — NEXT** (generalize
+dense pipeline to a `--time-control` filter; pilots only) · 16.2A Cross-Time-Control Move-Quality
+Audit · 16.2B Implementation · 16.3A Cross-Time-Control Sharpness Audit · 16.3B Implementation.
 
 ### Phase 17 — Packaging / Public Report (restored)
 
