@@ -381,12 +381,26 @@ clock-residual moderation (11.0A kill condition not triggered).
   worse (confounded w/ phase/eval); controlled C4 (15.1D/15.1F small clock assoc after controls)
   remains the inferential statement. EXP-044. See
   `reports/phase_reports/phase_15_4b_cp_es_constraint_atlas_visualization_implementation.md`.
-- **Next ticket: 15.4C — Controlled Dense Move-Quality Modeling Audit** (design the per-ply
-  controlled model reproducing the C4 small-clock-association result on the dense substrate, net of
-  eval band / phase / rating / termination, with mover-player clustering; then 15.4D implementation,
-  then Phase 15.5 sharpness enrichment). NOT Phase 16 cross-TC, NOT synthesis. **Preserved fallbacks
-  (deliberate choice only): 14.2E — Third-Month/Pooled-Power C3c Enrichment Audit; 14.3B — C3b
-  Flagging Sharpness Pre-Registration; the 16.0A synthesis snapshot (reuse in Phase 17).**
+- **15.4C complete (Controlled Dense Move-Quality Modeling Audit, doc-only):** controlled dense
+  per-ply model DESIGNED (no code/fits/figures). Locked: PRIMARY target ES loss (numpy OLS
+  adjusted-mean, reuse 15.1D `build_design`/`_ols_fit`); RHS = C(clock_coarse, ref=over_180) +
+  C(eval_band, ref=decided) + C(phase) + C(rating_bin, mover_elo 200-Elo) + C(month) +
+  C(mover_color) + C(termination_channel, ref=board_decided); focal contrast 60_180 vs over_180
+  (powered) — extreme low-clock board-decided sparse (under_10×BD=1,820) so under_10 exploratory.
+  Secondary S1 clipped-cp / S2 large-loss LPM+logistic / S3 board-decided-only (2,387,377 rows) /
+  S4 anomaly-excluded / S5 month-specific; interactions clock×{eval,phase,rating,termination}
+  (NO sharpness — Phase 15.5). Continuous-eval robustness via expected_score_before/eval_before_cp
+  (0 nulls). **statsmodels absent → reuse numpy OLS + sklearn logistic + clustered_uncertainty
+  cluster_bootstrap_refit; recommend per-cluster sufficient-statistics bootstrap (game-clustered
+  primary 50,106 clusters; mover-player robustness 31,381).** train+val fit / test=locked
+  confirmation / month replication; no model selection. 5 open Qs (defaults set). EXP-045. See
+  `reports/phase_reports/phase_15_4c_controlled_dense_move_quality_modeling_audit.md`.
+- **Next ticket: 15.4D — Controlled Dense Move-Quality Modeling Implementation** (new module
+  `dense_controlled_model.py` + tests; primary ES-loss model + S1–S5 + interactions + R1–R10
+  robustness; report `reports/dense_controlled_move_quality_model_10plus0_2024_09_2024_10_v1.md`;
+  dense artifacts untouched). Then Phase 15.5 sharpness. NOT Phase 16, NOT synthesis. **Preserved
+  fallbacks (deliberate choice only): 14.2E; 14.3B; the 16.0A synthesis snapshot (reuse in Phase
+  17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -420,8 +434,8 @@ Phase 15.3 — Dense Move-by-Move Loss Extraction
 Phase 15.4 — Centipawn / Expected-Score Constraint Atlas
 - 15.4A CP / ES Constraint Atlas Visualization Audit — complete (dense atlas designed).
 - 15.4B CP / ES Constraint Atlas Visualization Implementation — complete (9 figures + report).
-- 15.4C Controlled Dense Move-Quality Modeling Audit — NEXT.
-- 15.4D Controlled Dense Move-Quality Modeling Implementation.
+- 15.4C Controlled Dense Move-Quality Modeling Audit — complete (controlled model designed).
+- 15.4D Controlled Dense Move-Quality Modeling Implementation — NEXT.
 
 Phase 15.5 — Sharpness-Enriched Constraint Atlas
 - 15.5A Sharpness-Enriched Constraint Atlas Audit.

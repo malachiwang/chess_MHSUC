@@ -2534,3 +2534,60 @@ Non-claims:
 Predictive/descriptive only; not causal; no "low clock causes blunders"/"time pressure causes worse
 reasoning"/"Stockfish is ground truth"/"human obviousness modeled"/"DRAW solved". No sharpness, no
 cross-time-control, no model fitting/selection. C4 & C3c unchanged. Dense artifacts not modified.
+
+## EXP-045 — Controlled Dense Move-Quality Modeling Audit
+
+Experiment ID: EXP-045
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (DESIGN-ONLY audit; no models run; no figures; no data artifacts; no source/test
+code changed; nothing staged/committed; PREREGISTRATION unchanged)
+
+Purpose:
+Design the controlled dense per-ply move-quality model (for 15.4D) that turns the descriptive
+15.4B atlas into a controlled conditional-association estimate of clock vs next-move loss net of
+eval/phase/rating/termination/month/color.
+
+Motivation:
+15.4B marginal clock curves are U-shaped/confounded (eval state dominates, ~2.6x spread vs clock
+~1.25x non-monotone). A U-shaped marginal does NOT contradict the 15.1D/15.1F controlled checkpoint
+result (small replicated clock residual after controls). Need the dense controlled model to test
+persistence at per-ply scale.
+
+Feasibility (read-only):
+- headline 2,778,772 rows (status ok, mate-band excluded); board-decided 2,387,377; time-forfeit
+  391,395; 50,106 games; 31,381 mover hashes; splits train 1.94M/val 414k/test 414k.
+- continuous-eval fields present (expected_score_before, eval_before_cp; 0 nulls).
+- statsmodels NOT installed -> reuse numpy _ols_fit + sklearn logistic + clustered_uncertainty
+  cluster_bootstrap_refit/summarize_contrasts (the 15.1D/15.1F machinery; no new dep).
+- SPARSITY caveat: under_10 x board-decided = 1,820 rows (slight band 72) -> extreme-low-clock
+  board-decided residual underpowered; powered headline contrast = 60_180 vs over_180 (as 15.1D).
+
+Locked design:
+- PRIMARY target expected_score_loss (OLS adjusted-mean; coefficients = ES-loss differences). RHS:
+  C(clock_coarse, ref=over_180) + C(eval_band, ref=decided) + C(phase) + C(rating_bin, mover_elo
+  200-Elo) + C(month) + C(mover_color) + C(termination_channel, ref=board_decided). Additive (no
+  high-order interactions in primary). Continuous-eval robustness via binned/spline
+  expected_score_before or abs(eval_before_cp).
+- Secondary: S1 clipped_cp_loss; S2 I(ES>=0.10)/I(ES>=0.05) LPM primary + sklearn logistic
+  robustness; S3 board-decided-only; S4 anomaly-excluded; S5 month-specific replication.
+- Interactions (secondary, labeled): clock x {eval_band, phase, rating_bin, termination_channel}.
+  NO sharpness interaction (Phase 15.5).
+- Think-time EXCLUDED from primary (downstream/bad control); secondary descriptive only.
+- Uncertainty: game-clustered bootstrap PRIMARY (reuse cluster_bootstrap_refit; recommend
+  per-cluster sufficient-statistics bootstrap since naive row-reindex at 2.78M rows x reps is slow;
+  fallback --bootstrap 200); mover-player-clustered robustness.
+- Splits: pooled train+val fit w/ month FE for headline; test = locked confirmation (no tuning);
+  month-specific replication; rating_z train-only if used. No model selection.
+- Robustness R1-R10 (month, board-decided, anomaly-excluded, clipped-cp, large-loss, continuous
+  eval, clock encodings, rating continuous, phase-vs-move#, game-vs-player clustering).
+
+15.4D scope:
+- new module src/chess_mhsuc/dense_controlled_model.py + tests; fit primary + S1-S5 + interactions
+  + R1-R10; report reports/dense_controlled_move_quality_model_10plus0_2024_09_2024_10_v1.md +
+  phase_15_4d report; update ROADMAP/EXPERIMENT_LOG. NOT sharpness, NOT cross-TC, NOT synthesis.
+
+Non-claims:
+Design-only; conditional association NOT causal; no "low clock causes blunders"/"time pressure
+causes worse reasoning"/"Stockfish is ground truth"/"human obviousness"/"sharpness moderation
+confirmed-or-disproven"/"DRAW solved". C4 & C3c unchanged. No models/figures/data/code produced.
