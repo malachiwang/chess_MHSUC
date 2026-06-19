@@ -2855,3 +2855,50 @@ Design-only; cross-control = descriptive/conditional, NOT causal; raw ratings NO
 comparable; Stockfish not ground truth; no "faster time controls cause worse chess"/"increment
 causes better reasoning"/"time pressure causes worse reasoning"/"low clock causes blunders"; no
 sharpness claims; no "DRAW solved". C4 & C3c unchanged. No code/extraction/models/figures/data.
+
+## EXP-051 — Cross-Time-Control Pilot Dense Extraction
+
+Experiment ID: EXP-051
+Date: 2026-06-18
+Owner: Malachi Wang
+Status: complete (implementation + PILOT only; no full extraction; pilot artifacts gitignored;
+ES transform not refit; existing 10+0 artifacts untouched; nothing staged/committed;
+PREREGISTRATION unchanged)
+
+Purpose:
+Generalize the dense pipeline to safety-gated non-600+0 time controls and pilot 3+0/5+0 to validate
+cross-time-control extraction readiness before the full Phase 16 campaign.
+
+Code (dense_move_loss.py):
+- canonicalize_time_control (alias 3+0->180+0/5+0->300+0/10+0->600+0; reject malformed; default
+  600+0). build_accepted_meta_from_raw (header-only accepted set from raw cache, since game_records
+  is 600+0-only; basic acceptance = both Elos + decisive/draw result + Termination; split_set
+  unknown; no usernames). CLI: --time-control + --allow-time-control-pilot gate (non-600+0 refused
+  without gate / with --preflight / without finite cap / over cap; full-month stays 600+0-locked;
+  600+0 unchanged). 12 tests; full suite 1,857 passing.
+
+Pilots (1,500 accepted games/control/month, depth 12, caffeinate):
+- 2024-09 3+0: 94,935 rows / 1,485 games / 96,020 evals / 1937s / 49.8 eps / ES mean 0.0338 / TF 38.7%
+- 2024-09 5+0: 91,185 / 1,485 / 92,256 / 12066s(SLOW, transient throttle) / 7.7 eps / 0.035 / TF 28.8%
+- 2024-10 3+0: 92,225 / 1,481 / 93,280 / 1919s / 48.8 eps / 0.0339 / TF 36.3%
+- 2024-10 5+0: 89,652 / 1,483 / 90,728 / 1939s / 47.1 eps / 0.0353 / TF 27.9%
+- All clean: 0 dup keys, 0 eval/replay fail, all status ok, both colors, no usernames, 100% player-
+  hash, ES bounded, clipped cp>=0, TC fields correct (180+0/300+0, no_increment, blitz).
+
+DESCRIPTIVE READINESS (replicated, NOT causal):
+- TIME-FORFEIT rate = clean monotone DOSE-RESPONSE in base time: 3+0 ~37-39% > 5+0 ~28% > 10+0 ~13.4%.
+- Move-quality ES loss SIMILAR across controls (~0.034-0.035) — the cross-control difference is in
+  FLAGGING, not board-move loss.
+- Rating pools DIFFER (blitz mover-Elo median ~1570-1792 vs rapid ~1601) -> within-control rating
+  QUANTILES mandatory (confirmed). clock_fraction correctly off initial_time_s (180/300).
+
+Recommendation:
+- Pilots pass -> proceed to 16.1C Full (Matched-Size) 3+0/5+0 Dense Extraction (full per-control is
+  LARGE: 3+0 ~3.2M rows, 5+0 ~2.0M; cap to a common ~25k accepted games for balanced power; chunked/
+  resumable/caffeinated, no competing load). Then 16.2A move-quality audit.
+
+Non-claims:
+Pilot/feasibility only; not a full TC result; cross-control descriptive/conditional NOT causal; raw
+ratings NOT cross-pool comparable; Stockfish not ground truth; no "faster time controls cause worse
+chess"/"increment causes better reasoning"/"low clock causes blunders"/"time pressure causes worse
+reasoning"; no sharpness claims; no "DRAW solved". C4 & C3c unchanged.

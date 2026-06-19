@@ -16,7 +16,9 @@ from chess_mhsuc.dense_move_loss import (
     _OUTPUT_SCHEMA,
     _STATUS_OK,
     assemble_row,
+    build_accepted_meta_from_raw,
     build_move_records,
+    canonicalize_time_control,
     clock_bucket_coarse,
     clock_flags,
     clock_fraction_for,
@@ -658,3 +660,170 @@ def test_completed_ids_empty_when_no_chunks(tmp_path):
     done, next_idx = completed_game_ids_from_chunks(cdir)
     assert done == set()
     assert next_idx == 0
+
+
+# ===========================================================================
+# 16.1B — cross-time-control pilot support (safety-gated non-600+0)
+# ===========================================================================
+
+def test_canonicalize_time_control_aliases():
+    assert canonicalize_time_control("3+0") == "180+0"
+    assert canonicalize_time_control("5+0") == "300+0"
+    assert canonicalize_time_control("10+0") == "600+0"
+    assert canonicalize_time_control("10+5") == "600+5"
+    assert canonicalize_time_control("180+0") == "180+0"   # canonical passes through
+    assert canonicalize_time_control(None) is None
+
+
+def test_canonicalize_time_control_rejects_malformed():
+    for bad in ("abc", "180", "180+", "+0", "180-0", "3x0"):
+        with pytest.raises(ValueError):
+            canonicalize_time_control(bad)
+
+
+_RAW_PGN = """\
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/aaa11111"]
+[White "u1"]
+[Black "u2"]
+[Result "1-0"]
+[WhiteElo "1500"]
+[BlackElo "1480"]
+[TimeControl "180+0"]
+[Termination "Normal"]
+
+1. e4 {[%clk 0:03:00]} e5 {[%clk 0:03:00]} 2. Nf3 {[%clk 0:02:58]} Nc6 {[%clk 0:02:57]} 1-0
+
+[Event "Rated Blitz game"]
+[Site "https://lichess.org/bbb22222"]
+[White "u3"]
+[Black "u4"]
+[Result "0-1"]
+[WhiteElo "1600"]
+[BlackElo "1620"]
+[TimeControl "300+0"]
+[Termination "Time forfeit"]
+
+1. d4 {[%clk 0:05:00]} d5 {[%clk 0:05:00]} 0-1
+
+[Event "Rated Rapid game"]
+[Site "https://lichess.org/ccc33333"]
+[White "u5"]
+[Black "u6"]
+[Result "1/2-1/2"]
+[WhiteElo "1700"]
+[BlackElo "1700"]
+[TimeControl "600+0"]
+[Termination "Normal"]
+
+1. c4 {[%clk 0:10:00]} c5 {[%clk 0:10:00]} 1/2-1/2
+"""
+
+
+def test_build_accepted_meta_from_raw_filters_time_control(tmp_path):
+    p = tmp_path / "mix.pgn"
+    p.write_text(_RAW_PGN)
+    m180 = build_accepted_meta_from_raw(p, "180+0", max_games=100)
+    assert set(m180) == {"aaa11111"}
+    assert m180["aaa11111"]["result_class"] == "WHITE_WIN"
+    assert m180["aaa11111"]["time_control"] == "180+0"
+    assert m180["aaa11111"]["is_time_forfeit"] is False
+    assert m180["aaa11111"]["white_elo"] == 1500
+    assert m180["aaa11111"]["split_set"] == "unknown"
+    m300 = build_accepted_meta_from_raw(p, "300+0", max_games=100)
+    assert set(m300) == {"bbb22222"}
+    assert m300["bbb22222"]["is_time_forfeit"] is True   # Time forfeit
+    assert m300["bbb22222"]["result_class"] == "BLACK_WIN"
+
+
+def test_build_accepted_meta_from_raw_caps(tmp_path):
+    # duplicate the 180+0 game id-varied; cap at 1 should return a single game
+    pgn = _RAW_PGN + _RAW_PGN.replace("aaa11111", "aaa99999")
+    p = tmp_path / "dup.pgn"; p.write_text(pgn)
+    m = build_accepted_meta_from_raw(p, "180+0", max_games=1)
+    assert len(m) == 1
+
+
+def test_build_accepted_meta_from_raw_no_username_fields(tmp_path):
+    p = tmp_path / "mix.pgn"; p.write_text(_RAW_PGN)
+    m = build_accepted_meta_from_raw(p, "180+0", max_games=100)
+    for rec in m.values():
+        assert not ({"white", "black", "White", "Black", "u1", "u2"} & set(rec))
+
+
+def test_assemble_row_time_control_fields_for_180_0():
+    meta = {**_META, "time_control": "180+0"}
+    rec = _rec(20, 11, True)
+    rec["clock_before_s"] = 90.0
+    row = assemble_row("g", "2024_09", rec, meta, _eval(50), _eval(20), 12, 348.41)
+    assert row["time_control_raw"] == "180+0"
+    assert row["initial_time_s"] == 180
+    assert row["increment_s"] == 0
+    assert row["time_control_family"] == "no_increment"
+    assert row["clock_fraction"] == 90.0 / 180   # uses initial_time_s, not hardcoded 600
+
+
+# --- CLI safety gates for non-600+0 ---
+
+def test_cli_refuses_non_600_0_without_pilot_gate(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--time-control", "180+0",
+        "--max-accepted-games", "1500", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "allow-time-control-pilot" in capsys.readouterr().err
+
+
+def test_cli_refuses_non_600_0_malformed_tc(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--time-control", "3x0",
+        "--allow-time-control-pilot", "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "malformed time control" in capsys.readouterr().err
+
+
+def test_cli_refuses_non_600_0_over_pilot_cap(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--time-control", "180+0",
+        "--allow-time-control-pilot", "--max-accepted-games", "999999",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "pilot cap" in capsys.readouterr().err
+
+
+def test_cli_refuses_non_600_0_with_preflight(tmp_path, capsys):
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--time-control", "300+0",
+        "--allow-time-control-pilot", "--preflight",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "600+0-specific" in capsys.readouterr().err
+
+
+def test_cli_full_month_still_refuses_non_600_0(tmp_path, capsys):
+    # full-month + non-600+0 is refused; with the pilot gate present it reaches the
+    # full-month "restricted to 600+0" gate (without it, the non-anchor gate refuses first).
+    rc = dense_main([
+        "--raw-pgn", "x.pgn", "--month", "2024_09", "--allow-full-month-2024-09",
+        "--allow-time-control-pilot", "--time-control", "180+0", "--depth", "12",
+        "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "restricted to 600+0" in capsys.readouterr().err
+
+
+def test_cli_non_600_0_pilot_gate_passes_then_fails_on_inputs(tmp_path):
+    # with the gate + canonical alias + cap, the run passes the gates and then fails
+    # later on the missing PGN / stockfish (proves the gate itself accepted it).
+    with pytest.raises(Exception):
+        dense_main([
+            "--raw-pgn", "nonexistent.pgn", "--month", "2024_09", "--time-control", "3+0",
+            "--allow-time-control-pilot", "--max-accepted-games", "1500",
+            "--stockfish-path", "/nonexistent/stockfish",
+            "--out", str(tmp_path / "x.parquet"), "--report", str(tmp_path / "x.md"),
+        ])

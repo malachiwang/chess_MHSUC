@@ -412,6 +412,71 @@ def load_accepted_game_meta(
     return meta
 
 
+# Minute-notation aliases -> canonical Lichess PGN TimeControl (seconds+increment).
+_TC_ALIASES = {
+    "1+0": "60+0", "2+1": "120+1", "3+0": "180+0", "3+2": "180+2",
+    "5+0": "300+0", "5+3": "300+3", "10+0": "600+0", "10+5": "600+5",
+    "15+0": "900+0", "15+10": "900+10", "30+0": "1800+0",
+}
+_TC_RE = re.compile(r"^\d+\+\d+$")
+_RESULT_MAP = {"1-0": "WHITE_WIN", "0-1": "BLACK_WIN", "1/2-1/2": "DRAW"}
+
+
+def canonicalize_time_control(tc: str | None) -> str | None:
+    """Map a user-supplied time control to the canonical Lichess PGN form (seconds).
+    Accepts minute aliases ('3+0' -> '180+0', '5+0' -> '300+0', '10+0' -> '600+0') and
+    canonical second-forms ('180+0'). Raises ValueError on a malformed string. None -> None."""
+    if tc is None:
+        return None
+    tc = tc.strip()
+    tc = _TC_ALIASES.get(tc, tc)
+    if not _TC_RE.match(tc):
+        raise ValueError(f"malformed time control {tc!r} (expected e.g. 180+0 or 3+0)")
+    return tc
+
+
+def build_accepted_meta_from_raw(
+    raw_pgn: str | Path, time_control: str, max_games: int,
+) -> dict[str, dict]:
+    """Header-only accepted-game set for a non-600+0 time control (the parsed
+    game_records artifacts are 600+0-only). Streams the raw cache headers, keeps the
+    first ``max_games`` games whose TimeControl matches ``time_control`` and that pass a
+    basic acceptance filter (both Elos present + decisive/draw result + a Termination
+    tag), in PGN order. Returns {game_id -> metadata} with the same keys as
+    ``load_accepted_game_meta`` (split_set='unknown'). No raw usernames are retained."""
+    from chess_mhsuc.player_metadata import game_id_from_site, iter_game_headers
+    meta: dict[str, dict] = {}
+    for stream in open_pgn_stream(str(raw_pgn)):
+        for h in iter_game_headers(stream):
+            if h.get("TimeControl") != time_control:
+                continue
+            gid = game_id_from_site(h.get("Site"))
+            if gid is None:
+                continue
+            result = _RESULT_MAP.get(h.get("Result", ""))
+            term = h.get("Termination")
+            we, be = h.get("WhiteElo"), h.get("BlackElo")
+            if result is None or not term or not we or not be:
+                continue
+            try:
+                we_i, be_i = int(we), int(be)
+            except ValueError:
+                continue
+            meta[gid] = {
+                "result_class": result,
+                "termination": term,
+                "is_time_forfeit": term == "Time forfeit",
+                "white_elo": we_i,
+                "black_elo": be_i,
+                "time_control": time_control,
+                "split_set": "unknown",
+            }
+            if len(meta) >= max_games:
+                return meta
+        break  # only the first stream context is needed
+    return meta
+
+
 def _game_id_from_site(site: str) -> str | None:
     if not site:
         return None
@@ -1518,7 +1583,11 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--timing-subtest-games", type=int, default=100)
     # --- 15.3C full-month / chunking / preflight ---
     p.add_argument("--time-control", default=None,
-                   help="full-month mode requires 600+0 (or unset)")
+                   help="time control (canonical '180+0' or alias '3+0'); default 600+0. "
+                        "Non-600+0 requires --allow-time-control-pilot and a pilot cap.")
+    p.add_argument("--allow-time-control-pilot", action="store_true",
+                   help="safety gate required to pilot a non-600+0 time control "
+                        "(accepted set derived from raw-PGN headers; capped pilot only)")
     p.add_argument("--allow-full-month-2024-09", dest="allow_full_month_2024_09",
                    action="store_true",
                    help="run the FULL 2024-09 10+0 dense extraction (no game cap); "
@@ -1535,6 +1604,34 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--preflight", action="store_true",
                    help="reproduce the 15.3B 1,500-game pilot counts and exit")
     args = p.parse_args(argv)
+
+    # --- canonicalize time control (alias '3+0' -> '180+0'); default 600+0 ---
+    try:
+        tc = canonicalize_time_control(args.time_control) or "600+0"
+    except ValueError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        return 2
+    is_non_anchor_tc = tc != "600+0"
+
+    # --- non-600+0 time-control PILOT safety gate ---
+    if is_non_anchor_tc:
+        if not args.allow_time_control_pilot:
+            print(f"ERROR: time control {tc} is non-anchor; non-600+0 extraction requires "
+                  "--allow-time-control-pilot (capped pilot only).", file=sys.stderr)
+            return 2
+        if args.preflight:
+            print("ERROR: --preflight is 600+0-specific; not valid for a non-600+0 "
+                  "time control.", file=sys.stderr)
+            return 2
+        if args.max_accepted_games is None or args.max_accepted_games <= 0:
+            print("ERROR: non-600+0 pilot requires a finite positive --max-accepted-games.",
+                  file=sys.stderr)
+            return 2
+        if args.max_accepted_games > PILOT_HARD_MAX_GAMES and not args.pilot_override_allow_large:
+            print(f"ERROR: non-600+0 pilot --max-accepted-games {args.max_accepted_games} "
+                  f"exceeds the pilot cap of {PILOT_HARD_MAX_GAMES}; non-600+0 is pilot-only "
+                  "(no full-run path).", file=sys.stderr)
+            return 2
 
     # --- full-month safety gate (must be evaluated before any pilot-cap logic) ---
     # Each month-specific flag is restricted to its own month; there is no
@@ -1562,9 +1659,9 @@ def main(argv: list[str] | None = None) -> int:
             print(f"ERROR: full-month mode is locked to depth 12 (continuity with the "
                   f"depth-12 ES transform); got depth {args.depth}.", file=sys.stderr)
             return 2
-        if args.time_control not in (None, "600+0"):
-            print(f"ERROR: full-month mode is restricted to 600+0; got "
-                  f"{args.time_control!r}.", file=sys.stderr)
+        if is_non_anchor_tc:
+            print(f"ERROR: full-month mode is restricted to 600+0; got {tc}.",
+                  file=sys.stderr)
             return 2
 
     # --- pilot-cap safety (only when NOT full-month and NOT preflight) ---
@@ -1598,9 +1695,19 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  [dense] Stockfish: {sf_version} ({sf_path}); depth={args.depth}",
           file=sys.stderr)
 
-    accepted_meta = load_accepted_game_meta(version_tag, args.game_records, args.splits)
-    print(f"  [dense] accepted 600+0 games available: {len(accepted_meta):,}",
-          file=sys.stderr)
+    if is_non_anchor_tc:
+        # parsed game_records are 600+0-only -> derive the accepted set for this
+        # control from the raw-PGN headers (first max_accepted_games matching games).
+        print(f"  [dense] non-anchor time control {tc}: building accepted set from raw "
+              f"headers (cap {args.max_accepted_games}) ...", file=sys.stderr)
+        accepted_meta = build_accepted_meta_from_raw(
+            args.raw_pgn, tc, args.max_accepted_games)
+        print(f"  [dense] accepted {tc} games (header-derived): {len(accepted_meta):,}",
+              file=sys.stderr)
+    else:
+        accepted_meta = load_accepted_game_meta(version_tag, args.game_records, args.splits)
+        print(f"  [dense] accepted 600+0 games available: {len(accepted_meta):,}",
+              file=sys.stderr)
 
     # =====================================================================
     # MODE: preflight — reproduce the 15.3B 1,500-game pilot counts, then exit

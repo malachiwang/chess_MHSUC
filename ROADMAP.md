@@ -457,13 +457,23 @@ clock-residual moderation (11.0A kill condition not triggered).
   generalize to a `--time-control` filter.** Reuse depth 12, both months, chunked/resumable; PILOT
   first (Option D→B). EXP-050. See
   `reports/phase_reports/phase_16_1a_time_control_selection_feasibility_audit.md`.
-- **Next ticket: 16.1B — Cross-Time-Control Pilot Dense Extraction (3+0, 5+0)** (generalize the
-  dense pipeline to a safety-gated `--time-control` filter + tests; pilot ~1,500 accepted games/
-  control/month for 3+0 & 5+0; pilot reports with rows / clock-fraction / termination-rate /
-  rating-quantile / runtime; NO full multi-control extraction yet). **Optional later branches: 15.5D
-  Stratified Dense Sharpness Extraction Audit; Think-Time Loss-Rate / Flagging Signature Diagnostic;
-  increment-rapid (10+5/15+10) if a larger slice is acquired.** **Preserved fallbacks: 14.2E; 14.3B;
-  the 16.0A synthesis snapshot (reuse in Phase 17).**
+- **16.1B complete (Cross-Time-Control Pilot Dense Extraction):** generalized `dense_move_loss.py`
+  to safety-gated non-600+0 (canonicalize_time_control alias 3+0→180+0; build_accepted_meta_from_raw
+  derives the accepted set from raw-PGN headers since game_records is 600+0-only; `--time-control` +
+  `--allow-time-control-pilot` gate; 600+0 unchanged) + 12 tests (1,857 total). Ran 4 pilots
+  (3+0 & 5+0 × 2024-09/2024-10, 1,500 accepted games each, depth 12): ~90-95k rows each, clean (0
+  dup/eval/replay fail, no usernames, 100% hash, both colors, TC fields correct). **DESCRIPTIVE
+  READINESS (replicated, NOT causal): time-forfeit rate is a clean dose-response in base time —
+  3+0 ≈37-39% / 5+0 ≈28% / 10+0 ≈13.4%; move-quality ES loss SIMILAR across controls (~0.034-0.035);
+  rating pools differ (blitz med ~1570-1790 vs rapid ~1600) → within-control rating quantiles
+  MANDATORY.** One pilot ran slow (~3.4h, transient throttle; data fine). Pilot artifacts gitignored.
+  EXP-051. See `reports/phase_reports/phase_16_1b_cross_time_control_pilot_dense_extraction.md`.
+- **Next ticket: 16.1C — Full (Matched-Size) 3+0 / 5+0 Dense Extraction** (both months, depth 12,
+  chunked/resumable/caffeinated, matched accepted-game count — full per-control is large: 3+0 ~3.2M
+  rows, 5+0 ~2.0M, so cap to a common count e.g. ~25k games). Then 16.2A Cross-Time-Control
+  Move-Quality Audit. **Optional later branches: 15.5D Stratified Dense Sharpness Extraction Audit;
+  Think-Time Loss-Rate / Flagging Signature Diagnostic; increment-rapid (10+5/15+10) if a larger
+  slice is acquired.** **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -529,9 +539,10 @@ way consistent with bounded-resource constraints. Candidate controls: **3+0, 5+0
 cross-control comparisons require **within-pool rating quantiles** or explicit rating-pool
 caveats. Tickets: 16.1A Time-Control Selection / Feasibility Audit — **complete** (first wave
 3+0/5+0/10+0 selected; all abundant in existing caches; within-control rating quantiles
-mandatory) · **16.1B Cross-Time-Control Pilot Dense Extraction (3+0, 5+0) — NEXT** (generalize
-dense pipeline to a `--time-control` filter; pilots only) · 16.2A Cross-Time-Control Move-Quality
-Audit · 16.2B Implementation · 16.3A Cross-Time-Control Sharpness Audit · 16.3B Implementation.
+mandatory) · 16.1B Cross-Time-Control Pilot Dense Extraction (3+0, 5+0) — **complete** (pipeline
+generalized to safety-gated --time-control; 4 clean pilots; TF-rate dose-response 3+0~38%/5+0~28%/
+10+0~13%) · **16.1C Full (Matched-Size) 3+0/5+0 Dense Extraction — NEXT** · 16.2A Cross-Time-Control
+Move-Quality Audit · 16.2B Implementation · 16.3A Cross-Time-Control Sharpness Audit · 16.3B Impl.
 
 ### Phase 17 — Packaging / Public Report (restored)
 
