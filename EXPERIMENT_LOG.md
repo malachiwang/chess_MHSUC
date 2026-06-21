@@ -2902,3 +2902,62 @@ Pilot/feasibility only; not a full TC result; cross-control descriptive/conditio
 ratings NOT cross-pool comparable; Stockfish not ground truth; no "faster time controls cause worse
 chess"/"increment causes better reasoning"/"low clock causes blunders"/"time pressure causes worse
 reasoning"; no sharpness claims; no "DRAW solved". C4 & C3c unchanged.
+
+## EXP-052 — Full Matched-Size 3+0 / 5+0 Dense Extraction
+
+Experiment ID: EXP-052
+Date: 2026-06-20
+Owner: Malachi Wang
+Status: complete (EXTRACTION-ONLY; no cross-control modeling/figures/Phase-16 claims; PREREGISTRATION
+unchanged; data artifacts gitignored, nothing staged/committed)
+
+Purpose:
+Produce full, matched-size dense move-loss artifacts for the Phase 16 no-increment first wave (3+0,
+5+0) in both anchor months, as inputs for 16.2 — fair cross-control comparison vs the 10+0 anchor.
+
+Controls / months: 3+0 (180+0) and 5+0 (300+0) × 2024-09 and 2024-10.
+Accepted-game cap: 24,000 per month/control (matched; close to the 2024-10 10+0 anchor 24,552).
+
+Code: added a chunked/resumable matched-size mode to dense_move_loss.py (the chunked runner was
+reachable only via the 600+0-locked --allow-full-month-*; a 24k non-anchor run would otherwise fall
+through to the non-resumable run_pilot). Non-anchor + cap > PILOT_HARD_MAX_GAMES (still gated by
+--pilot-override-allow-large) now routes through run_full_month_chunked; new control-aware
+render_matched_size_report. +3 tests; 1,860 total passing. No edits to dense_constraint_atlas.py /
+dense_controlled_model.py; shared extract/finalize path unchanged (65-col schema identical to 10+0).
+
+Artifacts (gitignored, not staged):
+data/processed/dense_move_loss_2024_09_3plus0_24k_v1.parquet (1,495,648 rows)
+data/processed/dense_move_loss_2024_09_5plus0_24k_v1.parquet (1,437,932 rows)
+data/processed/dense_move_loss_2024_10_3plus0_24k_v1.parquet (1,491,120 rows)
+data/processed/dense_move_loss_2024_10_5plus0_24k_v1.parquet (1,437,116 rows)
++ 4 chunk dirs (5 chunks + manifest each).
+
+Reports: 4 CLI extraction reports (reports/dense_move_loss_2024_{09,10}_{3,5}plus0_24k_v1.md) +
+reports/phase_reports/phase_16_1c_full_matched_size_3plus0_5plus0_dense_extraction.md.
+
+Runtime/throughput: ~33.1h total sequential (caffeinated), 49–51 ev/s; per run ~8.0–8.6h. 0 resume
+skips (uninterrupted).
+
+Validation: ALL CLEAN — 0 dup keys, 0 replay failures, 0 eval errors, 0 missing-clock, both mover
+colors, 1.0 mover_player_hash coverage, no username columns; TC fields correct (180+0→init180/inc0,
+300+0→init300, all no_increment/blitz); clock_fraction = clock_before_s/initial_time_s exact (0 err);
+mate-band flagged/excluded from headline. ~24,000 accepted each; ~23.7k games contributed rows
+(~230–290 all-opening short games yielded 0 rows, expected).
+
+Termination-channel descriptive comparison (replicated, NOT causal): time-forfeit rate 3+0 ~36–37% >
+5+0 ~28% > 10+0 ~13.7% (monotone dose-response in base time). Move-quality ES loss SIMILAR across
+controls: mean ~0.0336–0.0352, median ~0.011–0.012 (10+0 anchor 0.0346/0.0114).
+
+Rating-pool caveat: mover-Elo median 3+0 ~1794–1802 vs 5+0 ~1585–1587 vs 10+0 ~1594–1599 — pools NOT
+cross-comparable; within-control rating quantiles MANDATORY for 16.2. clock_fraction = cross-control
+clock axis.
+
+Non-claims:
+Extraction-only; inputs for 16.2, not a Phase 16 result; no cross-control modeling/atlas/statistical
+claims. Termination dose-response is descriptive NOT causal; not "faster time controls cause worse
+chess", "time pressure causes worse reasoning", "low clock causes blunders", "increment causes better
+reasoning". Rating pools NOT directly comparable. Stockfish not ground truth. No increment/1+0/10+5/
+15+10, no sharpness joins, no MultiPV. Sharpness moderation neither confirmed nor disproven. No "DRAW
+solved". ES transform reused, not refit. C4 & C3c unchanged.
+
+Next: 16.2A — Cross-Time-Control Move-Quality Atlas / Modeling Audit (design only).

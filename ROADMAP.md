@@ -468,12 +468,26 @@ clock-residual moderation (11.0A kill condition not triggered).
   rating pools differ (blitz med ~1570-1790 vs rapid ~1600) → within-control rating quantiles
   MANDATORY.** One pilot ran slow (~3.4h, transient throttle; data fine). Pilot artifacts gitignored.
   EXP-051. See `reports/phase_reports/phase_16_1b_cross_time_control_pilot_dense_extraction.md`.
-- **Next ticket: 16.1C — Full (Matched-Size) 3+0 / 5+0 Dense Extraction** (both months, depth 12,
-  chunked/resumable/caffeinated, matched accepted-game count — full per-control is large: 3+0 ~3.2M
-  rows, 5+0 ~2.0M, so cap to a common count e.g. ~25k games). Then 16.2A Cross-Time-Control
-  Move-Quality Audit. **Optional later branches: 15.5D Stratified Dense Sharpness Extraction Audit;
-  Think-Time Loss-Rate / Flagging Signature Diagnostic; increment-rapid (10+5/15+10) if a larger
-  slice is acquired.** **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17).**
+- **16.1C complete (Full Matched-Size 3+0 / 5+0 Dense Extraction):** extraction-only. Added a
+  chunked/resumable matched-size mode to `dense_move_loss.py` (pilot-to-full gap: the chunked runner
+  was reachable only via the 600+0-locked `--allow-full-month-*`; a 24k non-anchor run would have
+  fallen through to the non-resumable `run_pilot`) — non-anchor + cap > pilot cap (still gated by
+  `--pilot-override-allow-large`) now routes through `run_full_month_chunked`; new control-aware
+  `render_matched_size_report`; +3 tests (1,860 total). **Matched cap = 24,000 accepted games** ×4
+  (3+0 & 5+0 × 2024-09/2024-10), depth 12, ES transform reused. Artifacts: ~1.44–1.50M rows each,
+  ~23.7k games w/ rows, ~33.1h total (49–51 ev/s). ALL CLEAN: 0 dup/replay/eval-err, 0 missing-clock,
+  both colors, 1.0 hash, no usernames, TC fields correct (180+0/300+0, no_increment/blitz),
+  `clock_fraction`=clk/initial_time_s exact. **DESCRIPTIVE READINESS (replicated, NOT causal):
+  time-forfeit dose-response in base time — 3+0 ≈36–37% / 5+0 ≈28% / 10+0 ≈13.7%; ES move-quality
+  loss SIMILAR across controls (~0.034–0.035); rating pools differ (3+0 med ~1.79k vs 5+0/10+0
+  ~1.59k) → within-control rating quantiles MANDATORY.** Artifacts + chunk dirs gitignored, not
+  staged. EXP-052. See `reports/phase_reports/phase_16_1c_full_matched_size_3plus0_5plus0_dense_extraction.md`.
+- **Next ticket: 16.2A — Cross-Time-Control Move-Quality Atlas / Modeling Audit** (DESIGN only):
+  within-control rating quantile cutpoints, `clock_fraction` clock axis, board-decided-only vs
+  all-games, eval-band conditioning, descriptive-vs-controlled plan. Do NOT jump to 16.2B or Phase 17.
+  **Optional later branches: 15.5D Stratified Dense Sharpness Extraction Audit; Think-Time Loss-Rate /
+  Flagging Signature Diagnostic; increment-rapid (10+5/15+10) if a larger slice is acquired.**
+  **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -541,8 +555,10 @@ caveats. Tickets: 16.1A Time-Control Selection / Feasibility Audit — **complet
 3+0/5+0/10+0 selected; all abundant in existing caches; within-control rating quantiles
 mandatory) · 16.1B Cross-Time-Control Pilot Dense Extraction (3+0, 5+0) — **complete** (pipeline
 generalized to safety-gated --time-control; 4 clean pilots; TF-rate dose-response 3+0~38%/5+0~28%/
-10+0~13%) · **16.1C Full (Matched-Size) 3+0/5+0 Dense Extraction — NEXT** · 16.2A Cross-Time-Control
-Move-Quality Audit · 16.2B Implementation · 16.3A Cross-Time-Control Sharpness Audit · 16.3B Impl.
+10+0~13%) · 16.1C Full (Matched-Size) 3+0/5+0 Dense Extraction — **complete** (4 artifacts, 24k cap
+each, depth 12, ~1.44–1.50M rows, all clean; TF dose-response 3+0~36-37%/5+0~28%/10+0~13.7%, ES loss
+~flat, rating pools differ) · **16.2A Cross-Time-Control Move-Quality Audit — NEXT** · 16.2B Impl. ·
+16.3A Cross-Time-Control Sharpness Audit · 16.3B Impl.
 
 ### Phase 17 — Packaging / Public Report (restored)
 

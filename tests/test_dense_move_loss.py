@@ -35,6 +35,7 @@ from chess_mhsuc.dense_move_loss import (
     parse_time_control,
     phase_for,
     rating_bin,
+    render_matched_size_report,
     render_report,
     speed_category_for,
     summarize,
@@ -360,6 +361,34 @@ def test_large_run_override_passes_cap_check(tmp_path):
         ])
 
 
+def test_matched_size_non_anchor_requires_override_above_cap(tmp_path, capsys):
+    # Non-anchor cap above PILOT_HARD_MAX_GAMES WITHOUT override is refused at gate.
+    rc = dense_main([
+        "--raw-pgn", "nonexistent.pgn", "--month", "2024_09",
+        "--time-control", "3+0", "--allow-time-control-pilot",
+        "--max-accepted-games", "24000",
+        "--out", str(tmp_path / "x.parquet"),
+        "--report", str(tmp_path / "x.md"),
+    ])
+    assert rc == 2
+    assert "pilot cap" in capsys.readouterr().err
+
+
+def test_matched_size_non_anchor_routes_to_chunked(tmp_path):
+    # Non-anchor, cap > pilot cap, with override -> routes past the gate into the
+    # chunked/resumable matched-size path (then fails on the missing stockfish/PGN,
+    # which is fine — we only assert it gets past the gate, not rc==2).
+    with pytest.raises(Exception):
+        dense_main([
+            "--raw-pgn", "nonexistent.pgn", "--month", "2024_09",
+            "--time-control", "3+0", "--allow-time-control-pilot",
+            "--max-accepted-games", "24000", "--pilot-override-allow-large",
+            "--resume", "--stockfish-path", "/nonexistent/stockfish",
+            "--out", str(tmp_path / "x.parquet"),
+            "--report", str(tmp_path / "x.md"),
+        ])
+
+
 # ---------------------------------------------------------------------------
 # 20. Report renderer includes validation summary
 # ---------------------------------------------------------------------------
@@ -381,6 +410,31 @@ def test_report_renderer_includes_validation_summary():
     assert "Loss metric summary" in text
     assert "Full-run runtime extrapolation" in text
     assert "pilot only" in text.lower()
+
+
+def test_matched_size_renderer_extraction_only():
+    meta_3plus0 = {**_META, "time_control": "180+0"}
+    rows = [
+        assemble_row("g1", "2024_09", _rec(20, 11, True), meta_3plus0, _eval(10), _eval(5), 12, 348.41),
+        assemble_row("g1", "2024_09", _rec(21, 12, False), meta_3plus0, _eval(-10), _eval(-80), 12, 348.41),
+    ]
+    df, cov = finalize_frame(rows, None)
+    counters = {"games_accepted": 1, "games_scanned": 3, "games_replay_failed": 0,
+                "engine_evals": 3, "eval_cache_hits": 1, "terminal_positions": 0,
+                "runtime_s": 1.0, "engine_seconds": 0.9, "n_chunks": 1,
+                "games_skipped_resume": 0, "accepted_available": 24000}
+    summary = summarize(df, counters)
+    summary["min_move_number"] = 5
+    text = render_matched_size_report(
+        "2024_09", "180+0", 12, 5000, counters, summary, [], cov,
+        "data/processed/x.parquet", "data/processed/x_chunks", "Stockfish 18")
+    assert "Matched-size dense extraction artifact" in text
+    assert "180+0" in text
+    assert "within-control rating quantiles" in text.lower()
+    assert "no_increment" in text  # speed/family schema validation line
+    assert "not causal" in text.lower()
+    # extraction-only: must NOT assert a final / 10+0 framing
+    assert "Full 10+0 Extraction" not in text
 
 
 # ---------------------------------------------------------------------------

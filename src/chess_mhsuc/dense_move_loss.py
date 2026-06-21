@@ -1552,6 +1552,145 @@ def render_full_month_report(
     return "\n".join(L)
 
 
+def render_matched_size_report(
+    month: str, time_control: str, depth: int, chunk_size: int, counters: dict,
+    summary: dict, failed_games: list[dict], coverage: dict, out_path: str,
+    chunk_dir: str, sf_version: str,
+) -> str:
+    """
+    Extraction-only report for a capped, matched-size NON-anchor (e.g. 3+0 / 5+0)
+    dense run produced by the chunked/resumable runner. Control-aware (no '10+0'
+    hardcoding); states extraction-only status and the within-control caveats.
+    """
+    s = summary
+    t = s["throughput"]
+    L: list[str] = []
+    a = L.append
+    a(f"# Dense Move Loss — {month.replace('_', '-')} {time_control} Matched-Size Extraction")
+    a("")
+    a("**Ticket:** 16.1C — Full Matched-Size 3+0 / 5+0 Dense Extraction")
+    a(f"**Engine:** {sf_version} @ depth {depth}")
+    a("")
+    a("> **Matched-size dense extraction artifact. Not a final cross-time-control "
+      "analysis. No causal claims. Use within-control rating quantiles for "
+      "comparisons.**")
+    a("")
+    a("## 1. Executive summary")
+    a("")
+    a(f"Capped matched-size dense per-ply next-move loss extraction for "
+      f"**{month.replace('_', '-')} {time_control}** — every accepted game in the "
+      f"matched cap, both colors, move_number >= {summary.get('min_move_number', 5)}. "
+      f"{counters['games_accepted']:,} accepted games processed → **{s['rows']:,} "
+      f"per-ply rows** in {t['engine_evals']:,} engine evals. One Stockfish eval per "
+      "pre-move position (Option A); post-move eval reused. Primary metric: "
+      "expected-score loss, mover perspective; secondary: clipped centipawn loss. "
+      "**Extraction only — no cross-time-control modeling, no atlas figures, no "
+      "Phase 16 statistical claims.** Predictive/descriptive only — not causal; "
+      "rating pools across controls are not directly comparable (use within-control "
+      "quantiles); Stockfish eval is objective context, not absolute ground truth.")
+    a("")
+    a("## 2. Extraction scope")
+    a(f"- Month: {month}; time control: {time_control}. Depth {depth}. Both colors, "
+      f"move_number >= {summary.get('min_move_number', 5)}.")
+    a(f"- Accepted {time_control} games (header-derived, capped): "
+      f"{counters.get('accepted_available', 'NA'):,}; processed: "
+      f"{counters['games_accepted']:,}.")
+    a("- Eval strategy: Option A (one eval per pre-move position; post-move reused).")
+    a("- ES transform scale reused from the 10+0 train fit (NOT refit).")
+    a("")
+    a("## 3. Chunking and resumability")
+    a(f"- Chunk size: {chunk_size:,} accepted games/chunk; chunks: {counters.get('n_chunks')}.")
+    a(f"- Chunk dir: `{chunk_dir}` (gitignored). Games skipped on resume: "
+      f"{counters.get('games_skipped_resume', 0):,}.")
+    a("- Final artifact = vertical concat of chunk parquets; chunks retained.")
+    a("- Run under `caffeinate -dimsu` (machine-awake).")
+    a("")
+    a("## 4. Runtime and throughput")
+    a(f"- Wall-clock: {t['runtime_s']} s; engine seconds: {t['engine_seconds']} s.")
+    a(f"- Engine evals: {t['engine_evals']:,}; cache reuse: {t['eval_cache_hits']:,}; "
+      f"terminal: {t['terminal_positions']:,}.")
+    a(f"- Throughput: {t['evals_per_second']} evals/s.")
+    a("")
+    a("## 5. Replay validation")
+    a(f"- Rows: {s['rows']:,}; unique games: {s['unique_games']:,}; "
+      f"duplicate (game_id, ply) keys: {s['duplicate_key_count']}.")
+    a(f"- Replay failures (partial rows kept): {counters['games_replay_failed']}.")
+    a("")
+    a("## 6. Evaluation validation")
+    a(f"- OK rows: {s['rows_ok']:,}; eval-error rows: {s['rows_eval_error']}; "
+      f"mate-band (flagged, excluded from headline): {s['rows_mate_band']:,}.")
+    if "cp_loss_raw" in s:
+        a(f"- raw cp loss negative share: {s['cp_loss_raw']['negative_share']} "
+          "(actual move beat prior static eval; expected).")
+    a("")
+    a("## 7. Clock and think-time validation")
+    a(f"- Missing-clock rows: {s['missing_clock_rows']}; clock-anomaly (no bucket): "
+      f"{s['clock_anomaly_rows']}; think-anomaly (no bucket): {s['think_anomaly_rows']}.")
+    a(f"- clock > start rows: {s['clock_over_start_rows']}; negative think-time "
+      f"rows: {s['negative_think_rows']} (flagged, not dropped).")
+    a("")
+    a("## 8. Time-control-aware schema validation")
+    if "time_control" in s:
+        tc = s["time_control"]
+        a(f"- time_control_raw: {tc['time_control_raw']}")
+        a(f"- initial_time_s: {tc['initial_time_s']}; increment_s: {tc['increment_s']} "
+          f"(expect 0 for no-increment); family: {tc['time_control_family']} "
+          f"(expect no_increment); speed: {tc['speed_category']} (expect blitz).")
+        a(f"- clock_fraction range: [{tc['clock_fraction_min']}, "
+          f"{tc['clock_fraction_max']}] (computed off initial_time_s, not a hardcoded "
+          "600).")
+        a(f"- increment_buffer null share: {tc['increment_buffer_null_share']} "
+          f"(1.0 expected for a no-increment control).")
+    a("")
+    a("## 9. Row schema and privacy validation")
+    a(f"- No raw-username columns: {s['no_username_cols']}; columns: "
+      f"{len(_OUTPUT_SCHEMA) + len(_HASH_COLS)} (typed schema + player hashes).")
+    if coverage.get("available"):
+        a(f"- mover_player_hash match fraction: {coverage['match_fraction']} "
+          f"({coverage['n_matched']:,}/{coverage['n_rows']:,}); one-way hashes only; "
+          "no raw usernames written.")
+    else:
+        a("- player metadata not provided; hash columns null.")
+    a("")
+    a("## 10. Loss metric summary")
+    if "es_loss" in s:
+        e = s["es_loss"]
+        a(f"- ES loss (OK, non-mate, n={e['n']:,}): mean {e['mean']} | median {e['median']} "
+          f"| p90 {e['p90']} | zero share {e['zero_share']}.")
+        a(f"- ES loss >= 0.05: {e['ge_0_05']} | >= 0.10: {e['ge_0_10']}.")
+    if "cp_loss_clipped" in s:
+        c = s["cp_loss_clipped"]
+        a(f"- clipped cp loss: mean {c['mean']} | median {c['median']} | p90 {c['p90']}; "
+          f">= 100: {c['ge_100']} | >= 200: {c['ge_200']}.")
+    if "by_color" in s and s["by_color"]:
+        bc = s["by_color"]
+        a(f"- Both-color orientation: White ES mean {bc.get('white', {}).get('es_mean')} / "
+          f"Black ES mean {bc.get('black', {}).get('es_mean')} (close ⇒ sign correct).")
+    a("")
+    a("## 11. Coverage by color / phase / eval / clock / result / rating")
+    a(f"- mover color: {s['rows_by_mover_color']}")
+    a(f"- phase: {s['rows_by_phase']}")
+    a(f"- eval band: {s['rows_by_eval_band']}")
+    a(f"- clock bucket: {s['rows_by_clock_bucket']}")
+    a(f"- result class: {s['rows_by_result_class']}")
+    a(f"- rating bucket: {s['rows_by_rating_bucket']}")
+    a("")
+    a("## 12. Non-claims")
+    a("- Extraction-only artifact; inputs for 16.2, not a Phase 16 result.")
+    a("- No causal claim; faster controls flagging more is descriptive, not 'time "
+      "pressure causes worse reasoning' or 'low clock causes blunders'.")
+    a("- Rating pools differ by control; comparisons must use within-control rating "
+      "quantiles. clock_fraction is the cross-control clock axis.")
+    a("- Stockfish eval = objective context, not ground truth; sharpness moderation "
+      "neither confirmed nor disproven here.")
+    a("")
+    a("## 13. Artifact")
+    a(f"- Artifact: `{out_path}` (gitignored under `data/`; not staged).")
+    a(f"- Failed games: {len(failed_games)}.")
+    a("")
+    return "\n".join(L)
+
+
 # ---------------------------------------------------------------------------
 # J. CLI
 # ---------------------------------------------------------------------------
@@ -1808,6 +1947,59 @@ def main(argv: list[str] | None = None) -> int:
 
         t = summary["throughput"]
         print(f"\n=== full dense {args.month} ===")
+        print(f"  games={counters['games_accepted']} rows={df.height} "
+              f"chunks={counters.get('n_chunks')} evals={t['engine_evals']} "
+              f"runtime={counters['runtime_s']}s eps={t['evals_per_second']}")
+        if "es_loss" in summary:
+            e = summary["es_loss"]
+            print(f"  ES loss: mean={e['mean']} median={e['median']} p90={e['p90']} "
+                  f">=0.10={e['ge_0_10']}")
+        print(f"  artifact: {out} | report: {report}")
+        return 0
+
+    # =====================================================================
+    # MODE: matched-size NON-anchor dense extraction (chunked, resumable)
+    # Non-600+0 cannot use --allow-full-month-* (those are 600+0-locked). A capped
+    # matched-size non-anchor run (cap > PILOT_HARD_MAX_GAMES, gated above by
+    # --pilot-override-allow-large) routes through the SAME chunked/resumable
+    # runner as the full-month path so a multi-hour run survives interruption.
+    # accepted_meta is already capped to max_accepted_games by
+    # build_accepted_meta_from_raw, so the runner processes exactly the matched set.
+    # =====================================================================
+    if is_non_anchor_tc and args.max_accepted_games > PILOT_HARD_MAX_GAMES:
+        out = Path(args.out)
+        report = Path(args.report)
+        if out.exists() and not args.overwrite and not args.resume:
+            raise FileExistsError(f"{out} exists; pass --overwrite or --resume")
+        chunk_dir = Path(args.chunk_dir or f"{out.with_suffix('')}_chunks")
+        print(f"  [dense] MATCHED-SIZE {args.month} {tc}: {len(accepted_meta):,} "
+              f"capped games, depth {args.depth}, chunk_size {args.chunk_size}, "
+              f"chunk_dir {chunk_dir}", file=sys.stderr)
+
+        counters, failed, chunk_files = run_full_month_chunked(
+            args.raw_pgn, args.month, accepted_meta, sf_path, args.depth,
+            args.min_move_number, es_scale, args.chunk_size, chunk_dir,
+            args.player_metadata, args.resume)
+
+        df = concatenate_chunks(chunk_files, out)
+        counters["rows"] = df.height
+        write_chunk_manifest(chunk_dir, chunk_files, args.month, args.depth,
+                             args.chunk_size, counters)
+
+        matched = int(df.filter(pl.col("mover_player_hash").is_not_null()).height)
+        coverage = {"available": args.player_metadata is not None,
+                    "n_rows": df.height, "n_matched": matched,
+                    "match_fraction": round(matched / df.height, 4) if df.height else 0.0}
+        summary = summarize(df, counters)
+        summary["min_move_number"] = args.min_move_number
+
+        report.parent.mkdir(parents=True, exist_ok=True)
+        report.write_text(render_matched_size_report(
+            args.month, tc, args.depth, args.chunk_size, counters, summary, failed,
+            coverage, str(out), str(chunk_dir), sf_version))
+
+        t = summary["throughput"]
+        print(f"\n=== matched-size dense {args.month} {tc} ===")
         print(f"  games={counters['games_accepted']} rows={df.height} "
               f"chunks={counters.get('n_chunks')} evals={t['engine_evals']} "
               f"runtime={counters['runtime_s']}s eps={t['evals_per_second']}")
