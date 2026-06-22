@@ -2961,3 +2961,91 @@ reasoning". Rating pools NOT directly comparable. Stockfish not ground truth. No
 solved". ES transform reused, not refit. C4 & C3c unchanged.
 
 Next: 16.2A — Cross-Time-Control Move-Quality Atlas / Modeling Audit (design only).
+
+## EXP-053 — Cross-Time-Control Move-Quality Atlas / Modeling Audit
+
+Experiment ID: EXP-053
+Date: 2026-06-21
+Owner: Malachi Wang
+Status: complete (AUDIT/DESIGN-ONLY; no analysis code, no models, no figures, no Stockfish, no
+extraction, no Parquet modified; read-only inspection only; PREREGISTRATION unchanged; nothing
+staged/committed)
+
+Purpose:
+Lock the scientific + statistical design for the first full cross-time-control move-quality analysis
+(16.2B) over the six no-increment dense datasets (3+0/5+0/10+0 × 2024-09/2024-10).
+
+Artifacts reviewed (read-only): 6 dense move-loss parquets; Phase 15.4 atlas + controlled-model
+reports/source; Phase 11 termination decomposition; Phase 16.1A/B/C reports; ROADMAP/EXPLOG/PREREG;
+dense_constraint_atlas.py / dense_controlled_model.py / dense_move_loss.py conventions + tests.
+Read-only diagnostics written to /tmp/phase_16_2a_cell_adequacy.txt (not committed).
+
+Denominator reconciliation: headline rows ≈ equal (~1.36–1.42M each) but game counts differ (10+0
+25.6k/24.5k vs capped 3+0/5+0 ~23.7k) and rows/game differ (10+0 ~55 vs 3+0 ~60) → 24k cap ≠ equal
+move denominator. LOCKED: (1) separate within-control models as primary (no cross-control weighting);
+(2) pooled = game-normalized weights, equal control-month aggregate weight; (3) unweighted row-level =
+robustness; (4) deterministic 10+0 24k subsample = optional robustness only (no stored accepted-game
+order). Always report games alongside rows.
+
+Rating normalization: within-control × month quintiles primary. Cutpoints differ sharply (3+0 Q3 ~1878
+vs 5+0/10+0 ~1685–1702 → 3+0 pool ~200 Elo higher; 5+0≈10+0); cross-month cuts stable. Raw cross-pool
+rating comparisons forbidden. Secondary = raw 200-Elo bins within control only.
+
+Clock_fraction policy: primary cross-control axis = clock_before_s/initial_time_s (verified exact, 0
+err). Atlas fine 7-buckets (≤.02/.02-.05/.05-.10/.10-.25/.25-.50/.50-.75/>.75); controlled coarse
+4-buckets (crit≤.05 / low .05-.15 / med .15-.50 / high >.50, ref=high). cf>1 negligible (≤0.01%).
+Continuous/spline = robustness; avoid raw inverse-clock. Absolute seconds = control-specific diagnostic
+only (10+0 lineage retained).
+
+Termination design: game-level dose-response replicated (TF games 3+0 ~29-30% > 5+0 ~22.6% > 10+0
+~11.5%). Board-decided-only is a REQUIRED separate population (not just a covariate; Phase 11 lesson).
+Game-level logistic termination model (one row/game): is_time_forfeit ~ C(time_control) + rating +
+game_length + month. Descriptive Pr(TF|covariates), NOT causal.
+
+Atlas design: 9–10 tracked PNGs in reports/figures/phase_16_2_cross_time_control/ (clock_fraction vs
+ES/CP/large-loss by control; termination rates; board-decided-only curves [central]; rating×clock
+heatmap; eval-band & phase conditioned curves; month-replication summary). Markdown tables + game-
+cluster bootstrap CIs.
+
+Controlled model design: within-control OLS ES_loss ~ C(clock_frac,ref=high) + C(eval_band,ref=decided)
++ C(phase,ref=middlegame) + C(rating_quintile,ref=Q3) + C(month) + C(color) + C(termination) + anomaly
+flags; contrasts crit/low/med vs high. Pooled adds C(time_control,ref=10+0) + TC×clock_fraction
+interaction (primary moderation test); no broad high-order interactions in primary. TC main effect NOT
+causal.
+
+Uncertainty/weighting: game-clustered sufficient-stat bootstrap (Phase 15.4D, not naïve row resample)
+primary; player-clustered (mover-hash) robustness. Cross-control player overlap tiny (~240–450 movers,
+all-3 ~22); cross-month 18–22% → months not independent. Month-replication ladder strict (replicated =
+same sign + both month CIs exclude 0).
+
+Cell adequacy: all fine + coarse clock cells headline-capable every control/month (smallest crit ≤.05 =
+17–18k rows/2.25k games in 10+0). Board-decided crit-clock = 5–8k rows/734–1241 games (thinnest
+headline; flagged). KEY CONFOUND: clock_fraction ≈ phase — crit-clock is ~entirely endgame (opening
+crit≈0) → phase conditioning mandatory; extreme-low-clock estimand = "low clock within endgame"
+(stated limitation). 10+0 Q1–Q2 crit lower power (exploratory-leaning).
+
+Claim ladder: T1 termination prevalence (descriptive), T2 move-quality flatness (cautious, never
+"identical"), T3 within-control clock gradient, T4 cross-control moderation (only if replicated).
+
+Architecture: dedicated new module src/chess_mhsuc/cross_time_control_analysis.py + test file, reusing
+Phase-15.4 pure helpers (bucket fns, ols_fit, ols_cluster_bootstrap) unchanged; do not edit stable 10+0
+code/outputs.
+
+Recommended 16.2B scope: 6-artifact load; quintiles + clock buckets; weighting policy; atlas; within-
+control models; pooled TC×clock interaction; game-level termination model; R1–R10 robustness; tracked
+PNGs; reports; ROADMAP/EXPLOG. Exclusions: increment, bullet, sharpness, Stockfish, Phase 17.
+
+Open questions for Malachi (with recommended defaults): (1) pooled weighting → game-normalized/equal
+control-month; (2) termination model in 16.2B (yes) vs separate 16.2C; (3) think-time loss-rate
+diagnostic → deferred; (4) compact core vs full atlas → consolidate figures unless each is distinct.
+
+Non-claims:
+Design-only; no code/models/figures/data/Stockfish/extraction. No causal claims; termination dose-
+response + move-quality flatness are hypotheses for 16.2B, not results. Raw ratings NOT cross-pool
+comparable. Stockfish not ground truth; ES transform reused (comparability assumption, not refit). No
+sharpness (neither confirmed nor disproven); no increment/bullet/10+5/15+10. No "faster controls cause
+worse chess"/"cause flagging", "time pressure causes worse reasoning", "low clock causes blunders",
+"increment causes better reasoning", "players reason equally well at all speeds", "DRAW solved". C4 &
+C3c unchanged.
+
+Next: 16.2B — Cross-Time-Control Atlas / Controlled Modeling Implementation.

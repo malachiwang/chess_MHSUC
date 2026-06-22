@@ -482,11 +482,33 @@ clock-residual moderation (11.0A kill condition not triggered).
   loss SIMILAR across controls (~0.034–0.035); rating pools differ (3+0 med ~1.79k vs 5+0/10+0
   ~1.59k) → within-control rating quantiles MANDATORY.** Artifacts + chunk dirs gitignored, not
   staged. EXP-052. See `reports/phase_reports/phase_16_1c_full_matched_size_3plus0_5plus0_dense_extraction.md`.
-- **Next ticket: 16.2A — Cross-Time-Control Move-Quality Atlas / Modeling Audit** (DESIGN only):
-  within-control rating quantile cutpoints, `clock_fraction` clock axis, board-decided-only vs
-  all-games, eval-band conditioning, descriptive-vs-controlled plan. Do NOT jump to 16.2B or Phase 17.
-  **Optional later branches: 15.5D Stratified Dense Sharpness Extraction Audit; Think-Time Loss-Rate /
-  Flagging Signature Diagnostic; increment-rapid (10+5/15+10) if a larger slice is acquired.**
+- **16.2A complete (Cross-Time-Control Move-Quality Atlas / Modeling Audit — DESIGN-ONLY, doc-only):**
+  locked the design for the first full cross-TC analysis over the 6 dense datasets (3+0/5+0/10+0 ×
+  2024-09/2024-10). No code/models/figures/Stockfish; read-only cell-adequacy audit only.
+  **LOCKED policy:** (1) clock axis = **`clock_fraction`** (cross-control comparable, verified); atlas
+  fine 7-buckets (≤.02…>.75), controlled coarse 4-buckets (crit≤.05/low/med/high, ref=high) — ALL
+  powered every control/month (smallest crit cell 17–18k rows/2.25k games). (2) rating = **within-
+  control×month quintiles** (cutpoints differ sharply: 3+0 ~200 Elo above 5+0≈10+0 → raw cross-pool
+  rating comparisons forbidden). (3) **termination separated from move-quality:** game-level TF dose-
+  response replicated (3+0 ~29–30% > 5+0 ~22.6% > 10+0 ~11.5%); board-decided-only is a required
+  separate population, not just a covariate. (4) primary = separate within-control OLS; pooled = TC ×
+  clock_fraction interaction, **game-normalized weights, equal control-month aggregate weight** (row
+  counts ≈ equal but games/rows-per-game differ → caps ≠ move denominators). (5) game-clustered
+  sufficient-stat bootstrap primary, player-clustered robustness (cross-control player overlap tiny
+  ~240–450 movers; cross-month 18–22% → months not independent). (6) **KEY CONFOUND: clock_fraction ≈
+  phase** — crit-clock is ~entirely endgame → phase conditioning mandatory, extreme-low-clock estimand
+  = "low clock within endgame" (stated limitation). Architecture = **dedicated new module**
+  `cross_time_control_analysis.py` reusing Phase-15.4 pure helpers unchanged. Claim ladder T1–T4 +
+  forbidden list locked. EXP-053. PREREGISTRATION unchanged. 4 open questions for Malachi (weighting;
+  termination in 16.2B vs 16.2C; think-time deferral; report compactness) with recommended defaults.
+  See `reports/phase_reports/phase_16_2a_cross_time_control_move_quality_atlas_modeling_audit.md`.
+- **Next ticket: 16.2B — Cross-Time-Control Atlas / Controlled Modeling Implementation** (new module;
+  6-artifact load; within-control quintiles + clock_fraction buckets; descriptive atlas; separate
+  within-control models; pooled TC×clock interaction; game-level termination model; R1–R10 robustness;
+  tracked PNGs; reports). Do NOT include increment/bullet/sharpness/Stockfish/Phase 17.
+  **Optional later branches: 16.3 increment contrast (3+0 vs 3+2, 5+0 vs 5+3); 15.5D Stratified Dense
+  Sharpness Extraction Audit; Think-Time Loss-Rate / Flagging Signature Diagnostic; 1+0 bullet;
+  increment-rapid (10+5/15+10) if a larger slice is acquired.**
   **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
@@ -557,7 +579,9 @@ mandatory) · 16.1B Cross-Time-Control Pilot Dense Extraction (3+0, 5+0) — **c
 generalized to safety-gated --time-control; 4 clean pilots; TF-rate dose-response 3+0~38%/5+0~28%/
 10+0~13%) · 16.1C Full (Matched-Size) 3+0/5+0 Dense Extraction — **complete** (4 artifacts, 24k cap
 each, depth 12, ~1.44–1.50M rows, all clean; TF dose-response 3+0~36-37%/5+0~28%/10+0~13.7%, ES loss
-~flat, rating pools differ) · **16.2A Cross-Time-Control Move-Quality Audit — NEXT** · 16.2B Impl. ·
+~flat, rating pools differ) · 16.2A Cross-Time-Control Move-Quality Audit — **complete** (clock_fraction
+axis + within-control quintiles + game-normalized/equal-control-month pooling locked; termination
+separated from move-quality; clock≈phase confound flagged; dedicated module) · **16.2B Impl. — NEXT** ·
 16.3A Cross-Time-Control Sharpness Audit · 16.3B Impl.
 
 ### Phase 17 — Packaging / Public Report (restored)
