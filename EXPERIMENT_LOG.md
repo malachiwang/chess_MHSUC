@@ -3120,3 +3120,79 @@ reasoning", "players reason equally well at all speeds", "time pressure affects 
 "sharpness moderation confirmed/disproven", "DRAW solved". C4 & C3c unchanged.
 
 Next: 16.2C — Cross-Time-Control Claim Consolidation / Phase 16 Decision Audit.
+
+## EXP-055 — Cross-Time-Control Claim Consolidation / Phase 16 Decision Audit
+
+Experiment ID: EXP-055
+Date: 2026-06-22
+Owner: Malachi Wang
+Status: complete (REPORT-ONLY; no code/models/figures/Stockfish/extraction/data changes; PREREGISTRATION
+unchanged; nothing staged/committed)
+
+Purpose: freeze Phase-16 no-increment cross-TC claim boundaries (T1–T4), reconcile with Phase 11 + 15 +
+sharpness, select the next branch.
+
+Evidence reviewed: 16.2A/16.2B reports + main analysis report (incl. executed R8); 16.1C extraction;
+Phase-15 dense 10+0 model + atlas; Phase-11 termination decomposition (11.2a/b/c + termination reports +
+player-clustered); Phase-15.5C sharpness closure; governance; cross_time_control_analysis.py + tests
+(inspected, not modified).
+
+FROZEN STATUSES:
+- T1 game-level time-forfeit prevalence 3+0>5+0>10+0 (0.292/0.301 > 0.226/0.226 > 0.115/0.116; adjusted
+  OR vs 10+0 3.22/2.23) = REPLICATED DESCRIPTIVE ORDERING. One row/game (NOT move-share); raw primary,
+  minimally adjusted logit secondary, game-length-adjusted cautious (length downstream of termination);
+  non-causal.
+- T2 mean ES loss broadly similar (~0.0337/0.0350/0.0346) = DESCRIPTIVE STABILITY ONLY. No equivalence
+  margin, no equivalence test, NOT replicated equivalence, OUTSIDE the contrast replication classifier.
+  Small mean differences remain; not "identical"/"unaffected".
+- T3 within-control lower clock_fraction → higher ES loss (crit-vs-high 3+0 +0.0117 / 5+0 +0.0077 / 10+0
+  +0.0056) = REPLICATED CONDITIONAL ASSOCIATION. Eval state dominates; phase conditioning mandatory;
+  extreme-low-clock ≈ endgame; board-decided ATTENUATES but stays positive (+0.0062/+0.0051/+0.0031);
+  survives mover-player clustering.
+- T4 gradient steeper in faster controls (3+0×crit +0.0089, 5+0×crit +0.0033 vs 10+0) = REPLICATED
+  CONDITIONAL MODERATION. Interaction not causal; survives mover-player clustering; partly flagging-
+  related; does not imply all moves worse in faster controls; no mechanism.
+
+Player-clustered robustness (R8, 200 draws, seed 20240621, game_id→mover_player_hash): all 5 headline
+T3/T4 targets survive — signs agree, point estimates ≈ unchanged, player CIs exclude 0 (22,332–77,408
+player clusters). T3/T4 not weakened.
+
+Board-decided attenuation: clock gradient shrinks board-decided-only but stays positive → part flagging-
+channel, part board play.
+
+Phase 11 reconciliation: flagging channel dominates the OUTCOME signal (Phase-11 board-decided outcome
+residual collapsed); a SMALLER conditional association with next-move quality survives at the MOVE level
+even board-decided. Safe synthesis: strongest cross-control clock difference is in termination/flagging
+prevalence; a smaller board-play move-quality association remains. NOT "time pressure only affects
+flagging"; outcome residual stays collapsed.
+
+Phase 15 reconciliation: 10+0 clock_fraction directionally compatible with prior absolute-clock lineage;
+Phase 16 generalizes across controls, shows gradient differs by control, uses normalized clock_fraction
+as the cross-control axis, requires within-control rating normalization.
+
+Sharpness: C3c remains UNRESOLVED; NOT promoted by the strong clock result (separate construct — value
+fragility vs remaining clock). T4 is clock×time-control, not clock×sharpness.
+
+Endgame/eval caveats: clock_fraction ≈ phase (critical-clock ~entirely endgame) → extreme-low-clock =
+"low clock within late-game"; eval state is a larger predictor than clock.
+
+Safe synthesis paragraph: see report §14 (game-level flagging higher in faster controls; average move
+quality broadly similar [descriptive, not equivalence]; within-control low-clock conditional gradient,
+steeper in faster controls, attenuated board-decided, survives player clustering; predictive/descriptive
+not causal; extreme-low-clock = late-game).
+
+Next-branch decision: 16.2D — Rating-Bucket / Clock Moderation Audit (design-only) — test
+clock_fraction × rating_quintile (within-control first), then × time_control; within-control×month
+quintiles primary, raw 200-Elo bins within-control secondary viz only; mandatory board-decided-only;
+both-month replication. Precedes 16.2E implementation. Increment contrast (3+0 vs 3+2, 5+0 vs 5+3)
+DEFERRED behind rating moderation; Think-Time Loss-Rate diagnostic = optional later branch; Phase 17
+packaging DEFERRED.
+
+Non-claims: report-only, no code/models/figures/data; no causal claims; T2 descriptive stability not
+equivalence; C3c unresolved (not promoted); raw ratings not cross-pool comparable; Stockfish not ground
+truth; no "fast chess causes blunders"/"time pressure causes worse reasoning"/"low clock causes
+blunders"/"faster controls cause flagging"/"faster controls do not harm move quality"/"time pressure
+affects only flagging"/"players reason equally well"/"3+0/5+0/10+0 equivalent in move quality"/"DRAW
+solved". C4 & C3c unchanged.
+
+Next: 16.2D — Rating-Bucket / Clock Moderation Audit (design-only).

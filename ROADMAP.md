@@ -524,16 +524,35 @@ clock-residual moderation (11.0A kill condition not triggered).
   pooled game-normalized + equal control-month aggregate weight. See
   `reports/cross_time_control_move_quality_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md` +
   `reports/phase_reports/phase_16_2b_cross_time_control_atlas_controlled_modeling_implementation.md`.
-- **Next ticket: 16.2C — Cross-Time-Control Claim Consolidation / Phase 16 Decision Audit** (doc-only):
-  consolidate the settled Phase-16 claim (T1 replicated descriptive ordering; T2 descriptive stability;
-  T3/T4 replicated conditional contrasts surviving mover-player clustering), reconcile with the 10+0
-  anchor + Phase-11 flagging reframing, decide the Phase-16 path (increment contrast 16.3 vs packaging).
-  Do NOT jump to
-  increment extraction or Phase 17 without consolidation.
-  **Optional later branches: 16.3 increment contrast (3+0 vs 3+2, 5+0 vs 5+3); 15.5D Stratified Dense
-  Sharpness Extraction Audit; Think-Time Loss-Rate / Flagging Signature Diagnostic; 1+0 bullet;
-  increment-rapid (10+5/15+10) if a larger slice is acquired.**
-  **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17).**
+- **16.2C complete (Cross-Time-Control Claim Consolidation / Phase 16 Decision Audit — doc-only):**
+  froze the Phase-16 claim boundaries and selected the next branch. No code/models/figures/Stockfish/
+  extraction; PREREGISTRATION unchanged. **FROZEN T1–T4 STATUSES (NOT "all four replicated"):**
+  **T1** game-level time-forfeit prevalence 3+0>5+0>10+0 (0.292/0.301 > 0.226 > 0.115/0.116; adjusted OR
+  vs 10+0 3.22/2.23) = **replicated descriptive ordering** (one row/game, not move-share; raw primary,
+  adjusted secondary, length-adjusted cautious; non-causal). **T2** mean ES loss broadly similar
+  (~0.0337/0.0350/0.0346) = **descriptive stability ONLY — no equivalence margin/test, NOT replicated
+  equivalence, outside the contrast classifier; not "identical"/"unaffected".** **T3** within-control
+  lower clock_fraction → higher ES loss (crit-vs-high 3+0 +0.0117 / 5+0 +0.0077 / 10+0 +0.0056) =
+  **replicated conditional association**; board-decided ATTENUATES but stays positive (+0.0062/+0.0051/
+  +0.0031); **survives mover-player clustering (R8)**. **T4** gradient steeper in faster controls
+  (3+0×crit +0.0089, 5+0×crit +0.0033 vs 10+0) = **replicated conditional moderation; survives R8**.
+  Phase-11 reconciliation: flagging channel dominates the OUTCOME signal, a smaller board-play
+  association survives at the MOVE level (NOT "time pressure only affects flagging"; outcome residual
+  stays collapsed). Phase-15 reconciliation: 10+0 clock_fraction directionally compatible with prior
+  absolute-clock lineage, now generalized + control-varying. Eval state > clock; extreme-low-clock ≈
+  endgame (localization caveat). C3c stays UNRESOLVED (NOT promoted by T4 — separate construct). EXP-055.
+  See `reports/phase_reports/phase_16_2c_cross_time_control_claim_consolidation_phase_decision_audit.md`.
+- **Next ticket: 16.2D — Rating-Bucket / Clock Moderation Audit** (DESIGN-only): does skill buffer the
+  low-clock move-quality gradient, and does the buffer differ across 3+0/5+0/10+0? Test
+  `clock_fraction × rating_quintile` (within-control first) then `× time_control`; within-control×month
+  quintiles primary, raw 200-Elo bins within-control as secondary viz only (never cross-pool); mandatory
+  board-decided-only parallel; both-month replication. Precedes 16.2E (Rating-Bucket Atlas / Controlled
+  Interaction Implementation). Do NOT implement 16.2D/E here; do NOT start increment extraction or
+  Phase 17.
+  **Later branches (deferred behind rating moderation): increment contrast 16.3 (3+0 vs 3+2, 5+0 vs 5+3);
+  Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D Stratified Dense Sharpness Extraction Audit;
+  1+0 bullet; increment-rapid (10+5/15+10) if a larger slice is acquired.**
+  **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17 — deferred).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -609,8 +628,11 @@ separated from move-quality; clock≈phase confound flagged; dedicated module) �
 **complete** (T1 TF prevalence 3+0>5+0>10+0 = replicated descriptive ordering; T2 ES loss ~similar =
 descriptive stability, NOT formal equivalence; T3 within-control clock gradient + T4 cross-control
 moderation = replicated conditional contrasts, survive mover-player clustering R8; 10 figures; 1,899
-tests) · **16.2C Claim Consolidation / Phase 16 Decision — NEXT** · 16.3A Cross-Time-Control Sharpness
-Audit · 16.3B Impl.
+tests) · 16.2C Claim Consolidation / Phase 16 Decision — **complete** (T1–T4 statuses frozen; T2 =
+descriptive stability NOT equivalence; T3/T4 survive R8 + board-decided attenuation; Phase-11/15
+reconciled; C3c stays unresolved; rating moderation chosen as next branch) · **16.2D Rating-Bucket /
+Clock Moderation Audit — NEXT** · 16.2E Rating-Bucket Interaction Impl. · increment contrast 16.3
+(deferred) · Phase 17 packaging (deferred).
 
 ### Phase 17 — Packaging / Public Report (restored)
 
