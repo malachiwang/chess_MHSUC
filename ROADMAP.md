@@ -542,16 +542,32 @@ clock-residual moderation (11.0A kill condition not triggered).
   absolute-clock lineage, now generalized + control-varying. Eval state > clock; extreme-low-clock ≈
   endgame (localization caveat). C3c stays UNRESOLVED (NOT promoted by T4 — separate construct). EXP-055.
   See `reports/phase_reports/phase_16_2c_cross_time_control_claim_consolidation_phase_decision_audit.md`.
-- **Next ticket: 16.2D — Rating-Bucket / Clock Moderation Audit** (DESIGN-only): does skill buffer the
-  low-clock move-quality gradient, and does the buffer differ across 3+0/5+0/10+0? Test
-  `clock_fraction × rating_quintile` (within-control first) then `× time_control`; within-control×month
-  quintiles primary, raw 200-Elo bins within-control as secondary viz only (never cross-pool); mandatory
-  board-decided-only parallel; both-month replication. Precedes 16.2E (Rating-Bucket Atlas / Controlled
-  Interaction Implementation). Do NOT implement 16.2D/E here; do NOT start increment extraction or
-  Phase 17.
-  **Later branches (deferred behind rating moderation): increment contrast 16.3 (3+0 vs 3+2, 5+0 vs 5+3);
-  Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D Stratified Dense Sharpness Extraction Audit;
-  1+0 bullet; increment-rapid (10+5/15+10) if a larger slice is acquired.**
+- **16.2D complete (Rating-Bucket / Clock Moderation Audit — DESIGN-only, doc-only):** locked the design
+  for whether relative rating moderates the clock_fraction→move-quality relationship and whether that
+  differs across controls. No code/models/figures/Stockfish/extraction; read-only cell audit only;
+  PREREGISTRATION unchanged. **LOCKED:** (1) rating = within-control×month **quintiles** (primary
+  categorical) + within-control×month **percentile [0,1]** (primary continuous/parsimonious); raw 200-Elo
+  bins within-control = viz only, never cross-pool. (2) primary moderation **M(c)=D(c,Q5)−D(c,Q1)** where
+  D=adjusted critical-minus-high ES-loss contrast; cross-control **M(3+0)−M(10+0)**, **M(5+0)−M(10+0)**.
+  (3) **5-test primary family + Holm**; no post-hoc quintile selection. (4) **mover-player-clustered
+  uncertainty PRIMARY** for interactions, game-clustered secondary; promotion needs stable month signs +
+  pooled player-cluster CI excl 0 + game-cluster directionally consistent. (5) **board-decided-only AND
+  endgame-only mandatory** localizations. (6) player-side time-forfeit (Option B: decisive-TF loser
+  flagged, ~3% draw-timeout excluded) feasible. (7) game-normalized weights even within control (rating
+  groups differ in game length). **CELL ADEQUACY:** all-games rating×clock headline-capable everywhere;
+  **board-decided 10+0 Q1/Q2 critical = exploratory-tier (~199–213 games/movers) → lean on continuous
+  percentile there**; endgame-only well-powered; descriptive TF-by-quintile gradient weak/flat (3+0 Q1
+  0.317→Q5 0.282, 10+0 ~flat). Architecture = **dedicated new module `rating_clock_moderation.py`**
+  importing 16.2B helpers unchanged. EXP-056. See
+  `reports/phase_reports/phase_16_2d_rating_bucket_clock_moderation_audit.md`.
+- **Next ticket: 16.2E — Rating-Bucket Atlas / Controlled Interaction Implementation** (new module; six
+  artifacts; quintiles + percentiles; rating×clock atlas; per-control clock×rating-quintile models +
+  locked Q5−Q1 contrasts; pooled percentile TC×clock×rating model; board-decided-only + endgame-only;
+  mover-player + game clustering; 5-test Holm family; player-side TF rating analysis; reports + figures).
+  Do NOT include increment/bullet/sharpness/Stockfish/extraction/Phase 17.
+  **Later branches (deferred behind rating moderation): 16.2F rating claim consolidation if needed;
+  increment contrast 16.3 (3+0 vs 3+2, 5+0 vs 5+3); Think-Time Loss-Rate / Flagging Signature Diagnostic;
+  15.5D Stratified Dense Sharpness Extraction Audit; 1+0 bullet; increment-rapid (10+5/15+10).**
   **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17 — deferred).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
@@ -630,9 +646,12 @@ descriptive stability, NOT formal equivalence; T3 within-control clock gradient 
 moderation = replicated conditional contrasts, survive mover-player clustering R8; 10 figures; 1,899
 tests) · 16.2C Claim Consolidation / Phase 16 Decision — **complete** (T1–T4 statuses frozen; T2 =
 descriptive stability NOT equivalence; T3/T4 survive R8 + board-decided attenuation; Phase-11/15
-reconciled; C3c stays unresolved; rating moderation chosen as next branch) · **16.2D Rating-Bucket /
-Clock Moderation Audit — NEXT** · 16.2E Rating-Bucket Interaction Impl. · increment contrast 16.3
-(deferred) · Phase 17 packaging (deferred).
+reconciled; C3c stays unresolved; rating moderation chosen as next branch) · 16.2D Rating-Bucket /
+Clock Moderation Audit — **complete** (rating quintiles+percentile locked; M(c)=D(Q5)−D(Q1) critical-clock
+contrast + cross-control diffs; 5-test Holm family; mover-player clustering primary; board-decided+endgame
+mandatory; board-decided 10+0 low-quintile = exploratory → percentile route; dedicated module) ·
+**16.2E Rating-Bucket Atlas / Controlled Interaction Impl. — NEXT** · increment contrast 16.3 (deferred) ·
+Phase 17 packaging (deferred).
 
 ### Phase 17 — Packaging / Public Report (restored)
 

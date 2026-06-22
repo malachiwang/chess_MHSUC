@@ -3196,3 +3196,89 @@ affects only flagging"/"players reason equally well"/"3+0/5+0/10+0 equivalent in
 solved". C4 & C3c unchanged.
 
 Next: 16.2D — Rating-Bucket / Clock Moderation Audit (design-only).
+
+## EXP-056 — Rating-Bucket / Clock Moderation Audit
+
+Experiment ID: EXP-056
+Date: 2026-06-22
+Owner: Malachi Wang
+Status: complete (AUDIT/DESIGN-ONLY; no analysis code/models/figures/Stockfish/extraction; no Parquet/
+JSON/figure modified; read-only cell audit only; PREREGISTRATION unchanged; nothing staged/committed)
+
+Purpose: design the next Phase-16 analysis — does relative player rating moderate the clock_fraction →
+next-move-quality relationship, and does that moderation differ across 3+0/5+0/10+0? (Implementation =
+16.2E.)
+
+Artifacts reviewed read-only: six dense move-loss parquets; 16.2A/B/C reports + main analysis report;
+Phase-11.3 player clustering; cross_time_control_analysis.py + tests + clustered_uncertainty.py. Read-only
+cell audit → /tmp/phase_16_2d_rating_cell_audit.txt (not committed).
+
+Existing rating treatment (16.2B): within-control×month quintiles as main-effect control + rating×clock
+heatmap; NO formal clock×rating or TC×clock×rating interaction tested. So no current claim on rating-
+associated insulation from low-clock states.
+
+Rating representation: PRIMARY categorical = within-control×month quintiles Q1–Q5 (relative rank; Q5 in
+3+0 ≠ Q5 in 10+0 absolute skill; 3+0 cutpoints ~200 Elo above 5+0/10+0). PRIMARY continuous = within-
+control×month percentile [0,1] (higher=higher rating; ~1,950 distinct Elo/stratum → feasible). SECONDARY
+viz = raw 200-Elo bins within-control only, never cross-pool.
+
+Primary contrasts: D(c,q)=adjusted ES loss(critical)−adjusted ES loss(high); M(c)=D(c,Q5)−D(c,Q1)
+(within-control rating moderation of the critical-clock gradient; M<0 = attenuation among top quintile,
+descriptive not causal); cross-control M(3+0)−M(10+0), M(5+0)−M(10+0). Report D(c,Q1..Q5) shape, no
+monotonicity assumed. Continuous: predicted critical-minus-high contrast at percentile 0.10 vs 0.90.
+
+Within-control model: ES_loss ~ C(clock_coarse,ref=high)*C(rating_quintile,ref=Q1) + eval + phase + month
++ color + termination + anomaly flags; M(c) = deterministic linear combo of interaction coeffs (reuse
+16.2B weighted-OLS + sufficient-stat cluster bootstrap UNCHANGED). Pooled three-way (PRIMARY = percentile,
+parsimonious): C(TC,ref=10+0)*C(clock_coarse,ref=high)*rating_percentile + controls, game-normalized
+equal-control-month weights; estimands = diff in 0.10→0.90 percentile rating moderation of critical-clock
+gradient for 3+0 vs 10+0 and 5+0 vs 10+0; full categorical three-way = exploratory only.
+
+Termination-rating (R5): Option B two player-side rows/game RECOMMENDED + FEASIBLE — decisive TF game →
+loser flagged (from result_class+mover_color, ~29.7k/30.6k TF games); ~892 draw-by-timeout (~3%) cannot
+attribute → exclude/document. Cluster at game+player. First-row proxy shows weak/flat TF-by-quintile
+gradient (3+0 Q1 0.317→Q5 0.282; 5+0 0.248→0.229 non-monotone; 10+0 ~flat 0.11–0.12).
+
+Phase/eval: critical-clock ≈ endgame → all-phase (lineage) + endgame-only (mandatory, well-powered) +
+avoid 4-way; eval band mandatory control + eval-localized robustness (slight-band cells thin).
+
+Weighting: game-normalized even within control (rating groups differ in game length — higher quintiles
+reach more low-clock decisions); unweighted = robustness. Uncertainty: mover-player-clustered PRIMARY for
+interactions, game-clustered secondary; promotion rule = stable month signs + pooled player-cluster CI
+excl 0 + game-cluster directionally consistent; two-way game/player clustering not in current bootstrap
+(if infeasible 16.2E, report both one-way, take conservative). Month replication classifier (5-class) for
+interaction contrasts (NOT T2 language).
+
+Multiple comparison: 5 primary tests [M(3+0),M(5+0),M(10+0),M(3+0)−M(10+0),M(5+0)−M(10+0)] + Holm;
+secondary low-vs-high; exploratory medium-vs-high/pairwise/raw-bins/eval-specific (no Holm, labeled). No
+post-hoc quintile selection.
+
+Cell adequacy (thresholds: headline ≥1000 rows ∧ ≥200 games ∧ ≥200 movers): all-games rating×clock
+headline-capable everywhere (thinnest 10+0 Q1/Q2 critical ~4–5k/762–804 games/669–742 movers); per-month
+critical×quintile tight but ok (10+0 Q1/Q2 ~2k/375–414/337–392); **BOARD-DECIDED-ONLY critical×quintile
+10+0 Q1≈1k/207/213, Q2≈1k/199/193 SUB-THRESHOLD → categorical Q5−Q1 board-decided 10+0 = EXPLORATORY, use
+continuous percentile**; endgame-only critical×quintile well-powered (≥4k/≥700 all controls); critical×
+quintile×eval slight-band thin (exploratory). Critical-clock row counts rise with quintile (higher-rated
+reach more low-clock decisions).
+
+Robustness R1–R13 (board-decided, endgame, percentile, raw-bins, clipped-CP, ES≥0.10, anomaly-excl,
+month-specific, mover/game clustering, weighting, eval-localization, categorical-vs-continuous three-way)
++ optional R14–R16 (single-control players, player-FE feasibility w/ selection audit, min-decisions).
+
+Claim ladder RM1–RM5 (average gradient / within-control moderation / cross-control moderation / board-
+decided / time-forfeit gradient); "buffer" = defined descriptive contrast only. Architecture = dedicated
+new src/chess_mhsuc/rating_clock_moderation.py + test file importing 16.2B helpers unchanged (no refactor
+in 16.2D).
+
+Recommended 16.2E scope: load+validate six artifacts; quintiles + new percentiles; rating×clock atlas;
+per-control clock×rating-quintile models + Q5−Q1 contrasts; pooled percentile TC×clock×rating; board-
+decided + endgame; mover-player + game clustering; 5-test Holm family; player-side TF analysis; reports +
+figures; ROADMAP/EXPLOG. Exclude increment/bullet/sharpness/Stockfish/extraction/Phase 17.
+
+Non-claims: design-only; no causal claims; "buffer"/"attenuation" descriptive only; no "rating causes
+resilience"/"rating protects from clock pressure"/"higher-rated immune to low clock"/"rating causes fewer
+blunders"/"lower-rated reason worse"/"fast chess harms low-rated players"/"ratings comparable across
+pools"/"time pressure causes worse reasoning"/"low clock causes blunders"/"Stockfish is ground truth"/"T2
+is equivalence"/"sharpness moderation resolved"/"DRAW solved". C4 & C3c unchanged.
+
+Next: 16.2E — Rating-Bucket Atlas / Controlled Interaction Implementation.
