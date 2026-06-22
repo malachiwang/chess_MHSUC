@@ -3049,3 +3049,74 @@ worse chess"/"cause flagging", "time pressure causes worse reasoning", "low cloc
 C3c unchanged.
 
 Next: 16.2B — Cross-Time-Control Atlas / Controlled Modeling Implementation.
+
+## EXP-054 — Cross-Time-Control Atlas / Controlled Modeling Implementation
+
+Experiment ID: EXP-054
+Date: 2026-06-22
+Owner: Malachi Wang
+Status: complete (implementation + analysis; no Stockfish/extraction; no Parquet modified; stable
+Phase-15 modules unchanged; PREREGISTRATION unchanged; nothing staged/committed)
+
+Six artifacts: dense_move_loss 3+0/5+0/10+0 × 2024-09/2024-10 (headline ~1.36–1.42M rows each; 10+0
+25.6k/24.5k games, 3+0/5+0 ~23.7k games). All pass identity validation (TC/initial-time/increment=0/
+family/speed/month; 0 dup keys; both colors; no usernames; ES bounded; CP nonnegative; status ok).
+
+Module: src/chess_mhsuc/cross_time_control_analysis.py (dedicated; reuses only _cluster_index; own
+weighted XᵀWX/XᵀWy clustered sufficient-stat bootstrap to support pooled game-normalized weights).
+Tests: tests/test_cross_time_control_analysis.py (39; 1,899 total passing).
+
+Analysis population: status==ok ∧ ¬mate-band ∧ valid clock/clock_fraction/rating/termination; anomalies
+(clock_fraction>1, neg think) retained with flags (primary), excluded in robustness; mate-band excluded.
+
+Rating quintiles: within control×month (Q1–Q5, ref Q3). Cutpoints differ (3+0 ~200 Elo above 5+0/10+0)
+→ raw cross-pool ratings not comparable. Clock buckets: fine 7 (≤.02…>.75) + coarse 4 (crit≤.05/low/
+med/high, ref=high); clock_fraction=clock_before_s/initial_time_s; >1 stays top bucket + flag.
+
+Weighting: within-control unweighted; pooled = game-normalized weight 1/(games_in_stratum × headline_
+moves_in_game) scaled to mean 1 (each game equal total weight, each control-month stratum equal
+aggregate weight). Unweighted row-level pooled = robustness.
+
+Atlas: 10 tracked PNGs in reports/figures/phase_16_2_cross_time_control/ (clock×ES/CP/large-loss;
+game-level termination; board-decided-only; rating×clock heatmap; eval-band & phase conditioned curves;
+controlled interactions; month-replication). Marginal U-shape resolved by phase/eval conditioning.
+
+RESULTS (all descriptive/conditional, NOT causal; game-clustered bootstrap, 500 draws, seed 20240621):
+- T1 game-level time-forfeit prevalence: 3+0 0.292/0.301 > 5+0 0.226/0.226 > 10+0 0.115/0.116 (Sep/Oct),
+  replicated. Adjusted logit OR vs 10+0: 3+0 ≈3.22, 5+0 ≈2.23; length-adjusted ≈3.29/2.31 (secondary).
+- T2 average ES loss broadly similar (mean 3+0 ~0.0337 / 5+0 ~0.0350 / 10+0 0.0346); not "identical".
+  T2 is DESCRIPTIVE STABILITY ONLY — no equivalence margin or equivalence test run → NOT classified as
+  replicated equivalence and outside the replication classifier (which covers T1/T3/T4 contrasts).
+- T3 within-control clock gradient (critical-vs-high, conditional): 3+0 +0.0117 [+.0109,+.0126] / 5+0
+  +0.0077 [+.0069,+.0086] / 10+0 +0.0056 [+.0046,+.0067]; monotone crit>low>med; replicated all 3.
+- T4 pooled TC×clock interaction (vs 10+0): 3+0×crit +0.0089 [+.0075,+.0103], 5+0×crit +0.0033
+  [+.0018,+.0047] (low/med smaller, all positive + replicated) → low-clock gradient steeper in faster
+  controls.
+- Board-decided-only (R1): crit-vs-high shrinks but stays + significant (3+0 +0.0062 / 5+0 +0.0051 /
+  10+0 +0.0031) → gradient partly flagging-channel, partly board play.
+- Robustness R2 anomaly-excluded ≈ primary; R4 clipped-CP same direction (3+0 +22.6cp / 5+0 +15.4 /
+  10+0 +11.2). 10+0 compatible with prior Phase-15 absolute-clock result (R10 lineage).
+- R8 mover-player-clustered (EXECUTED, 200 draws, seed 20240621; cluster key game_id→mover_player_hash):
+  T3 3+0 crit player +0.0117 [+.0110,+.0124] (22,332 clusters); 5+0 +0.0077 [+.0068,+.0086] (26,114);
+  10+0 +0.0056 [+.0046,+.0064] (31,381); T4 3+0×crit +0.0089 [+.0075,+.0102] (77,408); 5+0×crit +0.0033
+  [+.0023,+.0048] (77,408). ALL five survive: point estimates unchanged, signs agree, player CIs exclude
+  0, CIs ≈ same width as game-clustered. T3/T4 not weakened.
+
+Replication: the T1, T3, and T4 headline CONTRASTS = replicated (same sign + both month CIs exclude 0),
+via the deterministic 5-class classifier (replicated/directionally_replicated/pooled_only/not_replicated/
+null_or_unresolved). T2 is NOT in the classifier (descriptive similarity, not a contrast; no equivalence
+test) — "all T1–T4 replicated" is INCORRECT.
+
+Limitations: very-low clock fraction ≈ endgame (confound) → extreme-low-clock = "low clock within
+endgame"; ES transform reused across controls (comparability assumption, not refit); 10+0 full-month vs
+capped blitz pools differ in composition; cross-month player overlap ~18–22% (months not independent).
+
+Runtime: ~109s (≈95s models, ≈12s figures); sufficient-stat bootstrap avoids resampling raw rows.
+
+Non-claims: descriptive/predictive only; no causal claim; raw ratings not cross-pool comparable;
+Stockfish not ground truth; no "faster controls cause worse chess"/"cause flagging"/"do not harm move
+quality", "time pressure causes worse reasoning", "low clock causes blunders", "increment causes better
+reasoning", "players reason equally well at all speeds", "time pressure affects only flagging",
+"sharpness moderation confirmed/disproven", "DRAW solved". C4 & C3c unchanged.
+
+Next: 16.2C — Cross-Time-Control Claim Consolidation / Phase 16 Decision Audit.
