@@ -560,14 +560,39 @@ clock-residual moderation (11.0A kill condition not triggered).
   0.317→Q5 0.282, 10+0 ~flat). Architecture = **dedicated new module `rating_clock_moderation.py`**
   importing 16.2B helpers unchanged. EXP-056. See
   `reports/phase_reports/phase_16_2d_rating_bucket_clock_moderation_audit.md`.
-- **Next ticket: 16.2E — Rating-Bucket Atlas / Controlled Interaction Implementation** (new module; six
-  artifacts; quintiles + percentiles; rating×clock atlas; per-control clock×rating-quintile models +
-  locked Q5−Q1 contrasts; pooled percentile TC×clock×rating model; board-decided-only + endgame-only;
-  mover-player + game clustering; 5-test Holm family; player-side TF rating analysis; reports + figures).
-  Do NOT include increment/bullet/sharpness/Stockfish/extraction/Phase 17.
-  **Later branches (deferred behind rating moderation): 16.2F rating claim consolidation if needed;
-  increment contrast 16.3 (3+0 vs 3+2, 5+0 vs 5+3); Think-Time Loss-Rate / Flagging Signature Diagnostic;
-  15.5D Stratified Dense Sharpness Extraction Audit; 1+0 bullet; increment-rapid (10+5/15+10).**
+- **16.2E complete (Rating-Bucket Atlas / Controlled Interaction Implementation):** new dedicated module
+  `rating_clock_moderation.py` (~880 lines; imports 16.2B helpers unchanged; own percentile + interaction
+  designs; five M-contrasts as linear reads of one pooled categorical fit) + `test_rating_clock_moderation.py`
+  (22 tests; 1,921 total) + main report + 9 figures. No Stockfish/extraction; no Parquet modified;
+  16.2B/Phase-15 modules unchanged. 500 mover-player-clustered draws, seed 20240621, ~242–298s.
+  **KEY RESULT (descriptive, NOT causal): rating moderation of the critical-clock gradient is REAL but
+  CONDITIONING-SENSITIVE, and the cross-control difference is NULL.** M(c)=D(c,Q5)−D(c,Q1):
+  **all-phase = AMPLIFICATION** (M(3+0)+0.0084, M(5+0)+0.0049, M(10+0)+0.0066, all Holm-sig — top quintile
+  bigger critical-clock penalty, substantially composition-driven); **endgame-localized = ATTENUATION**
+  (M(5+0)−0.0067 replicated, M(10+0)−0.0044 directional, M(3+0)−0.0006 null). **Cross-control NOT
+  supported:** M(3+0)−M(10+0)+0.0015, M(5+0)−M(10+0)−0.0019 both contain 0 (Holm 0.76). Board-decided
+  mixed (3+0 amplification persists; 5+0/10+0 ns). Player-side TF weakly decreasing with rating in
+  3+0/5+0, flat 10+0 (30,585 TF games, 892 draw-timeout excluded). RM1 supported (positive control);
+  RM2 present-but-conditioning-sensitive; RM3 NOT supported; RM4 mixed; RM5 weak descriptive. EXP-057.
+  **16.2E post-review corrections applied:** (A) added executed percentile→Elo landmarks (P10–P90),
+  Q1–Q5 absolute-Elo ranges + counts, and raw 200-Elo bin table per control; (B) softened mechanism
+  language — all-phase amplification stated as "not stable under endgame restriction; no single mechanism
+  identified" (not "composition-driven"/"skill-buffering"); (C) EXECUTED R-matrix (R5/R6/R7/R10/R11/R12
+  + R3/R4 + board-decided/endgame) with M-contrast estimates — all confirm amplification all-phase +
+  cross-control null; R12 eval-localization also flips sign (reinforces conditioning-sensitivity);
+  (D) player-side prevalence denominator PROVEN correct (288,256 rows = 2×144,128 eligible; 29,693
+  positives = decisive-TF losers; overall 0.1030 ≈ half game-level rate — genuine prevalence, not
+  fraction-of-TF-games). +4 tests (1,925 total). Runtime ~34min (heavy R-matrix). PREREGISTRATION
+  unchanged. See
+  `reports/rating_clock_moderation_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md` +
+  `reports/phase_reports/phase_16_2e_rating_bucket_atlas_controlled_interaction_implementation.md`.
+- **Next ticket: 16.2F — Rating-Moderation Claim Consolidation / Phase 16 Closure Audit** (doc-only):
+  consolidate the conditioning-sensitive RM2 (amplification all-phase vs attenuation endgame), null RM3,
+  board-decided + player-side; reconcile with T1–T4; decide Phase-16 closure vs increment branch. Do NOT
+  jump to increment extraction or Phase 17 without consolidation.
+  **Later branches (deferred): increment contrast 16.3 (3+0 vs 3+2, 5+0 vs 5+3); Think-Time Loss-Rate /
+  Flagging Signature Diagnostic; 15.5D Stratified Dense Sharpness Extraction Audit; 1+0 bullet;
+  increment-rapid (10+5/15+10).**
   **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17 — deferred).**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
@@ -650,8 +675,10 @@ reconciled; C3c stays unresolved; rating moderation chosen as next branch) · 16
 Clock Moderation Audit — **complete** (rating quintiles+percentile locked; M(c)=D(Q5)−D(Q1) critical-clock
 contrast + cross-control diffs; 5-test Holm family; mover-player clustering primary; board-decided+endgame
 mandatory; board-decided 10+0 low-quintile = exploratory → percentile route; dedicated module) ·
-**16.2E Rating-Bucket Atlas / Controlled Interaction Impl. — NEXT** · increment contrast 16.3 (deferred) ·
-Phase 17 packaging (deferred).
+16.2E Rating-Bucket Atlas / Controlled Interaction Impl. — **complete** (rating moderation real but
+conditioning-sensitive: amplification all-phase / attenuation endgame; cross-control NULL under Holm;
+9 figures; 1,921 tests) · **16.2F Rating-Moderation Claim Consolidation / Phase 16 Closure — NEXT** ·
+increment contrast 16.3 (deferred) · Phase 17 packaging (deferred).
 
 ### Phase 17 — Packaging / Public Report (restored)
 

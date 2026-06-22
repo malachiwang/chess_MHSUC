@@ -3282,3 +3282,80 @@ pools"/"time pressure causes worse reasoning"/"low clock causes blunders"/"Stock
 is equivalence"/"sharpness moderation resolved"/"DRAW solved". C4 & C3c unchanged.
 
 Next: 16.2E — Rating-Bucket Atlas / Controlled Interaction Implementation.
+
+## EXP-057 — Rating-Bucket Atlas / Controlled Interaction Implementation
+
+Experiment ID: EXP-057
+Date: 2026-06-22
+Owner: Malachi Wang
+Status: complete (implementation + analysis; no Stockfish/extraction; no Parquet modified; 16.2B/Phase-15
+modules unchanged; PREREGISTRATION unchanged; nothing staged/committed)
+
+Six artifacts: dense 3+0/5+0/10+0 × 2024-09/2024-10 (~8.35M headline rows). New module
+src/chess_mhsuc/rating_clock_moderation.py imports 16.2B helpers UNCHANGED; adds rating percentile +
+interaction designs + linear contrast extraction + Holm + player-side termination. 22 tests; 1,921 total.
+
+Population/exclusions: 16.2B headline (status ok, non-mate, valid clock/cf/rating/termination); anomalies
+retained-with-flags primary; mate-band excluded. Rating: within-control×month quintiles (Q1–Q5, ref Q1)
++ within-control×month average-rank percentile [0,1]. Weighting: game-normalized even within control
+(equal game + equal control-month aggregate). Clustering: mover-player primary (500 draws, seed
+20240621, hashes clustered across months+controls), game secondary.
+
+Estimands: D(c,q)=adjusted critical−high ES-loss in quintile q; M(c)=D(c,Q5)−D(c,Q1); cross-control
+M(3+0)−M(10+0), M(5+0)−M(10+0). With refs TC=10+0/clock=high/rq=Q1 all five = linear reads of ONE pooled
+categorical TC×clock×quintile fit. Five-test family + Holm.
+
+KEY RESULTS (descriptive/conditional, NOT causal):
+- Five-test family (all-games, critical-vs-high, mover-player-clustered, Holm): M(3+0)+0.0083
+  [+.0059,+.0107], M(5+0)+0.0049 [+.0020,+.0077], M(10+0)+0.0068 [+.0030,+.0101] ALL Holm-sig
+  (AMPLIFICATION — top quintile larger critical-clock penalty); M(3+0)−M(10+0)+0.0015 [−.0026,+.0058]
+  Holm 0.76, M(5+0)−M(10+0)−0.0019 [−.0063,+.0023] Holm 0.76 BOTH CONTAIN 0 (cross-control NOT supported).
+- Within-control all-games D rises Q1→Q5 (3+0 +0.0106→+0.0189; 5+0 +0.0083→+0.0132; 10+0 +0.0031→+0.0097);
+  M replicated (3+0/10+0), directional (5+0). Percentile 0.90−0.10 diff agrees (3+0 +0.0083, 5+0 +0.0054,
+  10+0 +0.0086, all excl 0).
+- ENDGAME-ONLY M(c) REVERSES to attenuation: 3+0 −0.0006 (null), 5+0 −0.0067 [−.0097,−.0038] replicated,
+  10+0 −0.0044 [−.0082,−.0005] directional. Sign-flip vs all-games = the all-games amplification is
+  substantially phase/composition-driven; within comparable late-game positions skill modestly attenuates
+  the gradient (not in 3+0).
+- Board-decided mixed (3+0 M+0.0137* Holm-sig; 5+0 −0.0038 ns; 10+0 +0.0083 Holm 0.112; 10+0 low-Q cells
+  exploratory → percentile route).
+- Player-side time-forfeit (30,585 TF games, 29,693 attributable, 892 draw-timeout excluded 2.9%):
+  weakly decreasing with rating in 3+0 (Q1~0.16→Q5~0.13) and 5+0 (slight), flat 10+0 (~0.055).
+
+RM statuses: RM1 supported descriptively (positive control); RM2 present-but-conditioning-sensitive
+(amplification all-phase Holm-sig / attenuation endgame 5+0 replicated 10+0 directional — NOT single
+direction); RM3 NOT supported (cross-control null under Holm); RM4 mixed/unresolved; RM5 weak descriptive.
+
+Robustness R1–R13 run/available (board-decided, endgame sign-flip, continuous percentile agrees all-phase,
+raw-bins viz, clipped-CP/ES≥0.10 module-supported, anomaly-excl, month-specific, mover/game clustering,
+unweighted, eval-localization, categorical-vs-continuous agree). 9 figures.
+
+Runtime ~242–298s (~210s models, ~30s figures); sufficient-statistics bootstrap, selected-column reads.
+
+Non-claims: descriptive only; "buffer"/"attenuation"/"amplification" = descriptive contrasts; all-games
+amplification is composition-sensitive (NOT skill-harms-under-pressure); endgame attenuation modest/non-
+uniform. No "rating causes resilience"/"rating protects from clock pressure"/"higher-rated immune"/"lower-
+rated reason worse"/"rating causes fewer blunders"/"fast chess harms low-rated"/"same Elo=same skill
+across pools"/"Stockfish ground truth"/"T2 equivalence"/"sharpness resolved"/"DRAW solved". C4 & C3c
+unchanged.
+
+16.2E post-review corrections (same EXP-057, applied after first pass): (A) added executed
+percentile→Elo landmarks (P10/P25/P50/P75/P90), Q1–Q5 absolute-Elo ranges + rows/games/movers, and raw
+200-Elo bin table within each control (ES mean falls monotonically with rating = RM1; 5+0 2200+ sparse).
+(B) softened unsupported mechanism language: all-phase amplification = "not stable under endgame
+restriction; no single mechanism identified" (removed "substantially composition-driven"/"higher-rated
+reach more low-clock states"/"skill-buffering"); endgame = "rating-associated attenuation in the
+endgame-restricted model". RM2 status = "interaction present, direction conditioning-sensitive; no
+universal attenuation/amplification claim". (C) EXECUTED robustness matrix (not "available"): R5 clipped-CP
+(M(3+0)+11.2cp*/M(10+0)+8.7cp*), R6 ES≥0.10 LPM (+0.049*/+0.046*), R7 anomaly-excl (≈primary +0.0083/
++0.0070), R10 game-clustered (+0.0083/+0.0068, matches mover-player), R11 unweighted (+0.0078/+0.0057),
+R12 eval near_eq+slight (M(3+0)−0.0058* — SIGN FLIPS) + eval decided (M(5+0)−0.0078*) — all confirm
+amplification all-phase + cross-control X3/X5 contain 0 (RM2/RM3 unchanged); R12 eval-localization
+reinforces conditioning-sensitivity. R14/R15/R16 not executed (justified). (D) player-side prevalence
+denominator PROVEN: 145,020 games → 144,128 eligible (892 draw-timeout excluded) → 288,256 player rows
+(=2×eligible), 29,693 positives (=decisive-TF losers, one each), 258,563 zeros; overall prevalence 0.1030
+(≈ half game-level rate) — genuine prevalence including non-TF zeros, NOT fraction-of-TF-games; table was
+already correct, proof added. +4 tests (1,925 total). _linear_contrast guarded for empty bootstrap.
+Runtime ~2045s (heavy R-matrix). Figures unchanged (9). PREREGISTRATION unchanged.
+
+Next: 16.2F — Rating-Moderation Claim Consolidation / Phase 16 Closure Audit.
