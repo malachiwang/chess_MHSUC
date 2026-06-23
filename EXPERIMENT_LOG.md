@@ -3314,9 +3314,10 @@ KEY RESULTS (descriptive/conditional, NOT causal):
   M replicated (3+0/10+0), directional (5+0). Percentile 0.90−0.10 diff agrees (3+0 +0.0083, 5+0 +0.0054,
   10+0 +0.0086, all excl 0).
 - ENDGAME-ONLY M(c) REVERSES to attenuation: 3+0 −0.0006 (null), 5+0 −0.0067 [−.0097,−.0038] replicated,
-  10+0 −0.0044 [−.0082,−.0005] directional. Sign-flip vs all-games = the all-games amplification is
-  substantially phase/composition-driven; within comparable late-game positions skill modestly attenuates
-  the gradient (not in 3+0).
+  10+0 −0.0044 [−.0082,−.0005] directional. Sign-flip vs all-games = the all-phase amplification is NOT
+  stable under endgame restriction; no single mechanism identified (phase composition, residual
+  composition, or phase-specific heterogeneity all consistent); within late-game positions the gradient
+  is modestly smaller for higher quintiles in 5+0/10+0 (not in 3+0). [Softened in 16.2F consolidation.]
 - Board-decided mixed (3+0 M+0.0137* Holm-sig; 5+0 −0.0038 ns; 10+0 +0.0083 Holm 0.112; 10+0 low-Q cells
   exploratory → percentile route).
 - Player-side time-forfeit (30,585 TF games, 29,693 attributable, 892 draw-timeout excluded 2.9%):
@@ -3359,3 +3360,69 @@ already correct, proof added. +4 tests (1,925 total). _linear_contrast guarded f
 Runtime ~2045s (heavy R-matrix). Figures unchanged (9). PREREGISTRATION unchanged.
 
 Next: 16.2F — Rating-Moderation Claim Consolidation / Phase 16 Closure Audit.
+
+## EXP-058 — Rating-Moderation Claim Consolidation / Phase 16 Closure Audit
+
+Experiment ID: EXP-058
+Date: 2026-06-22
+Owner: Malachi Wang
+Status: complete (REPORT-ONLY; no code/models/figures/Stockfish/extraction/data; PREREGISTRATION
+unchanged; nothing staged/committed)
+
+Purpose: consolidate 16.2E rating × clock results, reconcile with T1–T4, freeze RM1–RM5, prevent a false
+"rating resilience" story, decide Phase-16 closure + next branch.
+
+Evidence reviewed: 16.2D/16.2E reports + main rating-moderation report (executed robustness matrix,
+percentile→Elo landmarks, player-side denominator proof); 16.2C cross-TC consolidation; 16.2B
+implementation + main report; Phase-15 dense 10+0 model; Phase-15.5C sharpness closure; governance;
+rating_clock_moderation.py + tests (read-only).
+
+FROZEN STATUSES:
+- T1 termination ordering 3+0>5+0>10+0 = replicated descriptive. T2 average ES loss broadly similar =
+  descriptively stable (NOT equivalence). T3 within-control clock gradient = replicated conditional. T4
+  cross-control clock moderation = replicated conditional. (Predictive/descriptive, not causal.)
+- RM1 average rating gradient = supported descriptively (ES falls with rating; positive control).
+- RM2 within-control rating moderation = CONDITIONING-SENSITIVE interaction. All-phase amplification
+  M(3+0)+0.0083/M(5+0)+0.0049/M(10+0)+0.0068 (five-test Holm survive within controls); endgame-restricted
+  attenuation (5+0 −0.0067 replicated, 10+0 −0.0044 directional, 3+0 null); eval-localized sign flips
+  (R12 near_eq+slight M(3+0)−0.0058*, decided M(5+0)−0.0078*). NO universal direction; NO mechanism
+  identified (sign reversal consistent with phase composition / residual composition / phase-specific
+  heterogeneity, none established). Must NOT be summarized as plain "supported".
+- RM3 cross-control difference = NOT supported. M(3+0)−M(10+0)+0.0015 [−.0026,+.0058], M(5+0)−M(10+0)
+  −0.0019 [−.0063,+.0023], Holm ~0.76; null/unresolved, NOT proof of equality.
+- RM4 board-decided = mixed/unresolved (3+0 amplification persists M+0.0137*; 5+0 ns; 10+0 sparse
+  low-quintile tails → percentile route cleaner).
+- RM5 player-side time-forfeit = weak descriptive (3+0/5+0 weak decrease with rating, 10+0 ~flat).
+  Validated denominator: 145,020 games → 144,128 eligible (892 draw-timeout excluded) → 288,256 player
+  rows (=2×eligible) → 29,693 positives (decisive-TF losers) + 258,563 zeros → prevalence 0.1030 (genuine
+  prevalence, not fraction-of-TF-games).
+- C3c sharpness moderation = unresolved (not promoted by rating result; separate construct).
+
+Conditioning-sensitive sign reversal: all-phase amplification vs endgame/eval-localized attenuation; the
+interaction PRESENCE is robust (R3 percentile / R5 clipped-CP / R6 ES≥0.10 / R7 anomaly-excl / R10 game-
+clustered / R11 unweighted all confirm all-phase amplification + null cross-control) but DIRECTION is NOT
+robust to phase/eval localization (R2 endgame reverses, R12 eval flips). R14/R15/R16 not executed
+(justified). Absolute-Elo interpretation: 16.2E §4 has Q1–Q5 ranges + P10/P25/P50/P75/P90 landmarks +
+raw 200-Elo bins per control; relative rank inferential, absolute Elo interpretive, raw bins within-
+control only.
+
+Reconciliations: refine not overturn T1–T4 (low-clock gradient exists in all controls, no universal
+rating account); Phase 11 (rating does NOT explain the flagging-channel outcome result); Phase 15 (10+0
+clock_fraction compatible with absolute-clock lineage); sharpness (C3c unresolved).
+
+Decisions: NO-INCREMENT PHASE 16 BASELINE CLOSED after 16.2F (T1–T4 settled, RM1–RM5 consolidated,
+remaining no-increment slicing = diminishing returns/multiplicity). Next branch = 16.3A Increment-Control
+Matched-Pair Feasibility / Design Audit (3+0 vs 3+2, 5+0 vs 5+3; matched base-time vs total-time;
+increment-buffer vs clock_fraction; rating-pool normalization; extraction cost; no extraction in 16.3A).
+Phase 17 packaging DEFERRED pending the increment-feasibility decision. Unresolved recorded: RM2
+mechanism, RM3 null, RM4 5+0/10+0, causal identification, C3c, increment effects, broader replication,
+think-time, human-difficulty.
+
+Non-claims: report-only; no causal; "buffer/attenuation/amplification" descriptive; no "rating causes
+resilience"/"rating protects"/"higher-rated immune"/"lower-rated reason worse"/"rating causes fewer
+blunders"/"faster controls harm low-rated"/"higher-rated suffer more"/"skill buffers or amplifies time
+pressure"/"mechanism identified"/"rating moderation differs across controls"/"ratings comparable across
+pools"/"time pressure causes worse reasoning"/"low clock causes blunders"/"Stockfish ground truth"/"T2
+equivalence"/"sharpness resolved"/"DRAW solved". C4 & C3c unchanged.
+
+Next: 16.3A — Increment-Control Matched-Pair Feasibility / Design Audit.

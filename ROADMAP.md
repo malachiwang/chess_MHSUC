@@ -568,7 +568,8 @@ clock-residual moderation (11.0A kill condition not triggered).
   **KEY RESULT (descriptive, NOT causal): rating moderation of the critical-clock gradient is REAL but
   CONDITIONING-SENSITIVE, and the cross-control difference is NULL.** M(c)=D(c,Q5)−D(c,Q1):
   **all-phase = AMPLIFICATION** (M(3+0)+0.0084, M(5+0)+0.0049, M(10+0)+0.0066, all Holm-sig — top quintile
-  bigger critical-clock penalty, substantially composition-driven); **endgame-localized = ATTENUATION**
+  bigger critical-clock penalty; NOT stable under endgame restriction, no single mechanism identified);
+  **endgame-localized = ATTENUATION**
   (M(5+0)−0.0067 replicated, M(10+0)−0.0044 directional, M(3+0)−0.0006 null). **Cross-control NOT
   supported:** M(3+0)−M(10+0)+0.0015, M(5+0)−M(10+0)−0.0019 both contain 0 (Holm 0.76). Board-decided
   mixed (3+0 amplification persists; 5+0/10+0 ns). Player-side TF weakly decreasing with rating in
@@ -586,14 +587,32 @@ clock-residual moderation (11.0A kill condition not triggered).
   unchanged. See
   `reports/rating_clock_moderation_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md` +
   `reports/phase_reports/phase_16_2e_rating_bucket_atlas_controlled_interaction_implementation.md`.
-- **Next ticket: 16.2F — Rating-Moderation Claim Consolidation / Phase 16 Closure Audit** (doc-only):
-  consolidate the conditioning-sensitive RM2 (amplification all-phase vs attenuation endgame), null RM3,
-  board-decided + player-side; reconcile with T1–T4; decide Phase-16 closure vs increment branch. Do NOT
-  jump to increment extraction or Phase 17 without consolidation.
-  **Later branches (deferred): increment contrast 16.3 (3+0 vs 3+2, 5+0 vs 5+3); Think-Time Loss-Rate /
-  Flagging Signature Diagnostic; 15.5D Stratified Dense Sharpness Extraction Audit; 1+0 bullet;
-  increment-rapid (10+5/15+10).**
-  **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot (Phase 17 — deferred).**
+- **16.2F complete (Rating-Moderation Claim Consolidation / Phase 16 Closure Audit — doc-only):** froze
+  the Phase-16 claim boundaries and CLOSED the no-increment baseline. No code/models/figures/Stockfish/
+  extraction; PREREGISTRATION unchanged. **FROZEN STATUSES (NOT a "rating resilience" story):** T1
+  replicated descriptive flagging ordering; T2 descriptively stable (NOT equivalence); T3 replicated
+  within-control clock gradient; T4 replicated cross-control clock moderation. **RM1** average rating
+  gradient = supported descriptively (positive control). **RM2** rating moderation = **CONDITIONING-
+  SENSITIVE interaction** — all-phase amplification (M(3+0)+0.0083/M(5+0)+0.0049/M(10+0)+0.0068, Holm-sig)
+  but endgame-restricted attenuation (5+0 replicated, 10+0 directional, 3+0 null) + eval-localized sign
+  flips; **no universal direction, no mechanism identified** (NOT "composition-driven" as established).
+  **RM3** cross-control difference = **NOT supported** (both contrasts contain 0, Holm 0.76; null not
+  equality). **RM4** board-decided = mixed/unresolved (3+0 amplification persists; 5+0/10+0 sparse/ns).
+  **RM5** player-side time-forfeit = weak descriptive (validated denominator: 144,128 eligible games,
+  288,256 player rows, 29,693 positives, prevalence 0.1030). Robustness reconciliation: interaction
+  PRESENCE robust (R3/R5/R6/R7/R10/R11) but DIRECTION not robust to phase/eval localization (R2/R12).
+  Reconciled with T1–T4 (refine, not overturn), Phase-11 flagging (rating does NOT explain it), Phase-15
+  10+0 lineage, sharpness (C3c stays unresolved, not promoted). **NO-INCREMENT PHASE 16 BASELINE CLOSED.**
+  EXP-058. See `reports/phase_reports/phase_16_2f_rating_moderation_claim_consolidation_phase_16_closure_audit.md`.
+- **Next ticket: 16.3A — Increment-Control Matched-Pair Feasibility / Design Audit** (DESIGN-only):
+  candidate pairs 3+0 vs 3+2, 5+0 vs 5+3; determine matched sample sizes, raw-cache sufficiency,
+  increment-aware clock representations (clock_fraction vs increment-buffer), matched base-time vs
+  total-time estimands, rating-pool normalization, termination comparability, extraction cost, whether
+  new dense extraction is justified. Do NOT run increment extraction or begin Phase 17.
+  **Optional later (no-increment) extensions: Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D
+  Stratified Dense Sharpness Extraction Audit; 1+0 bullet; increment-rapid (10+5/15+10).**
+  **Phase 17 packaging: DEFERRED pending the 16.3A increment-feasibility decision.**
+  **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -677,8 +696,10 @@ contrast + cross-control diffs; 5-test Holm family; mover-player clustering prim
 mandatory; board-decided 10+0 low-quintile = exploratory → percentile route; dedicated module) ·
 16.2E Rating-Bucket Atlas / Controlled Interaction Impl. — **complete** (rating moderation real but
 conditioning-sensitive: amplification all-phase / attenuation endgame; cross-control NULL under Holm;
-9 figures; 1,921 tests) · **16.2F Rating-Moderation Claim Consolidation / Phase 16 Closure — NEXT** ·
-increment contrast 16.3 (deferred) · Phase 17 packaging (deferred).
+9 figures; 1,921 tests) · 16.2F Rating-Moderation Claim Consolidation / Phase 16 Closure — **complete**
+(RM1–RM5 + T1–T4 frozen; RM2 conditioning-sensitive, RM3 unsupported, RM4 mixed, RM5 weak; no-increment
+Phase 16 baseline CLOSED) · **16.3A Increment-Control Matched-Pair Feasibility / Design Audit — NEXT** ·
+16.3B increment impl. (deferred) · Phase 17 packaging (deferred pending 16.3A).
 
 ### Phase 17 — Packaging / Public Report (restored)
 
