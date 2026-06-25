@@ -3426,3 +3426,98 @@ pools"/"time pressure causes worse reasoning"/"low clock causes blunders"/"Stock
 equivalence"/"sharpness resolved"/"DRAW solved". C4 & C3c unchanged.
 
 Next: 16.3A — Increment-Control Matched-Pair Feasibility / Design Audit.
+
+## EXP-059 — Prior-Art / Repository Overlap / Project Kill Audit
+
+Experiment ID: EXP-059
+Date: 2026-06-24
+Owner: Malachi Wang
+Status: complete (RESEARCH-AUDIT / DECISION-ONLY; no code/models/figures/Stockfish/extraction/data
+changes; no third-party source copied into repo; external clones only under /Users/malachiwang/chess-
+prior-art/ — verified OUTSIDE chess-MHSUC; PREREGISTRATION unchanged; nothing staged/committed)
+
+Purpose: determine which parts of chess-MHSUC already exist in public papers/repos, which are commodity,
+which are replication, and whether a sufficiently important + defensible contribution remains. Ruthless;
+no sunk-cost protection.
+
+Repositories cloned + inspected at source (shallow) — EXPANDED to 9 (commit | license | finding):
+- ianfab/chess-analysis — 4375c3c (2023-02-02) — AGPL-3.0 (reference-only). stats.py: EV/EL (= expected-
+  score loss), capped CPL (= clipped CP loss), normalized EWEL; groupby elo/ply/current-cp (= rating
+  bins / move-number / eval band). grep clock/time/termination = 0.
+- CSSLab/maia2 — 16c1383 (2025-07-23) — MIT. [%clk] as filter threshold; board/move/active_elo/opp_elo;
+  move PREDICTION; no termination.
+- marcusbuffett/oxi — 97c674b (2026-06-24) — NO LICENSE (reference-only). Rust/Burn move predictor;
+  pgn_processor.rs parses [%clk]+MIN_CLOCK+increment think time; eval_dataset.rs = ECL/blunder-rate of
+  its OWN policy; "timeout" = training wall-clock; no termination decomposition.
+- CSSLab/maia-chess — 749204c (2026-05-24) — GPL-3.0 (incl. Maia-3). termination stored as a metadata
+  column (game.headers['Termination']) in pgnCPsToCSV/utils; no decomposition.
+- ippolito-cmu/allie — a50f2d8 (2025-11-14) — MIT. termination-AWARE generative predictor
+  (normal_termination bool + <RESIGNED-OR-CHECKMATED> token); computes its own policy's centipawn loss;
+  NO outcome-by-termination decomposition, NO board-decided-only analysis, NO timeout attribution.
+- TillmannRheude/Time-Management-…-Human-Data — 22b75a8 (2021-10-28) — MIT. NN think-time predictor; no
+  termination.
+- trbarron/Chess-Bidding-Analysis — 956a1c8 (2025-10-27) — NO LICENSE. Armageddon bid analysis; no
+  termination decomposition.
+- bleongcw/Arrakis_Engine — 8e5725e (2026-06-23) — AGPL-3.0. Stockfish+LLM coaching app; not analysis.
+DECISIVE-CAPABILITY GREP (board-decided / timeout-exclusion / player-side-timeout / clock-fraction /
+expected-score-loss) = 0 files across ALL 8 clones.
+
+Papers — FULL-TEXT [PV]: AKM ar5iv 1606.04956 (target=blunder; USES time-remaining "blunder rate vs time
+remaining" in 3-min FICS; tablebase ground truth; NO termination split; difficulty>skill>time →
+project's T3 clock→loss is a REPLICATION/EXTENSION of AKM); ChessMimic arXiv 2606.04473 (move/think-time/
+outcome prediction; OUTCOME conditions on position+ratings+TC+remaining-clock; per-100-Elo bands; NO
+termination parse/split, NO move quality, NO engine → closest to the outcome-clock component but does not
+decompose). Abstract-level [SO]: Time-Pressure-&-Skill (403 on full text; rating×time interaction, weaker
+degrade more); Maia-2 (2409.20553); Barthelemy (2505.03251); CNN-LSTM (2409.11506); Allie paper
+(2410.03893); jk_182 blog. Evidence tiers: [SV] source-verified, [PV] paper-verified, [SO] search/abstract,
+[U] unresolved (ChessMimic/Allie-v2 repos not cloned; flagging-prediction absence not proven).
+
+Capability matrix (summary): metric layer (expected-score loss/clipped CP/normalized) + rating/ply/eval
+conditioning = COMMODITY (ianfab). Clock parse = commodity (maia2). Human move/time-usage prediction =
+covered (Maia/Allie) but NOT the project's estimand. Sharpness/MultiPV-gap = Barthelemy. Cross-control
+move-quality gradient + rating×time interaction = established literature. NONE of the inspected sources
+does: termination-channel decomposition (TF vs board-decided under position+rating control), board-
+decided-only move quality, player-side timeout attribution, OR move-quality-vs-clock_fraction /
+termination-rate / board-decided visualizations.
+
+Candidate verdicts:
+- A termination decomposition + board-decided-only + player-side timeout: APPARENTLY DISTINCT within
+  reviewed sources (searches: outcome+clock+forfeit ablation; flagging/timeout vs board-decided model;
+  board-decided-only / who-flagged attribution — all returned only rules/forums or generic "clock
+  improves outcome prediction"). Modest importance; already implemented; absence not proven.
+- B replicated cross-control gradients with clustering: MOSTLY DONE (association established) + method
+  extension (clustering/replication/board-decided/normalized clock).
+- C rating×clock sign instability under phase/eval localization: PARTIAL OVERLAP / fragile-null (rating×
+  time interaction known; sign-instability apparently distinct but resolves to "no universal direction").
+
+Component statuses: PGN ingest/clock parse/SF eval/expected-score loss/clipped CP/rating bins/eval-band/
+phase/move-number/clustering/Holm/visualization-stack = COMMODITY or reimplementation; sharpness =
+reimpl/extension (no novel result, C3c unresolved); cross-control gradient = replication; methodology
+package + RM2 cautionary = extension; termination decomposition = apparently distinct (modest).
+
+Licensing: ianfab/chess-analysis AGPL-3.0 = reference-only (do not copy); maia2 MIT = permissive but a
+predictor, no reuse warranted. Recommendation: retain all existing implementations unchanged; add prior-
+art citations; copy no third-party code.
+
+Scores (0–5 each, /40, explained in report §19/§20): research-continuation ≈21/40 (Originality 2,
+Importance 2, Tech 4, Reprod 5, Interp 4, Pub 2, Portfolio 4, RemainingCost 2); portfolio-retention ≈30/40
+(Portfolio 5, Reprod 5, Tech 4, Interp 4, Importance 3, RemainingCost 5, Originality 2, Pub 2). Portfolio
+(30) > research (21).
+
+DECISION: PRIMARY = Outcome 2 (reframe as replication/benchmark, anchored by termination decomposition);
+SECONDARY = Outcome 3 (portfolio engineering). Outcome 1 rejected (no important bounded remaining gap;
+distinct piece already done); Outcome 4 rejected (work rigorous/useful). Increment analysis (16.3A)
+DOWNGRADED to optional (further replication, not distinct). Next action (NOT started, needs approval):
+honest replication/benchmark packaging with explicit prior-art positioning.
+
+Claims to DROP: metric design / rating-eval-phase conditioning / "clock improves outcome prediction" /
+faster-controls-worse / rating×time interaction / sharpness-validated / any "novel/first/unique/SOTA".
+Claims that REMAIN defensible: "no equivalent termination decomposition found in inspected sources";
+rigorous replication of clock/move-quality gradients; RM2 conditioning-sensitivity cautionary note;
+engineering/reproducibility.
+
+Non-claims: audit-only; "apparently distinct within reviewed literature" / "no equivalent found" (NOT
+"novel/first/no-one-has-done-this/definitive absence"); search inconclusive for true absence proof. C4 &
+C3c unchanged.
+
+Next: reframe/packaging pivot (awaiting Malachi approval); 16.3A increment audit optional/deferred.

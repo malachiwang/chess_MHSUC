@@ -604,14 +604,43 @@ clock-residual moderation (11.0A kill condition not triggered).
   Reconciled with T1–T4 (refine, not overturn), Phase-11 flagging (rating does NOT explain it), Phase-15
   10+0 lineage, sharpness (C3c stays unresolved, not promoted). **NO-INCREMENT PHASE 16 BASELINE CLOSED.**
   EXP-058. See `reports/phase_reports/phase_16_2f_rating_moderation_claim_consolidation_phase_16_closure_audit.md`.
-- **Next ticket: 16.3A — Increment-Control Matched-Pair Feasibility / Design Audit** (DESIGN-only):
-  candidate pairs 3+0 vs 3+2, 5+0 vs 5+3; determine matched sample sizes, raw-cache sufficiency,
-  increment-aware clock representations (clock_fraction vs increment-buffer), matched base-time vs
-  total-time estimands, rating-pool normalization, termination comparability, extraction cost, whether
-  new dense extraction is justified. Do NOT run increment extraction or begin Phase 17.
-  **Optional later (no-increment) extensions: Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D
-  Stratified Dense Sharpness Extraction Audit; 1+0 bullet; increment-rapid (10+5/15+10).**
-  **Phase 17 packaging: DEFERRED pending the 16.3A increment-feasibility decision.**
+- **16.2G complete (Prior-Art / Repository Overlap / Project Kill Audit — research-audit/decision only):**
+  ruthless prior-art audit — EXPANDED to **9 repos inspected at source** (ianfab/chess-analysis AGPL,
+  maia2 MIT, oxi no-license, maia-chess GPL incl. Maia-3, allie MIT, Time-Management MIT, Chess-Bidding
+  no-license, Arrakis AGPL) + full-text papers AKM (1606.04956) & ChessMimic (2606.04473), under
+  `/Users/malachiwang/chess-prior-art/`, NONE inside repo; no third-party code copied; no source/test/
+  data/figure change; PREREGISTRATION unchanged). **FINDINGS:** move-quality metric (expected-score loss
+  = EV/EL, clipped CP = capped CPL, normalized/equal-weighting) + rating/ply/eval conditioning = COMMODITY
+  (matches `ianfab/chess-analysis`, AGPL-3.0, 2023 — reference-only, do not copy; project reimplemented
+  independently); clock parsing commodity (`maia2` MIT, `[%clk]` regex as filter); sharpness/MultiPV-gap =
+  reimpl/extension of Barthelemy 2505.03251 (C3c unresolved, no novel result); cross-control move-quality
+  gradient + rating×time interaction = REPLICATION/EXTENSION of established literature ("Time Pressure,
+  Skill & Move Quality"; 2006 Springer; ACPL-by-TC); RM2 sign-instability = cautionary null. **ONE
+  apparently-distinct component (within reviewed sources): the termination-channel decomposition (time-
+  forfeit vs board-decided under position+rating control) + board-decided-only move quality + validated
+  player-side timeout denominator — no equivalent found, but MODEST and already implemented.** EXPANDED-
+  REVIEW STRENGTHENERS: AKM (1606.04956) explicitly analyzes "blunder rate vs time remaining" → project's
+  T3 clock→loss is a REPLICATION/EXTENSION of AKM (Stockfish all-phase + multi-TC vs AKM tablebase-endgame
+  3-min); ChessMimic predicts OUTCOME from position+rating+TC+clock but does NOT parse termination/decompose/
+  measure move quality; Allie is termination-AWARE (token) + computes its own policy's CP loss but does NO
+  decomposition; decisive-capability grep (board-decided/timeout-attribution/clock-fraction/expected-score)
+  = 0 files across ALL 8 clones. Verdict CONFIRMED (not overturned). Candidate
+  verdicts: A apparently-distinct (stronger evidence); B mostly-done+method-extension; C partial-overlap/
+  fragile-null. Scores:
+  research-continuation ≈21/40, portfolio-retention ≈30/40. **PRIMARY DECISION: Outcome 2 — reframe as
+  replication/benchmark** (anchored by the termination decomposition); **SECONDARY: Outcome 3 — retain as
+  portfolio engineering.** Outcome 1 (continue-as-research) rejected (no important bounded remaining gap);
+  Outcome 4 (stop) rejected (work rigorous/useful). **Increment analysis (16.3A) DOWNGRADED to optional —
+  it would be further replication, not a distinct contribution.** EXP-059. See
+  `reports/phase_reports/phase_16_2g_prior_art_repository_overlap_project_kill_audit.md`.
+- **Next action (awaiting Malachi's approval — NOT started): reframe/packaging pivot** — an honest
+  replication/benchmark writeup ("rigorous replication of clock/move-quality relationships across Lichess
+  time controls + a clarifying termination-channel decomposition") with explicit prior-art positioning
+  (ianfab/chess-analysis, Anderson–Kleinberg–Mullainathan, time-pressure-&-skill lit, Maia, Barthelemy).
+  This is a reframed Phase-17 packaging step.
+  **16.3A increment audit: OPTIONAL/deferred** (further replication, not distinct). **Optional later
+  (no-increment) extensions: Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D Stratified Dense
+  Sharpness Extraction Audit; 1+0 bullet; increment-rapid (10+5/15+10).**
   **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
@@ -698,8 +727,11 @@ mandatory; board-decided 10+0 low-quintile = exploratory → percentile route; d
 conditioning-sensitive: amplification all-phase / attenuation endgame; cross-control NULL under Holm;
 9 figures; 1,921 tests) · 16.2F Rating-Moderation Claim Consolidation / Phase 16 Closure — **complete**
 (RM1–RM5 + T1–T4 frozen; RM2 conditioning-sensitive, RM3 unsupported, RM4 mixed, RM5 weak; no-increment
-Phase 16 baseline CLOSED) · **16.3A Increment-Control Matched-Pair Feasibility / Design Audit — NEXT** ·
-16.3B increment impl. (deferred) · Phase 17 packaging (deferred pending 16.3A).
+Phase 16 baseline CLOSED) · 16.2G Prior-Art / Repository Overlap / Project Kill Audit — **complete**
+(most components commodity/replication; ONE apparently-distinct = termination decomposition; PRIMARY
+decision = reframe as replication/benchmark, SECONDARY = portfolio; increment downgraded to optional;
+research ≈21/40 vs portfolio ≈30/40) · **reframe/packaging pivot — NEXT (awaiting approval)** · 16.3A
+increment audit (optional/deferred) · Phase 17 packaging (reframed).
 
 ### Phase 17 — Packaging / Public Report (restored)
 
