@@ -653,15 +653,36 @@ clock-residual moderation (11.0A kill condition not triggered).
   (clock_before_s/move_number/clock_fraction/ES/CP/is_time_forfeit/mover_elo/eval_band/phase) → 17.0B is
   READ-ONLY aggregate+plot, NO extraction, NO Stockfish, minutes runtime.** EXP-060. See
   `reports/phase_reports/phase_17_0a_replication_benchmark_reframing_public_packaging_audit.md`.
-- **Next ticket: 17.0B — Replication/Benchmark Public Package Implementation** (bounded, awaiting approval):
-  rewrite README (current one is stale old framing); concise benchmark report; generate H1–H6 from
-  existing Parquets (reuse pure aggregation helpers, no modeling, no Stockfish — STOP + ask if any field
-  absent); appendix figure index (reuse 13 existing); related-work + attribution; LICENSE (recommend MIT) +
-  CITATION.cff; reproducibility instructions; ROADMAP/EXPLOG. Preserve ALL existing reports + figures.
-  **16.3A increment audit + all new modeling: DEFERRED** (out of package scope).
-  **Optional later (no-increment) extensions: Think-Time / Flagging Diagnostic; 15.5D sharpness; 1+0
-  bullet; increment-rapid (10+5/15+10).** **Preserved fallbacks: 14.2E; 14.3B; 16.0A snapshot.**
-  **PROHIBITED in the package: broad novelty claims; causal claims; new Stockfish/extraction/modeling.**
+- **17.0B complete (Replication/Benchmark Public Package Implementation):** public package built. NEW:
+  `src/chess_mhsuc/benchmark_figures.py` (read-only aggregate→plot; reuses ctc/rcm pure helpers; matplotlib
+  Agg) + `tests/test_benchmark_figures.py` (22 tests; **1,947 total**); rewrote `README.md` (was stale old
+  framing → public benchmark front page); `reports/benchmark_report.md`; `reports/appendix_figure_index.md`;
+  `LICENSE` (MIT, scoped — does NOT relicense Stockfish/Lichess/third-party); `CITATION.cff`. Generated
+  **12 headline figures** in `reports/figures/benchmark/` (H1 TF prevalence; H2 all-vs-board-decided ACTUAL
+  SECONDS; H3 ×3 actual-seconds by absolute 200-Elo bin; H4 ×3 move-quality by MOVE NUMBER × clock state;
+  H5 ×3 move-number×actual-clock heatmaps w/ <200-obs masking; H6 critical-clock all-vs-board-decided month
+  replication) + count_tables.md — from existing Parquets, **NO extraction/Stockfish, ~20s**. **H6 redesign
+  (honesty fix):** original marginal critical−high gap was phase-confounded (mostly negative, contradicted
+  the conditional narrative) → replaced with critical-clock all-vs-board-decided attenuation replication
+  (matches H2, positive, on-message). All figures visually inspected (H1/H2/H3/H4/H5/H6). Dense Parquets,
+  existing Phase-16 reports + figures, PREREGISTRATION all UNCHANGED. EXP-061. See README + benchmark_report.
+- **17.0B post-implementation inspection complete (strict review):** defects found + FIXED — (1) BLOCKING:
+  H2–H6 used raw move-row means → corrected to **game-normalized** weighted means (matches settled Phase-16
+  estimand; weighted_mean helper; +regression tests); (2) H5 heatmap lacked a min-games threshold → added
+  (<200 rows OR <50 games masked; every shown cell ≥58 games); (3) H5 title clipping → fixed; (4) HONESTY:
+  README/report implied the conditional gradient was visible in the unadjusted U-shaped figures →
+  corrected to distinguish MARGINAL (descriptive, mixed gap +0.003/−0.002/−0.006), CONDITIONAL (model-
+  adjusted +0.012/+0.008/+0.006), and BOARD-DECIDED ATTENUATION; marginal numbers disclosed (not hidden);
+  (5) LICENSE had an appended third-party notice → made pure MIT + added NOTICE.md. Validated: H1 denom =
+  145,020 games (matches lineage, 0 dups, 892 draw-timeouts correctly kept, no player-side attribution);
+  CLI repro BYTE-IDENTICAL (inventory + count_tables + PNG hashes); all markdown links resolve; CFF valid
+  YAML (no DOI/venue); source clean (no hardcoded paths/bare-except/mutable-defaults; selected-col reads;
+  privacy-validated). Tests 26 benchmark / **1,951 total**. 17.0B is commit-ready.
+- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE.** No active next ticket. **DEFERRED (optional, only
+  if Malachi revives): 16.3A increment audit; Think-Time / Flagging Diagnostic; 15.5D sharpness; 1+0 bullet;
+  increment-rapid; a standalone preprint.** **Preserved fallbacks: 14.2E; 14.3B; 16.0A snapshot.**
+  **PERMANENTLY PROHIBITED in the package: broad novelty/first/unique/SOTA claims; causal claims; new
+  Stockfish/extraction/modeling without explicit approval.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -753,7 +774,10 @@ decision = reframe as replication/benchmark, SECONDARY = portfolio; increment do
 research ≈21/40 vs portfolio ≈30/40) · 17.0A Replication/Benchmark Reframing & Public Packaging Audit —
 **complete** (final identity locked; L1/L2/L3 claim hierarchy; figure audit of 19 existing → headline set
 H1–H6, 4 new actual-seconds/move-number figures + 2 adapted; 17.0B = read-only aggregate+plot, NO
-extraction/Stockfish) · **17.0B Public Package Implementation — NEXT (awaiting approval)** · 16.3A
+extraction/Stockfish) · 17.0B Public Package Implementation — **complete** (README rewrite + benchmark
+report + appendix index + LICENSE/CITATION + benchmark_figures.py module; 12 headline figures from existing
+Parquets, no extraction/Stockfish; game-normalized; H6 honesty-fixed; marginal-vs-conditional disclosed;
+strict inspection passed; 1,951 tests; PUBLIC PACKAGE COMPLETE) · 16.3A
 increment audit (deferred) · increment/new-modeling (deferred).
 
 ### Phase 17 — Packaging / Public Report (restored)

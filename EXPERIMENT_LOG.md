@@ -3594,3 +3594,97 @@ sources"; predictive/descriptive not causal; Stockfish objective context not gro
 equivalence; sharpness unresolved. C4 & C3c unchanged.
 
 Next: 17.0B — Replication/Benchmark Public Package Implementation (awaiting Malachi approval).
+
+## EXP-061 — Replication/Benchmark Public Package Implementation
+
+Experiment ID: EXP-061
+Date: 2026-06-26
+Owner: Malachi Wang
+Status: complete (public package; READ-ONLY aggregation+plot, NO Stockfish/extraction/modeling/refit; no
+dense Parquet / existing report / existing figure / PREREGISTRATION change; no third-party source copied;
+nothing staged/committed)
+
+Purpose: convert the project into an honest replication/benchmark + portfolio package anchored by the
+termination-channel decomposition (per 17.0A).
+
+Files created: src/chess_mhsuc/benchmark_figures.py (pure helpers: actual-second bins w/ clamp,
+move-number bins, sparse-Elo-bin collapse, all-vs-board-decided aggregation, move-number×seconds heatmap
+w/ count masking, count tables, deterministic figure naming, username-privacy validation; reuses
+cross_time_control_analysis load/headline/buckets/quintiles/game-table helpers UNCHANGED; matplotlib Agg;
+CLI). tests/test_benchmark_figures.py (22 tests; 1,947 total passing). README.md rewritten (was stale
+private-first 10+0 outcome-prediction framing → public benchmark front page: 145K+ games / 8.3M+ moves /
+3 controls / 2 months / two-channel decomposition / non-causal boundary / links). reports/benchmark_report.md
+(13-section public report + portfolio summary w/ 1-sentence + 3 bullets + 30s/2min). reports/appendix_
+figure_index.md (headline + 19 existing Phase-16 appendix figures indexed). LICENSE (MIT, scoped — explicit
+third-party notice: does NOT relicense Stockfish GPL / Lichess data / referenced repos / deps). CITATION.cff.
+
+Figures: 12 PNG in reports/figures/benchmark/ (29-117K each, README-readable) + count_tables.md, generated
+from the six existing dense Parquets in ~20s, NO Stockfish/extraction:
+- H1 time-forfeit prevalence by control × month (3+0 0.29/0.30 > 5+0 0.23 > 10+0 0.12).
+- H2 all-games vs board-decided ES loss vs ACTUAL seconds (panel/control) — board-decided BELOW all-games
+  at low seconds (the attenuation visible).
+- H3 ×3 ES loss vs actual seconds by absolute 200-Elo bin (per control; Elo ranges + counts; within-
+  control, not cross-comparable).
+- H4 ×3 ES loss vs move number by clock state (critical/low above high/medium through mid-game).
+- H5 ×3 move-number × actual-seconds heatmap of mean ES loss (<200-obs cells masked; mid-game low-clock
+  danger region).
+- H6 critical-clock all-vs-board-decided, both months (attenuation replicated Sep≈Oct).
+HONESTY FIX: H6 first drafted as the marginal critical−high gap, which is phase-composition-confounded
+(mostly NEGATIVE — critical clock ≈ endgame ≈ lower loss) and would contradict the conditional "lower
+clock → higher loss" narrative; replaced with the board-decided attenuation replication (pure aggregation,
+positive, on-message). All headline figures visually inspected.
+
+Feasibility confirmed (17.0A): all required fields already on disk (clock_before_s actual seconds,
+move_number, clock_fraction, ES/CP loss, is_time_forfeit/termination, mover_elo, eval_band, phase) → no
+extraction/Stockfish. Count tables: ~8.35M headline rows; all 200-Elo bins ≥200 games (no sparse flagged).
+
+Public claim discipline: descriptive/predictive, NOT causal; "apparently distinct within inspected
+sources" (NOT novel/first/unique/SOTA); Stockfish objective context not ground truth; T2 not equivalence;
+rating moderation conditioning-sensitive (no universal direction); sharpness unresolved (appendix only).
+Prior-art positioning table (ianfab/AKM/time-pressure/Maia/ChessMimic/Oxi/Allie/Barthelemy): did/replicate/
+extend/not-claim. No third-party code in repo; AGPL/GPL/no-license repos reference-only; MIT covers own
+code only.
+
+Tests: pytest tests/test_benchmark_figures.py = 22 passed; full suite 1,947 passed (3 pre-existing
+warnings). Runtime: figures ~20s; suite ~80s.
+
+Non-claims: package only; no models/Stockfish/extraction/refit; no novelty/causal; no increment. Deferred:
+increment, additional TCs, new extraction/Stockfish, new human-move/sharpness model, paper submission, NN
+training. C4 & C3c unchanged.
+
+17.0B POST-IMPLEMENTATION INSPECTION (strict, same EXP-061): defects found + FIXED:
+- BLOCKING weighting: H2–H6 plotted raw move-row means; settled Phase-16 used game-normalized weighting.
+  CORRECTED to game-normalized weighted means (sum(es*analysis_weight)/sum(analysis_weight)) via new
+  weighted_mean / weighted_mean_expr helpers + add_analysis_weights in _prep. Raw-vs-weighted diff small
+  (~0.002, shape unchanged) but systematic; now matches the settled estimand. Per-figure estimand: H1 =
+  game-level rate (1 row/game); H2/H3/H4/H6 = game-normalized weighted mean ES loss; H5 = game-normalized
+  weighted mean per cell. +4 regression tests (helper formula, expr==numpy, weighted≠raw when game lengths
+  differ, es_mean vs es_mean_raw columns).
+- H5 heatmap: added min-games threshold (cell masked if <200 rows OR <50 games) so a cell can't be powered
+  by a few long games; returns games matrix; +2 tests. Sparsity: 3+0 113/288 masked (min shown 267 rows/58
+  games); 5+0 101/288 (210/61); 10+0 69/288 (229/59). H5 title shortened (was clipping) + masked-count note.
+- HONESTY (marginal vs conditional): README/benchmark report implied the conditional "lower clock → higher
+  loss" gradient was visible in the unadjusted figures; the descriptive curves are actually U-SHAPED and the
+  unadjusted critical-minus-high gap is MIXED (+0.0028 / −0.0019 / −0.0055 for 3+0/5+0/10+0). Corrected:
+  README + benchmark report + appendix index now distinguish (1) marginal descriptive (U-shaped, mixed gap,
+  game-stage-confounded — critical clock ≈ endgame), (2) conditional model-adjusted (+0.012/+0.008/+0.006,
+  in the model reports, NOT visible in the aggregate), (3) board-decided attenuation (H2/H6). Marginal
+  numbers DISCLOSED, not hidden.
+- LICENSE: had appended third-party notice → made pure unmodified MIT; moved scope/third-party notice to
+  NOTICE.md (referenced from README + CITATION).
+
+Validation results: H1 denom = 145,020 games (matches validated lineage; 0 duplicate game rows; 892 draw-
+timeout games correctly KEPT since H1 = Pr(ended on time); no player-side attribution in H1). Second bins
+control-appropriate (10/16.7/33.3s widths; clock>init clamp 288/119/140 rows = 0.004–0.010%; clock<0 = 0).
+Elo bins all ≥200 games (count_tables). CLI repro to /tmp = BYTE-IDENTICAL (file inventory + count_tables.md
++ PNG sha256 all identical → deterministic). --help accurate. All markdown links resolve (relative to their
+files). CITATION.cff valid YAML (cff 1.2.0, no fabricated DOI/venue). Source quality clean (no hardcoded
+user paths, no bare/silent except, no mutable defaults, selected-column reads only, control/month from
+explicit args not filenames, privacy validated, deterministic). Forbidden artifacts (.DS_Store/.pyc) all
+gitignored — none stageable; data/processed clean.
+
+Files added since first pass: NOTICE.md. Module/tests updated: benchmark_figures.py (weighting + heatmap
+threshold + title), test_benchmark_figures.py (26 tests). Docs updated: README, benchmark_report,
+appendix_figure_index, LICENSE, CITATION. Tests: 26 benchmark / 1,951 total passing. 17.0B COMMIT-READY.
+
+Project status: PUBLIC BENCHMARK PACKAGE COMPLETE; no active next ticket.

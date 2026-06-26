@@ -1,0 +1,39 @@
+cff-version: 1.2.0
+message: If you use this work, please cite it as below.
+title: 'Chess-MHSUC — Human Chess Under Clock Constraints: A Replication and Benchmark Study'
+abstract: A reproducible replication and benchmark study of human move quality and clock constraints in online chess, covering 145,000+ Lichess games and 8.3M+ move-level observations across three time controls (3+0, 5+0, 10+0) and two independent monthly samples. The study decomposes the clock-related final-outcome signal into a mechanical time-forfeit channel and a board-decided channel, and compares it with next-move quality among board-decided games. Results are predictive and descriptive, not causal.
+type: software
+authors:
+- family-names: Wang
+  given-names: Malachi
+repository-code: https://github.com/malachiwang06-lgtm/chess-MHSUC
+license: MIT
+keywords:
+- chess
+- move quality
+- centipawn loss
+- expected-score loss
+- time pressure
+- time forfeit
+- replication
+- benchmark
+- Lichess
+- Stockfish
+date-released: 2026-06-26
+references:
+- type: article
+  authors:
+  - family-names: Anderson
+    given-names: Ashton
+  - family-names: Kleinberg
+    given-names: Jon
+  - family-names: Mullainathan
+    given-names: Sendhil
+  title: Assessing Human Error Against a Benchmark of Perfection
+  year: 2016
+- type: software
+  authors:
+  - name: ianfab
+  title: chess-analysis
+  notes: AGPL-3.0; referenced for the expected-loss / capped-CP metric design. No code copied.
+notes: This citation file covers only the original code and documentation of the chess-MHSUC project (MIT). Stockfish (GPL-3.0), the Lichess data, and all referenced external repositories retain their own licenses; no third-party source is included (see NOTICE.md).
