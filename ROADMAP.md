@@ -633,15 +633,35 @@ clock-residual moderation (11.0A kill condition not triggered).
   Outcome 4 (stop) rejected (work rigorous/useful). **Increment analysis (16.3A) DOWNGRADED to optional —
   it would be further replication, not a distinct contribution.** EXP-059. See
   `reports/phase_reports/phase_16_2g_prior_art_repository_overlap_project_kill_audit.md`.
-- **Next action (awaiting Malachi's approval — NOT started): reframe/packaging pivot** — an honest
-  replication/benchmark writeup ("rigorous replication of clock/move-quality relationships across Lichess
-  time controls + a clarifying termination-channel decomposition") with explicit prior-art positioning
-  (ianfab/chess-analysis, Anderson–Kleinberg–Mullainathan, time-pressure-&-skill lit, Maia, Barthelemy).
-  This is a reframed Phase-17 packaging step.
-  **16.3A increment audit: OPTIONAL/deferred** (further replication, not distinct). **Optional later
-  (no-increment) extensions: Think-Time Loss-Rate / Flagging Signature Diagnostic; 15.5D Stratified Dense
-  Sharpness Extraction Audit; 1+0 bullet; increment-rapid (10+5/15+10).**
-  **Preserved fallbacks: 14.2E; 14.3B; the 16.0A synthesis snapshot.**
+- **17.0A complete (Replication/Benchmark Reframing & Public Packaging Audit — doc/design only):** locked
+  the public framing and packaging plan. No models/Stockfish/extraction/figure/data/source/test/PREREG
+  change. **FINAL IDENTITY:** "a reproducible replication and benchmark study of human move quality and
+  clock constraints in online chess, with an explicit time-forfeit vs board-decided decomposition";
+  NO-novelty discipline ("apparently distinct within inspected sources", never "first/novel/unique/SOTA").
+  **CLAIM HIERARCHY:** L1 headline = two-channel clock result (mechanical time-forfeit dominates outcomes;
+  smaller board-play association remains board-decided); L2 = replicated cross-control gradients (steeper
+  in faster controls, survive clustering, replicate Sep/Oct); L3 = cautionary (T2 ~similar not equivalence;
+  RM2 conditioning-sensitive; RM3 null; sharpness unresolved). **RETAIN headline:** termination decomp +
+  board-decided move quality; **main replication:** cross-control gradients; **secondary:** RM2/RM5;
+  **appendix/omit:** sharpness, RM1 positive control, controlled-interaction grids; **methods/history:**
+  outcome-prediction ablation. **FIGURE AUDIT (19 existing, all clock-FRACTION-based — Malachi's
+  inadequacy):** retain-with-revision 3 (16.2B-04→H1, 16.2B-10→H6, 16.2E-07 secondary); replace 2;
+  appendix-only 13; discard 1. **NEW headline set H1–H6** (H1 TF prevalence by control; H2 all-games vs
+  board-decided ACTUAL-SECONDS gradient; H3 move quality vs actual seconds by absolute-Elo rating group;
+  H4 move quality vs MOVE NUMBER by clock state; H5 move-number×actual-clock heatmap; H6 month
+  replication) — 2 adapted + 4 new. **FEASIBILITY (decisive): all fields exist in dense Parquets
+  (clock_before_s/move_number/clock_fraction/ES/CP/is_time_forfeit/mover_elo/eval_band/phase) → 17.0B is
+  READ-ONLY aggregate+plot, NO extraction, NO Stockfish, minutes runtime.** EXP-060. See
+  `reports/phase_reports/phase_17_0a_replication_benchmark_reframing_public_packaging_audit.md`.
+- **Next ticket: 17.0B — Replication/Benchmark Public Package Implementation** (bounded, awaiting approval):
+  rewrite README (current one is stale old framing); concise benchmark report; generate H1–H6 from
+  existing Parquets (reuse pure aggregation helpers, no modeling, no Stockfish — STOP + ask if any field
+  absent); appendix figure index (reuse 13 existing); related-work + attribution; LICENSE (recommend MIT) +
+  CITATION.cff; reproducibility instructions; ROADMAP/EXPLOG. Preserve ALL existing reports + figures.
+  **16.3A increment audit + all new modeling: DEFERRED** (out of package scope).
+  **Optional later (no-increment) extensions: Think-Time / Flagging Diagnostic; 15.5D sharpness; 1+0
+  bullet; increment-rapid (10+5/15+10).** **Preserved fallbacks: 14.2E; 14.3B; 16.0A snapshot.**
+  **PROHIBITED in the package: broad novelty claims; causal claims; new Stockfish/extraction/modeling.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
@@ -730,8 +750,11 @@ conditioning-sensitive: amplification all-phase / attenuation endgame; cross-con
 Phase 16 baseline CLOSED) · 16.2G Prior-Art / Repository Overlap / Project Kill Audit — **complete**
 (most components commodity/replication; ONE apparently-distinct = termination decomposition; PRIMARY
 decision = reframe as replication/benchmark, SECONDARY = portfolio; increment downgraded to optional;
-research ≈21/40 vs portfolio ≈30/40) · **reframe/packaging pivot — NEXT (awaiting approval)** · 16.3A
-increment audit (optional/deferred) · Phase 17 packaging (reframed).
+research ≈21/40 vs portfolio ≈30/40) · 17.0A Replication/Benchmark Reframing & Public Packaging Audit —
+**complete** (final identity locked; L1/L2/L3 claim hierarchy; figure audit of 19 existing → headline set
+H1–H6, 4 new actual-seconds/move-number figures + 2 adapted; 17.0B = read-only aggregate+plot, NO
+extraction/Stockfish) · **17.0B Public Package Implementation — NEXT (awaiting approval)** · 16.3A
+increment audit (deferred) · increment/new-modeling (deferred).
 
 ### Phase 17 — Packaging / Public Report (restored)
 

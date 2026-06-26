@@ -3521,3 +3521,76 @@ Non-claims: audit-only; "apparently distinct within reviewed literature" / "no e
 C3c unchanged.
 
 Next: reframe/packaging pivot (awaiting Malachi approval); 16.3A increment audit optional/deferred.
+
+## EXP-060 — Replication/Benchmark Reframing and Public Packaging Audit
+
+Experiment ID: EXP-060
+Date: 2026-06-25
+Owner: Malachi Wang
+Status: complete (DOC / NARRATIVE-DESIGN / VIZ-SELECTION / PACKAGING AUDIT ONLY; no models/Stockfish/
+extraction; no Parquet/JSON/model/figure modified; no third-party code copied; PREREGISTRATION unchanged;
+nothing staged/committed)
+
+Purpose: convert the completed project into an honest replication/benchmark + portfolio artifact anchored
+by the apparently-distinct termination-channel decomposition; lock public claim, figure selection, report/
+README structure, and bounded 17.0B scope.
+
+Evidence inspected: ROADMAP/EXPLOG/PREREG; 16.2G prior-art decision; 16.2F/16.2C consolidations; cross-TC
++ rating-clock main reports; Phase-11 termination lineage (termination_decomposition_{09,10,combined},
+player_clustered); current README (157 lines — STALE old private-first 10+0 outcome-prediction framing) +
+requirements.txt (no LICENSE/CITATION); 19 existing Phase-16 figures; read-only Parquet schema check.
+
+Project identity (LOCKED): "a reproducible replication and benchmark study of human move quality and clock
+constraints in online chess, with an explicit time-forfeit vs board-decided decomposition." Secondary =
+large-scale data-eng/stats (145K+ games, 8M+ moves, 3 controls, 2 months, clustering, robustness). NO
+novelty framing; cautious "no equivalent analysis found in directly inspected sources" only.
+
+Claim hierarchy: L1 = two-channel clock result (mechanical time-forfeit dominates final outcomes; smaller
+board-play move-quality association remains board-decided; backing termination_decomposition_combined
+board-decided +0.0010[CI∋0]/+0.0060 vs time-forfeit −0.118/−0.131). L2 = replicated benchmark (TF
+prevalence faster→higher; lower clock→higher ES loss; gradient steeper in faster controls; shrinks but
+positive board-decided; Sep/Oct replication; survives mover-player clustering) = replication/extension of
+AKM + time-pressure literature, NOT novelty. L3 = cautionary (T2 ~similar not equivalence; RM2
+conditioning-sensitive; RM3 null; sharpness unresolved).
+
+Retain/demote/omit: HEADLINE = termination decomposition + board-decided move quality; MAIN REPLICATION =
+cross-control gradients; SUPPORTING = T2 average + RM1 positive control; SECONDARY = RM2/RM5; APPENDIX/OMIT
+= sharpness (unresolved), controlled-interaction grids; METHODS/HISTORY = E3→E4 outcome ablation;
+DEFERRED = increment.
+
+Figure audit (19 existing, ALL clock-FRACTION-based, no actual-seconds/move-number/move-number×clock —
+Malachi's stated inadequacy): retain-with-revision 3 (16.2B-04→H1 TF prevalence, 16.2B-10→H6 month
+replication, 16.2E-07 secondary player-side TF); replace 2 (16.2B-05, 16.2E-01 → feed H2/H3); appendix-only
+13; discard 1 (16.2E-09 dup). HEADLINE SET H1–H6 (2 adapted + 4 NEW): H1 TF prevalence by control; H2
+all-games vs board-decided ACTUAL-SECONDS gradient (panel/control); H3 move quality vs actual seconds by
+absolute-Elo rating group (Q1/Q3/Q5 w/ Elo legend, panel/control); H4 move quality vs MOVE NUMBER by clock
+state; H5 move-number × actual-clock heatmap (color=mean ES loss); H6 month replication. Appendix = full
+Q1–Q5/raw-bin/board-decided/endgame/eval-localized/clipped-CP/large-loss/rating-moderation/clustering
+figures (reuse 13 existing + revised captions).
+
+Feasibility (DECISIVE): read-only schema check (65-col Parquet) confirms ALL headline fields present —
+clock_before_s (actual seconds), move_number, clock_fraction, expected_score_loss, cp_loss_clipped,
+is_time_forfeit, termination, mover_elo, eval_band, phase, time_control_raw, month, initial_time_s,
+mover_player_hash. → 17.0B is READ existing Parquets → aggregate → plot. NO extraction, NO Stockfish, NO
+new modeling (figures = means + game-cluster bootstrap CIs); minutes runtime; reuse cross_time_control_
+analysis + rating_clock_moderation pure helpers. If any headline figure needs an absent field → STOP + ask.
+Actual-seconds anomaly note: 3+0 clock_before_s up to 1197s (clock>initial, flagged) → cap to
+[0, initial_time_s].
+
+Public report structure (§10) + README structure (§11) designed (current README fully replaced). Prior-art
+positioning table (§12): ianfab/AKM/time-pressure/Maia/Maia-2-3/ChessMimic/Oxi/Allie/Barthelemy — what each
+did / replicate / extend / not-claim; project does NOT compete with the human-move-predictor field. Resume
+framing: one-sentence + 3 bullets (verified numbers) + 30s/2min interview script, no novelty. Licensing:
+recommend MIT project license (no copyleft copied); copyleft/no-license repos stay reference-only; add
+LICENSE + CITATION.cff in 17.0B.
+
+17.0B scope (bounded): rewrite README; concise benchmark report; H1–H6 from existing Parquets; appendix
+figure index; related-work + attribution; LICENSE + CITATION; reproducibility; ROADMAP/EXPLOG; preserve all
+existing reports/figures; NO new modeling/Stockfish/extraction. Deferred: increment, additional TCs, new
+Stockfish, new human-move/sharpness models, causal claims, paper submission, NN training.
+
+Non-claims: audit-only; no novelty/first/unique/SOTA; decomposition "apparently distinct within inspected
+sources"; predictive/descriptive not causal; Stockfish objective context not ground truth; T2 not
+equivalence; sharpness unresolved. C4 & C3c unchanged.
+
+Next: 17.0B — Replication/Benchmark Public Package Implementation (awaiting Malachi approval).
