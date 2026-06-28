@@ -3688,3 +3688,49 @@ threshold + title), test_benchmark_figures.py (26 tests). Docs updated: README, 
 appendix_figure_index, LICENSE, CITATION. Tests: 26 benchmark / 1,951 total passing. 17.0B COMMIT-READY.
 
 Project status: PUBLIC BENCHMARK PACKAGE COMPLETE; no active next ticket.
+
+## EXP-062 — Public Release Readiness and External-Reader QA Audit (Ticket 17.0C)
+
+Audit-only release-readiness review of the 17.0B public package. **No source/test/README/report/figure/
+data/PREREGISTRATION changes.** Verdict: **READY FOR PUBLIC RELEASE; no blocking defects; no required fixes.**
+
+- Working tree clean at start; commit base c5c9449 (17.0B). Clone test to /tmp clean.
+- Files inspected: README.md, LICENSE, NOTICE.md, CITATION.cff, requirements.txt, benchmark_figures.py,
+  test_benchmark_figures.py, benchmark_report.md, appendix_figure_index.md, all 12 benchmark PNGs +
+  count_tables.md, ROADMAP, EXPERIMENT_LOG, .gitignore; referenced 16.2g/17.0a/cross-TC/rcm reports.
+- Clean-clone: full public package present, benchmark_figures imports + --help works, **0 Parquets**
+  (dense data correctly gitignored). Figure regen in clone fails with clear FileNotFoundError naming the
+  missing Parquet → honest reproducibility boundary; README does not imply fresh-clone regeneration.
+- Link/path: all public-doc relative Markdown links resolve; 10/10 cross-TC + 9/9 rcm appendix figures and
+  the 15.5c/16.2g reports exist on disk; private-path grep clean (only generic `.venv` commands + repo-
+  relative gitignored-Parquet regen command the README flags as not-shipped). No /Users/, no chess-prior-art,
+  no /tmp paths in public docs.
+- Claim-language: forbidden-term grep returns only negations/disclaimers (descriptive-not-causal; not ground
+  truth; "does not claim … novelty … or state of the art"; disclaimed "skill buffers time pressure"). No
+  misleading/unsupported wording.
+- Figures: 12 PNGs + count_tables, all open and README-legible (880–1760px, 32–132KB; benchmark total 1.1MB);
+  H1/H2/H5/H6 visually inspected — board-decided dashed below all-games at low seconds (H2), masked diagonal +
+  in-axes "masked 113/288 cells (<200 rows or <50 games)" (H5), board-decided<all-games both months (H6),
+  labeled TF prevalence 0.29/0.30,0.23,0.12 (H1). "game-normalized" shown where relevant.
+- License/metadata: LICENSE pure unmodified MIT (2026 Malachi Wang, no third-party scope edits in body);
+  NOTICE.md covers Stockfish GPL / Lichess terms / referenced-repo licenses / no-vendored-source; CITATION.cff
+  valid YAML (cff 1.2.0, MIT, github URL, no DOI/venue/placeholder).
+- Artifacts/size: no tracked Parquet/PGN.zst/model/DB/CSV (only allowed tiny synthetic fixture
+  tests/fixtures/tiny_clock_eval_game.pgn); largest tracked file EXPERIMENT_LOG.md 204KB; nothing untracked-
+  and-unignored; .DS_Store/*.pyc all gitignored/non-stageable; .gitignore adequate.
+- Tests: targeted 26 passed (0.51s); full suite **1,951 passed, 3 warnings** (86.30s) — the 3 warnings are
+  pre-existing sklearn y_pred notices, not new, not from the benchmark package.
+- Narrative: benchmark_report graspable <2min, prior-work-before-positioning, replication vs extension split,
+  termination decomposition clear, marginal/conditional/board-decided kept distinct, limitations + repro
+  boundaries explicit, portfolio-appropriate length. README recruiter-fast with embedded H1–H6 + portfolio link.
+- Resume consistency: 145,020 games / 8,353,475 rows / 3 TC / 2 months / 12 figures / TF rates all reconcile to
+  count_tables.md; "~1,900+ tests" = honest lower bound on 1,951; no novelty/causal/SOTA/degradation claims.
+- Defects: **0 blocking.** 1 cosmetic — H6 y-axis label left-clipped ("ne-normalized", "game-" cut at margin;
+  non-misleading). Required fixes before release: **none.** Optional polish: regen H6 to fix clipping (figure
+  change, follow-up ticket); confirm GitHub URL resolves before announcement; optionally print exact test count.
+- **Final public-release decision: READY.** Repository is public-showable as-is.
+
+Files changed (17.0C): ROADMAP.md, EXPERIMENT_LOG.md, reports/phase_reports/phase_17_0c_public_release_
+readiness_external_reader_qa_audit.md. Nothing staged, nothing committed.
+
+Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — RELEASE-READY (17.0C verified); no active next ticket.

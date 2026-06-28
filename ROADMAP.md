@@ -678,11 +678,29 @@ clock-residual moderation (11.0A kill condition not triggered).
   CLI repro BYTE-IDENTICAL (inventory + count_tables + PNG hashes); all markdown links resolve; CFF valid
   YAML (no DOI/venue); source clean (no hardcoded paths/bare-except/mutable-defaults; selected-col reads;
   privacy-validated). Tests 26 benchmark / **1,951 total**. 17.0B is commit-ready.
-- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE.** No active next ticket. **DEFERRED (optional, only
-  if Malachi revives): 16.3A increment audit; Think-Time / Flagging Diagnostic; 15.5D sharpness; 1+0 bullet;
-  increment-rapid; a standalone preprint.** **Preserved fallbacks: 14.2E; 14.3B; 16.0A snapshot.**
-  **PERMANENTLY PROHIBITED in the package: broad novelty/first/unique/SOTA claims; causal claims; new
-  Stockfish/extraction/modeling without explicit approval.**
+- **17.0C complete (Public Release Readiness & External-Reader QA Audit — doc-only, audit):** **VERDICT =
+  READY FOR PUBLIC RELEASE; repository is public-showable; no blocking defects; no required fixes.** Cold-open
+  reader can understand the project, trust the (non-causal) claims, view H1–H6, run tests, and see the
+  engineering scale without being misled. Checks all PASS: README first screen (scale + decomposition +
+  not-causal + links, no ticket-history/novelty/jargon opener); claim-language grep (all `causal`/`novel`/
+  `ground truth`/`skill buffer` hits are negations/disclaimers); all public-doc relative links resolve +
+  10/10 cross-TC and 9/9 rcm appendix figures exist; private-path grep clean (only generic `.venv` + repo-
+  relative gitignored-Parquet commands the README flags as not-shipped); 12 PNGs + count_tables present, open,
+  legible (H1/H2/H5/H6 visually inspected); clean-clone has full package + 0 Parquets; figure regen fails
+  cleanly with FileNotFoundError (honest boundary); LICENSE pure unmodified MIT + NOTICE.md + CITATION.cff
+  valid YAML (no DOI/venue/placeholder); no tracked data/model artifacts (only allowed tiny PGN fixture);
+  largest tracked file 204KB doc, benchmark figs 1.1MB total; tests **26 benchmark / 1,951 total** (3 pre-
+  existing sklearn warnings); resume numbers reconcile to count_tables (145,020 games / 8,353,475 rows / TF
+  0.29-0.30/0.23/0.12). **Only finding = 1 COSMETIC:** H6 y-axis label left-clipped ("ne-normalized" — "game-"
+  cut at margin; non-misleading, title/caption correct) → optional follow-up figure regen, NOT required for
+  release. Optional polish: confirm GitHub URL resolves before announcement; optionally state exact test count.
+  Changed ONLY ROADMAP + EXPERIMENT_LOG + this report; source/tests/README/figures/data/PREREGISTRATION
+  UNCHANGED. EXP-062. See `reports/phase_reports/phase_17_0c_public_release_readiness_external_reader_qa_audit.md`.
+- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — RELEASE-READY (17.0C verified).** No active next
+  ticket. **DEFERRED (optional, only if Malachi revives): 16.3A increment audit; Think-Time / Flagging
+  Diagnostic; 15.5D sharpness; 1+0 bullet; increment-rapid; a standalone preprint.** **Preserved fallbacks:
+  14.2E; 14.3B; 16.0A snapshot.** **PERMANENTLY PROHIBITED in the package: broad novelty/first/unique/SOTA
+  claims; causal claims; new Stockfish/extraction/modeling without explicit approval.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
