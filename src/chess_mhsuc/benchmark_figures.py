@@ -379,8 +379,11 @@ def render_headline_figures(head, game_tbl, fig_dir: Path):
             ax.bar(x + (i - 0.5) * wd, vals_, wd, label=lab, color=col)
         ax.set_xticks(x); ax.set_xticklabels([_MONTH_LABEL[m] for m in MONTH_ORDER])
         ax.set_title(c); ax.grid(alpha=.3, axis="y"); ax.legend(fontsize=8)
-    axes[0].set_ylabel("game-normalized mean ES loss at critical clock (≤5% of base time)")
-    fig.suptitle("H6 — Month replication: critical-clock move-quality, all games vs board-decided "
+    # Short y-label so tight_layout reserves enough vertical room on this short figure (the long
+    # original label overflowed the axis height and clipped "game-" at the bottom); the critical-clock
+    # ≤5% threshold is carried by the suptitle and the report caption. Estimand unchanged.
+    axes[0].set_ylabel("game-normalized mean ES loss")
+    fig.suptitle("H6 — Month replication: critical-clock (≤5% base time), all games vs board-decided "
                  "(board-decided lower = time-forfeit attenuation; Sep≈Oct = replication)")
     save(fig, "H6_month_replication_summary")
     return inv

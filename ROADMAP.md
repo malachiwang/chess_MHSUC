@@ -696,11 +696,30 @@ clock-residual moderation (11.0A kill condition not triggered).
   release. Optional polish: confirm GitHub URL resolves before announcement; optionally state exact test count.
   Changed ONLY ROADMAP + EXPERIMENT_LOG + this report; source/tests/README/figures/data/PREREGISTRATION
   UNCHANGED. EXP-062. See `reports/phase_reports/phase_17_0c_public_release_readiness_external_reader_qa_audit.md`.
-- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — RELEASE-READY (17.0C verified).** No active next
-  ticket. **DEFERRED (optional, only if Malachi revives): 16.3A increment audit; Think-Time / Flagging
-  Diagnostic; 15.5D sharpness; 1+0 bullet; increment-rapid; a standalone preprint.** **Preserved fallbacks:
-  14.2E; 14.3B; 16.0A snapshot.** **PERMANENTLY PROHIBITED in the package: broad novelty/first/unique/SOTA
-  claims; causal claims; new Stockfish/extraction/modeling without explicit approval.**
+- **17.0D complete (Final Public Polish, GitHub Rendering & Release Tag Audit — doc + 1 cosmetic figure fix):**
+  **VERDICT = READY FOR PUBLIC USE.** Fixed the sole 17.0C cosmetic defect: H6 y-axis label clipping. Root
+  cause = long rotated y-label overflowed the short (4.6in) axis height → `tight_layout` clipped "game-".
+  FIX (H6 block of `benchmark_figures.py` only): shortened y-label to "game-normalized mean ES loss" and moved
+  the "(≤5% base time)" threshold into the suptitle (dropped redundant "move-quality" to keep suptitle at the
+  proven-fitting length). Estimand UNCHANGED (game-normalized ES loss, critical-clock all-games vs
+  board-decided, by control×month); no values changed. Regenerated via CLI over the 6 existing dense Parquets
+  (read-only, no Stockfish/extraction): **only H6 PNG changed; H1–H5 byte-identical; count_tables.md
+  byte-identical.** No regression test added (string-only cosmetic edit; no test asserts H6 label/title; literal
+  label assertions are brittle). Tests **26 targeted / 1,951 full** (3 pre-existing sklearn warnings). GitHub:
+  remote `origin = https://github.com/malachiwang06-lgtm/chess-MHSUC.git` reachable, `git ls-remote` HEAD =
+  local HEAD (17.0C pushed); URL matches CITATION.cff. Rendering NOT browser-verified (not fabricated) — GitHub
+  currently shows pre-fix H6 until 17.0D is pushed. No forbidden artifacts; largest tracked file 208KB doc,
+  benchmark figs 1.1MB. Framing unchanged (descriptive replication/benchmark; NOT a decision-tree/novel/causal/
+  SOTA model). Changed ONLY benchmark_figures.py + H6 PNG + ROADMAP + EXPERIMENT_LOG + this report;
+  README/LICENSE/NOTICE/CITATION/benchmark_report/appendix/H1–H5/data/PREREGISTRATION UNCHANGED. EXP-063. See
+  `reports/phase_reports/phase_17_0d_final_public_polish_github_rendering_release_tag_audit.md`. Optional future:
+  browser-verify render after push; tag a v1.0 release; tighten "~1,900+"→"1,951"; update URL only if username
+  changes.
+- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE (17.0C verified, 17.0D polished).**
+  No active next ticket. **DEFERRED (optional, only if Malachi revives): 16.3A increment audit; Think-Time /
+  Flagging Diagnostic; 15.5D sharpness; 1+0 bullet; increment-rapid; a standalone preprint.** **Preserved
+  fallbacks: 14.2E; 14.3B; 16.0A snapshot.** **PERMANENTLY PROHIBITED in the package: broad
+  novelty/first/unique/SOTA claims; causal claims; new Stockfish/extraction/modeling without explicit approval.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 

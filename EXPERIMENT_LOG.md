@@ -3734,3 +3734,46 @@ Files changed (17.0C): ROADMAP.md, EXPERIMENT_LOG.md, reports/phase_reports/phas
 readiness_external_reader_qa_audit.md. Nothing staged, nothing committed.
 
 Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — RELEASE-READY (17.0C verified); no active next ticket.
+
+## EXP-063 — Final Public Polish, GitHub Rendering, and Release Tag Audit (Ticket 17.0D)
+
+Small public-release polish. Fixed the one cosmetic defect from 17.0C (H6 y-axis label clipping). No
+framing change, no research, no Stockfish/extraction/refit, no data/model changes. Verdict: **READY FOR
+PUBLIC USE.**
+
+- Commit base: clean tree, HEAD = c3483bf (17.0C; pushed — `git ls-remote origin` HEAD == local HEAD).
+- H6 fix: root cause = long rotated y-label overflowed the short (4.6in) axis height, so tight_layout
+  clipped "game-" at the bottom. Fix in H6 block of benchmark_figures.py only: y-label shortened to
+  "game-normalized mean ES loss"; "(≤5% base time)" moved into the suptitle (dropped redundant
+  "move-quality" so the suptitle stays at the proven-fitting length). Estimand unchanged (game-normalized
+  ES loss, critical-clock all-games vs board-decided, control×month); no values changed. Regenerated via
+  CLI over the 6 existing dense Parquets (read-only, no Stockfish/extraction): **only H6 PNG changed;
+  H1–H5 byte-identical (sha256); count_tables.md byte-identical (0f392a38…).** No regression test added
+  (string-only cosmetic edit; no test asserts the label/title; literal label assertions are brittle).
+  Visual inspection: y-label and suptitle both fully readable, bars identical (board-decided below
+  all-games both months).
+- GitHub rendering: remote origin = https://github.com/malachiwang06-lgtm/chess-MHSUC.git, reachable;
+  `git ls-remote origin refs/heads/main` = local HEAD → 17.0C pushed. NOT browser-verified (not
+  fabricated); GitHub currently renders the pre-fix H6 until 17.0D is pushed. Local link/figure/CFF audit
+  (from 17.0C) re-confirmed.
+- Repository URL: CITATION.cff repository-code matches the origin remote exactly; correct for the present
+  remote; update only if the GitHub username changes. Only public-doc GitHub URL is the CITATION field.
+- Test-count consistency: public docs say "~1,900+ tests" (conservative, correct vs actual 1,951); left
+  as-is.
+- Tests: targeted 26 passed (0.33s); full **1,951 passed, 3 warnings** (104.50s) — same 3 pre-existing
+  sklearn y_pred notices, not new, not from the benchmark package.
+- Forbidden artifacts/size: no raw data / Parquet / model / cache / prior-art-clone staged or
+  untracked-unignored; data/ clean; no forbidden file types tracked (only allowed tiny
+  tests/fixtures/tiny_clock_eval_game.pgn); largest tracked file EXPERIMENT_LOG.md 208KB; benchmark figs
+  1.1MB (H6 41KB, was 48KB).
+- Defects: H6 clipping FIXED; no new defects; 0 blocking. Required fixes before public use: none (commit +
+  push 17.0D is the only operational step). Optional: browser-verify render post-push; tag v1.0; tighten
+  test count; update URL only on username change.
+- **Final public-use decision: READY.**
+
+Files changed (17.0D): src/chess_mhsuc/benchmark_figures.py, reports/figures/benchmark/
+H6_month_replication_summary.png, ROADMAP.md, EXPERIMENT_LOG.md, reports/phase_reports/
+phase_17_0d_final_public_polish_github_rendering_release_tag_audit.md. Nothing staged, nothing committed.
+
+Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE (17.0C verified, 17.0D
+polished); no active next ticket.
