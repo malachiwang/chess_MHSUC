@@ -715,11 +715,27 @@ clock-residual moderation (11.0A kill condition not triggered).
   `reports/phase_reports/phase_17_0d_final_public_polish_github_rendering_release_tag_audit.md`. Optional future:
   browser-verify render after push; tag a v1.0 release; tighten "~1,900+"→"1,951"; update URL only if username
   changes.
-- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE (17.0C verified, 17.0D polished).**
-  No active next ticket. **DEFERRED (optional, only if Malachi revives): 16.3A increment audit; Think-Time /
-  Flagging Diagnostic; 15.5D sharpness; 1+0 bullet; increment-rapid; a standalone preprint.** **Preserved
-  fallbacks: 14.2E; 14.3B; 16.0A snapshot.** **PERMANENTLY PROHIBITED in the package: broad
-  novelty/first/unique/SOTA claims; causal claims; new Stockfish/extraction/modeling without explicit approval.**
+- **18.0A complete (Portfolio Launch Pack & External Presentation Audit — doc-only, no code/figures/data):**
+  created `reports/portfolio_launch_pack.md` — copy-ready external material for resume / GitHub / LinkedIn /
+  applications / interviews / research outreach. 17 sections: 3 one-sentence descriptions (general/technical/
+  resume-header), GitHub short description (<350 chars) + 12 topics, 3 resume bullet sets (DS-ML / SWE-data-eng
+  / quant), LinkedIn entry, 30-sec + 2-min interview explanations, recruiter + professor explanations, technical
+  deep-dive points, **"what model did you use?" answer (explicitly: NOT a decision-tree/NN — game-normalized
+  descriptive figures + controlled outcome/move-quality comparisons + direct expected-score-loss measurement)**,
+  reproducibility answer (public code/figs/tests shipped; dense Parquets gitignored, not in GitHub), novelty
+  answer (replication/benchmark, bounded "apparently distinct" decomposition claim, NOT "first/novel"),
+  numbers/source-of-truth table, and a claims-to-avoid list. All numbers verified against count_tables/reports:
+  145,020 games / 8,353,475 rows / 3 controls / 2 months / 12 figures / 1,951 tests / TF 0.2917-0.3009(3+0),
+  0.2263-0.2258(5+0), 0.1151-0.1164(10+0). Non-causal, non-novelty, non-SOTA discipline preserved throughout.
+  Changed ONLY portfolio_launch_pack.md + ROADMAP + EXPERIMENT_LOG; README/LICENSE/NOTICE/CITATION/benchmark
+  reports/figures/source/tests/data/PREREGISTRATION UNCHANGED. EXP-064. See `reports/portfolio_launch_pack.md`.
+- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE + PORTFOLIO PACK (17.0C verified,
+  17.0D polished, 18.0A packaged).** Future project activity should be **external-use only** (resume/GitHub/
+  LinkedIn/interview/outreach) unless Malachi explicitly reopens research. No active next ticket. **DEFERRED
+  (optional, only if Malachi revives): 16.3A increment audit; Think-Time / Flagging Diagnostic; 15.5D sharpness;
+  1+0 bullet; increment-rapid; a standalone preprint.** **Preserved fallbacks: 14.2E; 14.3B; 16.0A snapshot.**
+  **PERMANENTLY PROHIBITED in the package: broad novelty/first/unique/SOTA claims; causal claims; new
+  Stockfish/extraction/modeling without explicit approval.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 

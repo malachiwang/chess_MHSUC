@@ -3777,3 +3777,38 @@ phase_17_0d_final_public_polish_github_rendering_release_tag_audit.md. Nothing s
 
 Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE (17.0C verified, 17.0D
 polished); no active next ticket.
+
+## EXP-064 — Portfolio Launch Pack and External Presentation Audit (Ticket 18.0A)
+
+Doc-only external-presentation packaging. No research, no Stockfish/extraction/refit, no new
+figures/results, no code/test/data/framing changes. Created `reports/portfolio_launch_pack.md`.
+
+- Evidence inspected (existing public/release files only): README.md, benchmark_report.md,
+  appendix_figure_index.md, count_tables.md, NOTICE.md, CITATION.cff, ROADMAP.md, EXPERIMENT_LOG.md
+  (all carried from 17.0C/17.0D inspections; unchanged). No raw data inspected.
+- Final project descriptions: general (25-35w), technical (35-50w), resume-header (12-18w) — all
+  descriptive/non-causal, "novel" avoided.
+- Resume bullet sets: Version A (DS/ML internship), Version B (SWE/data-eng), Version C (quant/analytics),
+  3 bullets each, verified numbers, ATS-safe punctuation.
+- LinkedIn entry: title + 2-4 sentence description + skills list + repo link; no ticket numbers.
+- Interview explanations: 30-second (what/data/result/why) and 2-minute (problem→data→pipeline→ES-loss→
+  decomposition→figures→prior-art→limitations→engineering); recruiter + professor versions.
+- Model/framing answer: explicitly NOT a decision-tree classifier or neural net — public package =
+  game-normalized descriptive benchmark figures; deeper analysis = controlled outcome-prediction +
+  move-quality comparisons; move quality measured directly as expected-score loss, not learned. Short
+  recruiter-safe version included.
+- Novelty answer: replication/benchmark framing; strongest distinct part = time-forfeit vs board-decided
+  decomposition; "not found in the sources I inspected" stated as bounded, not universal; confident + honest.
+- Reproducibility answer: public code/reports/12 figures/tests/CLI shipped; dense Parquets gitignored; raw
+  data + Stockfish runs not bundled; figures regenerate once Parquets supplied; does NOT imply 8.3M rows on GitHub.
+- Source-of-truth table: 145,020 games / 8,353,475 rows / 3 controls / 2 months / 12 figures / 1,951 tests /
+  TF rates 0.2917-0.3009(3+0), 0.2263-0.2258(5+0), 0.1151-0.1164(10+0) / board-decided residual ~+0.001(CI∋0)/
+  +0.006 / time-forfeit channel ~-0.12 to -0.13 / depth 12 / MIT — each mapped to its source file + public wording.
+- Claims to avoid: novel/first/unique, SOTA, causal, "Stockfish ground truth", decision-tree/NN core, solved
+  sharpness, universal rating-buffer, "8.3M rows downloadable from GitHub".
+
+Files changed (18.0A): reports/portfolio_launch_pack.md (new), ROADMAP.md, EXPERIMENT_LOG.md. Nothing
+staged, nothing committed.
+
+Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE + PORTFOLIO PACK (17.0C verified,
+17.0D polished, 18.0A packaged); future activity external-use only unless research is explicitly reopened.
