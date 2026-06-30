@@ -3812,3 +3812,39 @@ staged, nothing committed.
 
 Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE + PORTFOLIO PACK (17.0C verified,
 17.0D polished, 18.0A packaged); future activity external-use only unless research is explicitly reopened.
+
+## EXP-065 — External Launch Execution Materials (Ticket 18.0B)
+
+Doc-only external launch packaging from the 18.0A pack. No research, no Stockfish/extraction/refit, no new
+figures/results, no code/test/data/framing changes. Created `reports/external_launch_materials.md`.
+
+- Inspected (source-of-truth, unchanged): reports/portfolio_launch_pack.md, README.md, benchmark_report.md,
+  count_tables.md, CITATION.cff; git remote get-url origin.
+- GitHub state: clean tree, HEAD = 2d2075e (18.0A), pushed (`git ls-remote origin` HEAD == local HEAD); remote
+  origin = https://github.com/malachiwang06-lgtm/chess-MHSUC.git matches CITATION.cff. Rendering NOT
+  browser-verified (not fabricated); pushed HEAD reflects committed public content (incl. 17.0D H6 fix + 18.0A
+  pack). Local link/path/figure audit from 17.0C/17.0D re-relied-on (public files unchanged).
+- GitHub metadata: paste-ready repo description (<350 chars), 12 topics, Website-field guidance (GitHub needs a
+  URL not an in-repo file → repo/README link to benchmark_report.md), pinning steps.
+- Resume bullets: A (DS/ML), B (SWE/data-eng), C (quant), 2-3 each + a 2-line compact version; verified numbers,
+  ATS-safe, no novelty/causal/SOTA/decision-tree/NN.
+- LinkedIn entry: title + date placeholder + URL + 4-sentence description + skills; no ticket labels.
+- Pinned-repo blurb: <180 chars (8.3M moves, clock constraints, time-forfeit vs board-decided).
+- Interview answer pack: 10 spoken-style answers (what built / what model / why-not-decision-tree-NN / hardest
+  part / main result / novelty / causal / reproduce / improve next / relevance to DS-quant-SWE).
+- Outreach blurbs: recruiter (2-3 sentences) + professor (2-3 sentences), both with [GitHub link] placeholder,
+  no publication overselling.
+- "Do Not Say This" card: 9 forbidden→corrected pairs (novel AI, causal proof, SOTA, decision-tree/NN, Stockfish
+  ground truth, first study, rating-protection, downloadable dataset, solved sharpness).
+- Release-tag recommendation: DO NOT TAG YET; v1.0.0 + title + note template provided, create only on explicit
+  instruction.
+- Source-of-truth numbers: 145,020 games / 8,353,475 rows / 3 controls / 2 months / 12 figures / 1,951 tests /
+  TF 0.2917-0.3009(3+0), 0.2263-0.2258(5+0), 0.1151-0.1164(10+0) / depth 12 / MIT / repo URL — each mapped to
+  its source file + public wording.
+
+Files changed (18.0B): reports/external_launch_materials.md (new), ROADMAP.md, EXPERIMENT_LOG.md. Nothing
+staged, nothing committed.
+
+Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE + PORTFOLIO PACK + LAUNCH MATERIALS
+(17.0C verified, 17.0D polished, 18.0A packaged, 18.0B launch-ready); future activity external-use only unless
+research is explicitly reopened.

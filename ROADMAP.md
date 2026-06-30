@@ -729,13 +729,29 @@ clock-residual moderation (11.0A kill condition not triggered).
   0.2263-0.2258(5+0), 0.1151-0.1164(10+0). Non-causal, non-novelty, non-SOTA discipline preserved throughout.
   Changed ONLY portfolio_launch_pack.md + ROADMAP + EXPERIMENT_LOG; README/LICENSE/NOTICE/CITATION/benchmark
   reports/figures/source/tests/data/PREREGISTRATION UNCHANGED. EXP-064. See `reports/portfolio_launch_pack.md`.
-- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE + PORTFOLIO PACK (17.0C verified,
-  17.0D polished, 18.0A packaged).** Future project activity should be **external-use only** (resume/GitHub/
-  LinkedIn/interview/outreach) unless Malachi explicitly reopens research. No active next ticket. **DEFERRED
-  (optional, only if Malachi revives): 16.3A increment audit; Think-Time / Flagging Diagnostic; 15.5D sharpness;
-  1+0 bullet; increment-rapid; a standalone preprint.** **Preserved fallbacks: 14.2E; 14.3B; 16.0A snapshot.**
-  **PERMANENTLY PROHIBITED in the package: broad novelty/first/unique/SOTA claims; causal claims; new
-  Stockfish/extraction/modeling without explicit approval.**
+- **18.0B complete (External Launch Execution Materials — doc-only, no code/figures/data):** created
+  `reports/external_launch_materials.md` (11 sections) from the 18.0A pack. Contents: GitHub metadata steps
+  (paste-ready repo description <350 chars; topics list; Website-field note that GitHub needs a URL not an
+  in-repo path → use repo/README link to benchmark_report.md; pinning instructions); 3 final resume bullet
+  sets (DS-ML / SWE-data-eng / quant) + a 2-line compact version; final LinkedIn entry; pinned-repo blurb
+  (<180 chars); 10-question spoken-style interview answer pack (incl. "what model" + "why not a decision-tree/
+  NN" — answered: controlled stats + descriptive figures, move quality measured directly, not learned);
+  recruiter + professor outreach blurbs (with [GitHub link] placeholder, no publication overselling);
+  "Do Not Say This" card (9 forbidden→corrected pairs); release-tag recommendation = **DO NOT TAG YET** (v1.0.0
+  template provided, create only on explicit instruction); source-of-truth numbers table. GitHub state verified:
+  remote reachable, `git ls-remote` HEAD == local HEAD (18.0A pushed), URL matches CITATION.cff; rendering NOT
+  browser-verified (local link/path audit from 17.0C/17.0D re-relied-on, public files unchanged). All numbers
+  verified (145,020 / 8,353,475 / 3 / 2 / 12 / 1,951 / TF rates). Non-causal/non-novelty/non-SOTA/no-decision-
+  tree-NN discipline preserved. Changed ONLY external_launch_materials.md + ROADMAP + EXPERIMENT_LOG; README/
+  LICENSE/NOTICE/CITATION/benchmark reports/portfolio_launch_pack/figures/source/tests/data/PREREGISTRATION
+  UNCHANGED. EXP-065. See `reports/external_launch_materials.md`.
+- **Project status: PUBLIC BENCHMARK PACKAGE COMPLETE — READY FOR PUBLIC USE + PORTFOLIO PACK + LAUNCH MATERIALS
+  (17.0C verified, 17.0D polished, 18.0A packaged, 18.0B launch-ready).** Future project activity should be
+  **external-use only** (resume/GitHub/LinkedIn/interview/outreach) unless Malachi explicitly reopens research.
+  No active next ticket. **DEFERRED (optional, only if Malachi revives): 16.3A increment audit; Think-Time /
+  Flagging Diagnostic; 15.5D sharpness; 1+0 bullet; increment-rapid; a standalone preprint.** **Preserved
+  fallbacks: 14.2E; 14.3B; 16.0A snapshot.** **PERMANENTLY PROHIBITED in the package: broad
+  novelty/first/unique/SOTA claims; causal claims; new Stockfish/extraction/modeling without explicit approval.**
 
 ## Roadmap Recovery Note (2026-06-15, Ticket 15.2B)
 
