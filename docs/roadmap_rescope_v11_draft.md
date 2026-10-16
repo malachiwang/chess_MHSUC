@@ -1,4 +1,14 @@
-# chess-MHSUC — ROADMAP Re-Scoping Proposal (v11-draft, v2-merged)
+# Historical v11 research proposal
+
+This proposal records the June 2026 design and subsequent recovery notes. It is
+preserved for its hypotheses, contrast definitions, methodological decisions, and
+stop criteria. Its “active”, “unfinished”, and “authoritative” status statements
+are historical. The later dense and cross-control analyses were completed, and
+the project adopted replication framing. See [current status](../ROADMAP.md) and
+[results](../README.md).
+
+<details>
+<summary>Original proposal and revision notes</summary>
 
 **ROADMAP RECOVERY (2026-06-15, Tickets 15.2A → 15.2B):** the project was briefly misrouted into
 a premature synthesis path (a "16.0A synthesis-readiness" / "16.0B final report" default). That
@@ -648,3 +658,5 @@ narrow, non-obvious, and possibly multi-move precision.
 12. Approve excluding `best_move_is_simple_trade` from the v1 headline composite pending
     the 13.2 stability mini-audit, with promotion only via a pre-registered composite v2?
 
+
+</details>

@@ -1,5 +1,30 @@
 # Roadmap
 
+## Current status
+
+The recorded research and public packaging work is complete through Ticket 18.0B
+(EXP-065). There is no active research ticket. The current project is a replication
+and benchmark study; see the [README](README.md) for supported results.
+
+Completed work includes the 10+0 checkpoint pipeline and outcome models, calibration
+diagnostics, fixed-depth evaluation, termination decomposition, player-clustered
+checks, dense move-quality analysis, three-control comparisons, rating interactions,
+and public figures. Gradient boosting overfit in the pilot; the non-time-forfeit
+outcome gain did not survive; sharpness moderation remains unresolved.
+
+Neural sequence models, increment comparisons, additional difficulty measures,
+prior-move trajectory controls, and a better-powered sharpness study are deferred.
+They require a new research decision, not automatic execution of an old next-step note.
+
+The sections below preserve the ticket history, including superseded plans and
+status snapshots. “Active”, “next”, and novelty language inside that history describe
+the time of writing. Later evidence and the [prior-work audit](reports/phase_reports/phase_16_2g_prior_art_repository_overlap_project_kill_audit.md)
+supersede the early novelty framing. The [experiment log](EXPERIMENT_LOG.md) and
+[phase reports](reports/phase_reports/) retain the evidence behind these changes.
+
+<details>
+<summary>Historical roadmap and ticket records</summary>
+
 This roadmap is phase-based, with audit/implementation pairs wherever practical.
 
 Each audit/implementation pair should produce a report. The roadmap is expected to evolve as the project learns from real data.
@@ -1848,3 +1873,5 @@ Phases 0–9 complete:
 - Phase 15.2: roadmap recovery audit (15.2A); roadmap recovery patch (15.2B)
 
 Update this section after each stable commit.
+
+</details>

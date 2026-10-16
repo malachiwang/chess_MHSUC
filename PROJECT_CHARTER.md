@@ -1,189 +1,80 @@
-# Project Charter
+# Project charter
 
-Project title: **Modeling Human Strategy Under Constraints**  
-Repository: `chess-MHSUC`
+Repository: [malachiwang/chess_MHSUC](https://github.com/malachiwang/chess_MHSUC).
+MHSUC stands for Modeling Human Strategy Under Constraints.
 
-## 1. Mission
+## 1. Research question
 
-This project studies how human chess outcomes are shaped by objective position quality, player rating, clock pressure, and game phase.
+How are human chess outcomes and next-move quality associated with remaining time,
+player ratings, and board evaluation? The study distinguishes prediction of losing
+on time from engine-measured quality of the moves played.
 
-The long-term goal is to build a calibrated model that predicts White win / Draw / Black win probabilities at each point in a game, accounting for the fact that humans are not engines and do not play with unlimited precision or unlimited time.
+## 2. Current scope
 
-## 2. Core hypothesis
+The completed project is an observational replication and benchmark study of
+Lichess standard rated games. Outcome prediction uses 10+0 checkpoints; the later
+move-quality study uses 3+0, 5+0, and 10+0 archive-prefix samples from September and
+October 2024. The [README](README.md) gives counts and supported conclusions.
 
-Engine evaluation carries predictive value, but it is incomplete for human games. Human conversion and collapse depend on constraints such as:
+## 3. Original objective and changes in direction
 
-- player rating,
-- rating gap,
-- clock pressure,
-- phase of the game,
-- time-control environment,
-- position volatility or complexity,
-- termination mode.
+The initial objective was calibrated White-win/draw/Black-win probabilities at
+successive game positions. Work began with 10+0, selected checkpoints, dummy and
+logistic baselines, then gradient-boosted trees. The tree pilot overfit and
+calibration work remained diagnostic. Fixed-depth Stockfish evaluation replaced
+reliance on sparse Lichess annotations for the later outcome comparisons.
 
-The project begins by testing whether clock and rating features improve outcome prediction beyond engine evaluation alone, especially in late-game and low-time regimes.
+The termination analysis found that the gain from clock features was concentrated
+in games ending on time. Subsequent work therefore measured next-move quality
+directly, first at checkpoints and then densely for both colors. The later
+prior-work audit led to replication and benchmark framing. The original every-ply
+outcome predictor and neural sequence models remain aspirations, not deliverables.
+See [ROADMAP.md](ROADMAP.md) and [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md) for the record.
 
-## 3. Initial research setting
+## 4. Deliverables and intended use
 
-The first controlled setting is:
+The repository provides reusable parsing, measurement, modeling, and reporting
+code; tests with synthetic inputs; saved analysis reports; and figures. It is
+intended for research inspection and reproduction. It is not a move recommendation
+service, cheating detector, player surveillance tool, or deployed prediction API.
 
-```text
-Data source: Lichess standard rated database
-Game type: standard chess
-Time control: 10+0 only, TimeControl "600+0"
-Ratings: all valid ratings
-Outcome label: White win / Draw / Black win
-Processed usernames: dropped by default
-Variants: excluded
-Unrated games: excluded
-```
+## 5. Measurement and interpretation
 
-This scope is intentionally narrow. It exists to make the first pipeline reliable and interpretable.
+Game results are outcome labels. Engine evaluations provide an approximate board
+reference, not ground truth or a direct measure of human reasoning. Expected-score
+loss is a fitted transformation of evaluations. Associations after adjustment are
+not causal effects. Time-forfeit filtering changes the analyzed population.
 
-## 4. What this project is
+## 6. Data and privacy
 
-This project is:
+Real data and model artifacts remain outside Git. Raw PGNs may contain usernames;
+processed tables omit them. Salted player hashes are retained locally for dependence
+checks. [DATA_POLICY.md](DATA_POLICY.md) governs data operations and publication.
 
-- a human outcome prediction project,
-- a bounded-rationality modeling project,
-- a chess analytics and ML pipeline project,
-- a reproducible data science project,
-- a possible foundation for later research outreach.
+## 7. Compute and extensions
 
-## 5. What this project is not
-
-This project is not initially:
-
-- a chess engine,
-- a move recommendation system,
-- a chess.com/Lichess clone,
-- a neural-network-first project,
-- a web app,
-- a full scrape of all chess data,
-- a public dataset release,
-- a NeurIPS/ICML paper draft before pilot evidence exists.
-
-## 6. Primary outcome task
-
-The primary task is three-class prediction:
-
-```text
-White win / Draw / Black win
-```
-
-Binary labels such as `White win vs not White win` are allowed only for early debugging, sanity checks, and simple baselines. They are not the final target.
-
-## 7. Position granularity
-
-The long-term target is every-ply prediction.
-
-The initial pilot may use selected positions to reduce pipeline complexity. Acceptable early checkpoints include:
-
-```text
-after move 10
-after move 20
-after move 30
-after move 40
-final available pre-result position
-```
-
-This is a stepping stone only. The docs and code should not redefine the project as checkpoint-only prediction.
+The implementation was developed locally. Reproducing dense depth-12 engine
+measurements is substantial work and is separate from the README smoke example.
+New data collection, engine runs, dependencies, or model families require a scoped
+proposal. More data should answer a documented uncertainty rather than serve as an
+end in itself. Deferred ideas are listed in the roadmap, without an active commitment.
 
 ## 8. Evidence standards
 
-A claim is not considered supported unless it is backed by:
+Claims need documented source scope and filters, a saved result, and an explicit
+analysis population. Outcome-model comparisons require game-ID splits, baselines,
+probability metrics, and calibration diagnostics. Report log loss and multiclass
+Brier score alongside class-specific behavior; accuracy alone can hide draw failure.
+Keep validation model selection distinct from final test evaluation.
 
-- documented dataset version and filters,
-- clean train/validation/test split by game ID,
-- baseline comparison,
-- appropriate probability metrics,
-- error/calibration assessment,
-- written report or experiment log entry.
+For move-level analyses, identify the measurement, weighting, controls, cluster
+unit, sparse cells, and uncertainty procedure. Report month-specific results and
+negative or conditioning-sensitive findings. Do not describe recurring-player
+samples as independent or infer novelty from an incomplete literature search.
 
-Accuracy alone is not sufficient.
+## 9. Record preservation
 
-Preferred metrics include:
-
-- log loss,
-- Brier score,
-- calibration curves,
-- confusion matrices where useful,
-- ablation tables,
-- subgroup performance by rating bucket, phase, and low-time state.
-
-## 9. Data ethics and privacy stance
-
-Lichess games are public, but processed project datasets should still minimize unnecessary identity retention.
-
-Policy:
-
-- Raw PGNs may contain usernames locally.
-- Processed datasets should drop usernames by default.
-- If player-level splitting becomes necessary, use hashed or anonymized IDs.
-- Do not publish raw or processed real game data from this repository.
-- Reproducibility should come from scripts and documented data sources, not Git-hosted datasets.
-
-## 10. Modeling stance
-
-This project is model-agnostic but should begin with interpretable baselines and tabular models.
-
-Preferred model sequence:
-
-1. Rule/probability baselines.
-2. Logistic regression.
-3. Gradient-boosted tree model.
-4. Calibrated gradient-boosted model.
-5. Neural sequence model only after tabular results justify the added complexity.
-
-## 11. Sample-size stance
-
-The first iteration should be capped and staged.
-
-Recommended ramp:
-
-```text
-Parser smoke test:        100-1,000 games
-First data audit:         10,000-25,000 games scanned or sampled
-First modeling pilot:     25,000-50,000 qualifying positions/games, depending on eval availability
-Serious pilot:            100,000-300,000 qualifying rows
-Scale-up candidate:       500,000+ qualifying rows only after baselines are validated
-```
-
-The project should not download or process huge files just because storage is available. Scale must answer a specific research or validation need.
-
-## 12. Compute stance
-
-Default development is local-first on Malachi's MacBook Pro M3 Pro.
-
-Cloud compute is not part of the initial plan. It may be considered later for:
-
-- large fixed-depth Stockfish evaluation,
-- sequence-model training,
-- repeated multi-million-row experiments,
-- workloads that demonstrably exceed local capacity.
-
-## 13. Public/private stance
-
-The repository is private-first.
-
-Potential future public release may include:
-
-- cleaned code,
-- methods,
-- generated figures,
-- reports,
-- reproduction instructions.
-
-It should not include raw or processed real game datasets.
-
-## 14. Outreach stance
-
-Professor feedback is useful, but outreach should be strongest after the project has at least:
-
-- a clean pilot dataset,
-- a documented pipeline,
-- one ablation table,
-- one calibration assessment,
-- one concise written summary.
-
-Early informal conceptual questions are allowed, but formal research outreach should wait for pilot evidence.
+Experiment reports and protocols record what was known when each stage ran. Their
+old next-step instructions are historical. The current overview is the README;
+[MANIFEST.md](MANIFEST.md) points to the supporting records. No research result is
+replaced simply because the direction of the project changed.

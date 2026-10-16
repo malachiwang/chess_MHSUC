@@ -1,109 +1,59 @@
-# Project Manifest
+# Repository guide
 
-Repository: `chess-MHSUC`
+Start with the [README](README.md) for the question, results, limitations, and
+synthetic example. The public repository is
+[malachiwang/chess_MHSUC](https://github.com/malachiwang/chess_MHSUC).
 
-This file describes the governance document set, the expected repository structure, and the rules governing what should and should not be committed.
-
----
-
-## 1. Governance documents
-
-These files define project scope, operating rules, and pipeline conventions.
+## Current documentation
 
 | File | Purpose |
-|------|---------|
-| `README.md` | Project overview, research question, initial scope, repo structure summary, data policy summary, development philosophy |
-| `PROJECT_CHARTER.md` | Mission, core hypothesis, initial research setting, evidence standards, data ethics, modeling stance, sample-size and compute stances |
-| `ROADMAP.md` | Phase-by-phase ticket plan with audit/implementation pairs; updated as the project progresses |
-| `WORKFLOW.md` | Standard development loop, audit and implementation ticket formats, post-implementation report rules, commit/push policy, data-operation policy |
-| `DATA_POLICY.md` | Full data safety rules: what is ignored by Git, naming conventions, raw/interim/processed separation, Claude data restrictions, reproducibility requirements |
-| `CLAUDE.md` | Behavior instructions for Claude Code: operating modes, data safety rules, audit/implementation formats, parser and modeling discipline |
-| `PIPELINE_OVERVIEW.md` | Intended data and modeling pipeline stages from raw PGN to calibrated model; feature schema; evaluation requirements |
-| `EXPERIMENT_LOG.md` | Template and running log of data/modeling experiments that influence project direction |
-| `MODEL_CARD.md` | Template for the first serious model: intended use, training data, labels, features, evaluation, known limitations |
-| `MANIFEST.md` | This file |
+|---|---|
+| [PROJECT_CHARTER.md](PROJECT_CHARTER.md) | Scope, changes in direction, and evidence standards |
+| [PIPELINE_OVERVIEW.md](PIPELINE_OVERVIEW.md) | Implemented data paths, filtering, measurement, and reproduction prerequisites |
+| [MODEL_CARD.md](MODEL_CARD.md) | Model families, evaluation populations, probability diagnostics, and limitations |
+| [DATA_POLICY.md](DATA_POLICY.md) | Data storage, privacy, and Git exclusions |
+| [WORKFLOW.md](WORKFLOW.md) | Development audits, verification, reports, and holdout policy |
+| [CLAUDE.md](CLAUDE.md) | Existing coding-agent operating instructions |
+| [NOTICE.md](NOTICE.md) and [CITATION.cff](CITATION.cff) | Attribution, license scope, and citation metadata |
 
----
+## Scientific records
 
-## 2. Expected repository structure
+| Record | What to read it for |
+|---|---|
+| [Termination decomposition](reports/termination_decomposition_combined.md) | The 10+0 outcome-model clock comparison, including the collapsed non-time-forfeit result |
+| [Cross-control report](reports/cross_time_control_move_quality_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md) | Dense sample counts, clock contrasts, weighting, and robustness |
+| [Rating moderation](reports/rating_clock_moderation_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md) | The conditioning-sensitive interaction and unsupported cross-control moderation claim |
+| [Sharpness report](reports/sharpness_enriched_constraint_atlas_10plus0_2024_09_2024_10_v1.md) | Sparse checkpoint overlap and the unresolved interaction |
+| [Benchmark figures](reports/figures/benchmark/) and [count tables](reports/figures/benchmark/count_tables.md) | Descriptive figures and their denominators |
+| [Appendix index](reports/appendix_figure_index.md) | Earlier figures and technical analyses |
+| [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md) | Experiment chronology, including negative results and test exposure |
+| [PREREGISTRATION.md](PREREGISTRATION.md) | Protocols, locked contrasts, decision rules, and revisions |
+| [Phase reports](reports/phase_reports/) | Audits, implementation decisions, dataset cards, and verification records |
 
-```text
-chess-MHSUC/
-  README.md
-  PROJECT_CHARTER.md
-  ROADMAP.md
-  WORKFLOW.md
-  DATA_POLICY.md
-  CLAUDE.md
-  PIPELINE_OVERVIEW.md
-  EXPERIMENT_LOG.md
-  MODEL_CARD.md
-  MANIFEST.md
-  requirements.txt          # curated direct Python dependencies
-  .python-version           # target Python version (3.13.11)
+Reports remain records of their original runs. Their next-step language and local
+paths may be historical. The [benchmark narrative](reports/benchmark_report.md)
+contains older shorthand that needs qualification: the source is an archive prefix,
+not a full month; recurring players make the months dependent; and the fitted
+transform JSON is not tracked. Consult the current pipeline guide for reproduction.
 
-  data/                     # local only; ignored by Git entirely
-    raw/lichess/            # immutable raw Lichess PGN archives
-    interim/                # work-in-progress parsed/scanned outputs
-    processed/              # model-ready cleaned datasets
+## Historical plans and presentation notes
 
-  notebooks/                # exploratory analysis; outputs cleared before commit
-  reports/
-    figures/                # small committed figures if useful
-    phase_reports/          # durable audit and implementation reports
+[ROADMAP.md](ROADMAP.md) gives current status above the preserved ticket history.
+The [v11 proposal](docs/roadmap_rescope_v11_draft.md) preserves an earlier design,
+and [related work](docs/RELATED_WORK.md) separates current positioning from its
+historical literature table. [Presentation notes](reports/portfolio_launch_pack.md)
+consolidate the former resume and interview variants;
+[external launch notes](reports/external_launch_materials.md) retain metadata guidance.
+These are presentation aids, not additional experimental evidence.
 
-  src/chess_mhsuc/          # reusable pipeline and modeling code
-  tests/                    # parser, feature, and model tests
-    fixtures/               # tiny synthetic PGN fixtures only (no real game data)
-```
+## Layout
 
----
+- `src/chess_mhsuc/`: reusable Python pipeline, models, statistics, and report generators.
+- `tests/`: tests and one synthetic PGN under `tests/fixtures/`.
+- `reports/`: saved Markdown analyses and figures; `phase_reports/` contains audit records.
+- `docs/`: literature context and the historical design proposal.
+- `requirements.txt`, `.python-version`: dependency minima and target Python version.
+- `data/raw/`, `data/interim/`, `data/processed/`: local-only paths, absent from a fresh clone.
 
-## 3. What may be committed
-
-- Source code (`src/`, `tests/`)
-- Governance documents (all files listed in Section 1)
-- `requirements.txt` and `.python-version`
-- Markdown reports (`reports/phase_reports/`)
-- Small figures (`reports/figures/`)
-- Tiny synthetic PGN fixtures (`tests/fixtures/`) — not real game data
-- Configuration templates without secrets
-- `.gitkeep` placeholders for empty tracked directories
-
----
-
-## 4. What must not be committed
-
-- Real downloaded PGNs (`.pgn`, `.pgn.zst`)
-- Parsed or processed game tables (`.parquet`, `.csv`)
-- DuckDB or SQLite databases (`.duckdb`, `.sqlite`, `.db`)
-- Large model artifacts (`.pkl`, `.joblib`, `.pt`, `.pth`, `.onnx`)
-- Usernames or player identifiers from processed datasets
-- Secrets, API keys, or environment credentials (`.env`)
-- Any file under `data/`
-
----
-
-## 5. Report conventions
-
-Phase reports are saved to:
-
-```text
-reports/phase_reports/
-```
-
-Naming convention:
-
-```text
-phase_<phase>_<ticket>_<short_description>.md
-```
-
-Examples:
-
-```text
-reports/phase_reports/phase_0_1b_project_initialization_implementation.md
-reports/phase_reports/phase_1_1a_lichess_source_audit.md
-reports/phase_reports/phase_2_1b_pgn_parser_implementation.md
-```
-
-Post-implementation reports are outputs of their implementation ticket. They are not standalone tickets.
+Do not commit real game extracts, Parquets, databases, prediction files, or fitted
+model artifacts. The complete rules are in [DATA_POLICY.md](DATA_POLICY.md).

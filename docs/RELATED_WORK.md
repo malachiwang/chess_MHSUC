@@ -1,4 +1,22 @@
-# Related Work — chess-MHSUC
+# Related work and attribution
+
+The project uses established engine-based move-quality measurements and investigates
+clock associations previously studied in chess research. It does not claim a new
+metric, a leading human-move predictor, or priority for the observed associations.
+
+The [later repository-overlap audit](../reports/phase_reports/phase_16_2g_prior_art_repository_overlap_project_kill_audit.md)
+compares the implementation and research questions with prior work and supports the
+replication framing. The [third-party notice](../NOTICE.md) records license scope.
+The termination comparison and unresolved sharpness interaction are described in
+the [README](../README.md) with their evaluation limits.
+
+The original literature table below preserves attribution, source-status labels,
+and the reasoning behind the earlier proposal. Its “unoccupied” and “novelty lane”
+statements are superseded by the later audit and are not current claims. Verification
+dates refer to that historical review; sources were not re-reviewed for this cleanup.
+
+<details>
+<summary>Historical source table and positioning notes</summary>
 
 ## Status and citation hygiene
 
@@ -92,3 +110,5 @@ on top of engine eval.
   sources in C4 and Phase 15 reports.
 - Update this file whenever a new source is verified; never add a source without a
   status label.
+
+</details>

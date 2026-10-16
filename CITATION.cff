@@ -1,12 +1,12 @@
 cff-version: 1.2.0
 message: If you use this work, please cite it as below.
-title: 'Chess-MHSUC — Human Chess Under Clock Constraints: A Replication and Benchmark Study'
-abstract: A reproducible replication and benchmark study of human move quality and clock constraints in online chess, covering 145,000+ Lichess games and 8.3M+ move-level observations across three time controls (3+0, 5+0, 10+0) and two independent monthly samples. The study decomposes the clock-related final-outcome signal into a mechanical time-forfeit channel and a board-decided channel, and compares it with next-move quality among board-decided games. Results are predictive and descriptive, not causal.
+title: 'chess_MHSUC: Human Chess Under Clock Constraints'
+abstract: An observational replication and benchmark study of human chess under clock constraints. Saved dense move-quality analyses cover 145,020 games and 8,353,475 filtered move observations across 3+0, 5+0, and 10+0 samples from September and October 2024. A separate 10+0 checkpoint outcome-model comparison finds that the predictive gain from clock features is concentrated in games ending on time. The monthly archive-prefix samples share players; results are predictive and descriptive, not causal.
 type: software
 authors:
 - family-names: Wang
   given-names: Malachi
-repository-code: https://github.com/malachiwang06-lgtm/chess-MHSUC
+repository-code: https://github.com/malachiwang/chess_MHSUC
 license: MIT
 keywords:
 - chess
