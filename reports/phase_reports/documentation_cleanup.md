@@ -120,3 +120,108 @@ sharpness moderation.
 Review the documentation diff. A later reproduction task would need its own local
 artifact preparation and an environment matching the recorded requirements. No
 additional research run is required for this documentation cleanup.
+
+
+## Follow-up: documentation review, 2026-10-16
+
+This second pass starts from the published cleanup at `46ce2df` on `main`. The
+original report and its verification record above are preserved. The checks below
+belong to this follow-up; the earlier synthetic-example run and 136-test result
+were not rerun.
+
+### Repository, scope, and files changed
+
+Verified root `/Users/malachiwang/chess_MHSUC`, branch `main`, and origin
+`git@github.com:malachiwang/chess_MHSUC.git`. The initial working tree contained only
+untracked `.Rhistory`; its contents remain unchanged. No applicable `AGENTS.md` was
+found in the selected checkout or checked parents. Existing repository guidance,
+including `CLAUDE.md`, `WORKFLOW.md`, and `DATA_POLICY.md`, was read. The task's
+explicit instruction to append here takes precedence over creating a new report.
+
+Seven documentation files changed; none were added, moved, or deleted:
+
+- [README](../../README.md): moved dataset scale near the opening, named the two
+  outcome models descriptively, retained both result tables and the synthetic
+  example, simplified status, and embedded existing H1/H2 figures with captions
+  distinguishing descriptive summaries from adjusted regressions.
+- [Pipeline guide](../../PIPELINE_OVERVIEW.md): expanded the ordered route from
+  archive-prefix acquisition through parsing, cleaning, features, splits,
+  checkpoint evaluation, score-transform fitting, player metadata, dense
+  extraction, and benchmark figures. Each stage lists inputs, outputs,
+  prerequisites, and verification status. Reproduction outputs use separate paths.
+- [Preregistration](../../PREREGISTRATION.md): added dated status and provenance
+  based on Git history and the 11.1A/14.2A protocol records. Distinguished locally
+  recorded prospective decisions from external registration and later amendments;
+  linked completed move-quality work and current dependence limitations.
+- [Historical benchmark](../benchmark_report.md): added a dated notice qualifying
+  monthly independence, the local-only transform, figure-writing side effects,
+  and the archive-prefix meaning of “full month.”
+- [Count-table introduction](../figures/benchmark/count_tables.md): distinguished
+  equal-row within-control clock regressions from game-normalized pooled
+  interactions and descriptive figures. Retained the original raw-versus-weighted
+  comparison as a historical observation and preserved every numerical table.
+- [External metadata notes](../external_launch_materials.md): revised the suggested
+  About description; retained relevant topics. No GitHub setting was changed.
+- This report: appended this follow-up without changing the original record.
+
+### Evidence and assumptions
+
+Inspected implementation entry points, argument parsers, output-path construction,
+acceptance routes, split propagation, transform fitting, player hashing, dense
+extraction gates, regression weights, and figure aggregations. Read the relevant
+saved outcome, move-quality, benchmark, extraction, and protocol records. Viewed
+both embedded PNGs and checked their generator before choosing them.
+
+Saved records establish what was reported; they are not independently recomputed
+results. The protocol's initial/refinement commits (`631328b`, `c184674`) and later
+sharpness protocol (`d1c0a09`) support a versioned local planning process. No external
+registry link or registration identifier was found in the protocol, experiment log,
+or supporting reports. Earlier outcome results already existed; the new notice
+makes no claim that all analyses were prospective.
+
+### Checks actually performed in this follow-up
+
+- Git root, remote, branch, baseline, working tree, final diff, and `git diff --check`.
+- Nine module help commands exited successfully: `run_parser`, `cleaning`,
+  `features`, `splits`, `stockfish_eval`, `next_move_loss`, `player_metadata`,
+  `dense_move_loss`, and `benchmark_figures`, under `chess_mhsuc`.
+- Validated all 20 expanded recipe argument sets through the real argument parsers,
+  intercepting immediately after parsing and before workload execution. Both month
+  gates, all six dense inputs, transform paths, and output-path connections agree.
+  This checks argument acceptance, not data compatibility or successful extraction.
+- `bash -n` passed for all 11 shell blocks in the edited documents. These blocks
+  were not executed. Checked local links, anchors, image paths, Markdown fences,
+  and incoming links to changed headings; no broken edited references were found.
+- Byte comparisons confirmed the historical benchmark and protocol bodies,
+  count-table numerical body, and all tracked PNGs match `HEAD`. All README tables,
+  setup/example/test blocks, and expected output are unchanged. The existing
+  report remains an exact prefix of this file. `.Rhistory` has its original hash.
+- Final scope review: only the seven Markdown files above differ from `HEAD`.
+  Implementation, tests, dependencies, datasets, scientific numbers, fitted
+  artifacts, and figures are unchanged. Nothing was staged, committed, or pushed.
+
+### Environment and reproduction limitations
+
+Python 3.13.11 and the modules needed for CLI checks were available. Package checks
+found python-chess 1.999, Polars 1.38.1, NumPy 2.4.1, SciPy 1.16.3,
+scikit-learn 1.8.0, PyArrow 23.0.1, zstandard 0.24.0, and Matplotlib 3.10.8.
+`duckdb` is absent and several installed versions are below `requirements.txt`
+minima. No dependency installation or fresh-environment verification was attempted.
+Stockfish was not started or version-verified in this follow-up.
+
+The checkout has no `data/` directory: raw prefixes, parser/features/split artifacts,
+checkpoint evaluations, player metadata, the fitted transform JSON, and six dense
+Parquets are unavailable. No download, engine analysis, fitting, training, full
+processing, or figure regeneration ran. Unchanged examples and tests were not
+repeated, and GitHub rendering/external URLs were not rechecked.
+
+Implementation constraints are documented, not repaired: transform fitting reads
+hardcoded `data/processed/sf_eval_broad_<tag>.parquet` inputs; the parser CLI has no
+local-input flag; October extraction reports compare with historical September
+constants; and split-report templates contain historical test language. The figure
+generator still emits outdated “read-only” and weighting prose, so newly generated
+count tables would need the same qualification as the annotated saved table.
+
+Next step: review this uncommitted documentation diff. A future scientific
+reproduction needs the local inputs, a suitable dependency environment, and an
+explicitly authorized computational run.

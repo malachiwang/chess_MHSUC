@@ -5,17 +5,17 @@ result? Chess provides recorded decisions, player ratings, and clock annotations
 plus an engine-based reference for evaluating moves. It also has a complication:
 a player can lose by running out of time even when their board position is good.
 
-I built a Python pipeline to study these two questions separately: whether clocks
-improve outcome prediction beyond engine evaluation and ratings, and whether low
-remaining time is associated with worse moves. The completed work is an
-observational replication and benchmark study, not a new chess engine or a causal
-study of reasoning. Saved reports cover 10+0 outcome models and a later move-quality
-analysis of 3+0, 5+0, and 10+0 games.
+I built a Python pipeline for outcome prediction and move-quality analysis. The
+dense move-quality study covers **145,020 Lichess games with 8,353,475 filtered move
+observations**, across three no-increment time controls and two monthly archive samples. The work combines a
+10+0 checkpoint outcome study with a later dense analysis of both players' moves
+in 3+0, 5+0, and 10+0 games.
 
-The outcome-model improvement is concentrated in games ending on time. The separate
-move-quality analysis finds a small adjusted low-clock association that remains
-among games not ending on time. Neither result establishes why an individual player
-made a mistake.
+Adding clocks to an outcome model that already uses engine evaluation and ratings
+mainly helps predict games ending on time. Separately, the move-quality analysis
+finds a small adjusted low-clock association that remains among games not ending
+on time. This is an observational replication and benchmark study: the comparisons
+describe associations rather than causal effects of time pressure.
 
 ## Data and scope
 
@@ -24,12 +24,11 @@ using the first 250,000 games in each September and October 2024 archive. These 
 archive prefixes, not random samples or complete months. Here, 3+0 means three
 minutes per player with no increment; 5+0 and 10+0 work the same way.
 
-The 10+0 parser requires standard chess, positive integer ratings, a recognized
-result, and clock annotations; cleaning removes abandoned games. The later 3+0 and
-5+0 extraction selects the first 24,000 accepted games per control and month using
-time control, game ID, integer ratings, result, and termination headers. Rated and
-standard provenance comes from the source archive; these routes do not independently
-validate every aspect of an arbitrary PGN. See [pipeline details](PIPELINE_OVERVIEW.md).
+The samples come from standard rated games with ratings, results, and clock data.
+The 3+0 and 5+0 extractions each use a cap of 24,000 accepted games per month;
+10+0 uses the accepted games in each cached prefix. The
+[pipeline guide](PIPELINE_OVERVIEW.md) details the different acceptance and cleaning
+rules used by the checkpoint and dense extraction paths.
 
 Dense extraction measures both players' moves from full move 5 onward. Headline
 analysis excludes engine failures and mate-band evaluations, and requires non-null
@@ -82,10 +81,14 @@ approximations, not ground truth.
 
 ## Saved results
 
-**Outcome prediction, 10+0 checkpoints.** E3 uses fixed-depth evaluation and ratings;
-E4 adds clocks. Log loss is the mean negative log probability assigned to the actual
-three-class result, so lower is better. The table reports `log_loss(E4) - log_loss(E3)`
-on frozen validation predictions, with paired game-bootstrap 95% confidence intervals.
+**Outcome prediction, 10+0 checkpoints.** Two logistic models use the same
+fixed-depth evaluation and rating features; one also receives clock features.
+Log loss is the mean negative log probability assigned to the actual three-class
+result, so lower is better. The table reports the clock-augmented model's log loss
+minus the evaluation-and-rating model's log loss on frozen validation predictions,
+with paired game-bootstrap 95% confidence intervals. These are models E4 and E3,
+respectively, in the saved records.
+
 The September evaluation has 9,823 rows from 3,678 games; October has 3,524 validation
 games. The termination groups are filtered after prediction, without retraining.
 
@@ -118,11 +121,24 @@ See the [cross-control report, sections 10, 14, and 16](reports/cross_time_contr
 for month-specific results and player-clustered checks. The unadjusted curves are
 U-shaped; they should not be read as these adjusted contrasts.
 
+![Game-normalized expected-score loss against remaining seconds for all games and games not ending on time](reports/figures/benchmark/H2_all_games_vs_board_decided_actual_seconds.png)
+
+*Descriptive move-quality curves, pooled across months within each control. The
+solid curves include all games; the dashed “board-decided” curves exclude time
+forfeits. These game-normalized means mix game phases and rating groups. They are
+not the adjusted critical-versus-high-clock estimates in the table above.*
+
 Time-forfeit rates in the headline game samples are 29.17%/30.09% for 3+0,
 22.63%/22.58% for 5+0, and 11.51%/11.64% for 10+0 (September/October).
 These are game proportions, not shares of move rows. The
 [figures](reports/figures/benchmark/) and [appendix index](reports/appendix_figure_index.md)
 show the descriptive patterns.
+
+![Proportion of games ending on time by time control and month](reports/figures/benchmark/H1_time_forfeit_prevalence_by_control.png)
+
+*Descriptive time-forfeit prevalence in the headline game samples, with one
+observation per game. Bars compare the unadjusted proportions for September and
+October within each time control.*
 
 ## Limitations and negative findings
 
@@ -194,32 +210,30 @@ python -m pip install -r requirements.txt
 python -m pytest -q tests/test_parse_pgn.py tests/test_benchmark_figures.py
 ```
 
-The dependency file contains minimum versions, not a locked environment. This
-cleanup ran the example and 136 selected tests on Python 3.13.11 using available
-packages; it did not perform a fresh dependency installation or rerun research.
+The dependency file contains minimum versions, not a locked environment.
 [Full reproduction prerequisites and figure command](PIPELINE_OVERVIEW.md#7-reproducing-figures)
 are separate from this smoke example.
 
 ## Status and further reading
 
-Completed work includes the checkpoint pipeline, baseline and tree experiments,
-calibration diagnostics, fixed-depth engine evaluation, termination comparisons,
-dense move-quality analyses, and saved figures. The research log closes with public
-packaging work; there is no active research run. Neural sequence models, increment
-comparisons, richer position-difficulty measures, and a better-powered sharpness
-study remain deferred proposals.
+**Completed:** the checkpoint pipeline, baseline and tree experiments, calibration
+diagnostics, fixed-depth engine evaluation, termination comparisons, dense
+move-quality analyses, and saved figures.
+
+**Deferred:** neural sequence models, increment comparisons, richer position-difficulty
+measures, and a better-powered sharpness study. No research run is currently active.
 
 [MODEL_CARD.md](MODEL_CARD.md) describes the implemented model families.
 [MANIFEST.md](MANIFEST.md) indexes the technical records.
 [ROADMAP.md](ROADMAP.md) separates current status from historical plans, and
 [EXPERIMENT_LOG.md](EXPERIMENT_LOG.md) preserves the sequence of experiments.
-The [historical benchmark report](reports/benchmark_report.md) remains unchanged;
-use this README and the pipeline guide for current scope and reproduction details.
-In particular, its transform JSON is local-only and its two months share players.
+The [historical benchmark report](reports/benchmark_report.md) retains its original
+narrative with a dated status notice. [Verification records](reports/phase_reports/documentation_cleanup.md)
+distinguish checks performed from reproduction steps inspected only.
 
-This work uses established move-quality metrics and studies associations already
-examined in chess research. [Related work](docs/RELATED_WORK.md) and the
+This work uses established move-quality metrics and builds on earlier studies of
+chess and clock constraints. [Related work](docs/RELATED_WORK.md) and the
 [repository-overlap audit](reports/phase_reports/phase_16_2g_prior_art_repository_overlap_project_kill_audit.md)
-record attribution and the decision to use replication framing. No priority or
-state-of-the-art claim is made. Original code and documentation use the
-[MIT license](LICENSE); [NOTICE.md](NOTICE.md) records third-party scope.
+record attribution and the basis for replication framing. Original code and
+documentation use the [MIT license](LICENSE); [NOTICE.md](NOTICE.md) records
+third-party scope.

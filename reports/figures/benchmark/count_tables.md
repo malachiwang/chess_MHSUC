@@ -1,6 +1,26 @@
 # Benchmark figure count tables
 
-Aggregation counts behind the headline figures. **Estimand:** H2–H6 plot the **game-normalized** mean expected-score loss (each game contributes equal total weight within its control-month, via `analysis_weight`, so long games do not dominate) — the same weighting the inferential Phase-16 models used. The difference from the raw move-row mean is small and does not change the curve shape (raw ≈ weighted − ~0.002). H1 is a game-level rate (one row per game). Within-control; raw Elo bins are NOT identical populations across controls.
+Aggregation counts behind the headline figures. **Weighting clarification,
+2026-10-16:** H1 is a game-level time-forfeit rate, with one row per game. H2-H6
+show descriptive, game-normalized mean expected-score loss. The figure pipeline
+assigns `analysis_weight` proportional to
+`1 / (games_in_control_month * headline_moves_in_game)` before subsetting into
+panels and cells. Each game has equal total weight within its control-month, and
+each control-month has equal aggregate weight in the full headline population.
+Weights are retained when computing cell means; games need not contribute equal
+weight within each individual clock bin. The original figure note reports a small
+difference from the raw move-row mean (raw approximately weighted minus 0.002),
+without a change in curve shape; that comparison was not recomputed in this follow-up.
+
+This is not the weighting of every Phase-16 regression. In
+[cross_time_control_analysis.py](../../../src/chess_mhsuc/cross_time_control_analysis.py),
+within-control clock regressions weight move rows equally, while the primary pooled
+cross-control interaction models use game normalization with equal control-month
+aggregate weight. [benchmark_figures.py](../../../src/chess_mhsuc/benchmark_figures.py)
+uses the latter weights for descriptive plots, not adjusted regression estimates.
+The separate rating-moderation analysis uses game normalization even within control.
+Raw Elo bins describe within-control populations and are not equivalent skill groups
+across controls. Numerical tables below are unchanged.
 
 ## Headline denominators
 | Control | Month | Headline rows | Games |

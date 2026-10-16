@@ -7,9 +7,8 @@ metadata suggestions; it does not record a publication, outreach, or release act
 
 ## Suggested repository description
 
-Analysis of chess clocks, game outcomes, and engine-measured move quality using
-Lichess archive samples. Python pipeline, saved statistical reports, and a synthetic
-parser example. Observational replication and benchmark study.
+Python study of chess clocks, game outcomes, and engine-measured move quality across
+145,020 Lichess games. Includes saved analyses, figures, and a synthetic example.
 
 ## Suggested topics and links
 

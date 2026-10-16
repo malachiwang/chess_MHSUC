@@ -1,5 +1,35 @@
 # PREREGISTRATION.md — v1
 
+## Current status and provenance (2026-10-16)
+
+This file preserves a locally recorded prospective protocol, followed by amendments
+and result-status annotations. Repository history records the initial stub in commit
+`631328b` and its v1 refinement in `c184674`, both dated 2026-06-12. The
+[11.1A audit](reports/phase_reports/phase_11_1a_scientific_claim_preregistration_audit.md)
+describes the contrasts and decisions locked at that stage. Earlier outcome results
+already existed and appear below as frozen historical comparisons. Later analyses
+have their own records, including the [14.2A sharpness protocol](reports/phase_reports/phase_14_2a_sharpness_interaction_preregistration.md)
+(commit `d1c0a09`, 2026-06-15), followed by modeling and result amendments.
+
+“Pre-registration” here refers to this repository's versioned planning and revision
+process. No external registry, registration identifier, or registry link was located
+in the protocol, experiment log, or supporting reports. This is not evidence of an
+externally registered study, nor a claim that every analysis was specified before
+results were seen. Prospective definitions, exploratory work, and post-result
+amendments should be read with their individual dates and records.
+
+The historical “Current supported claim” below describes the next-move-quality
+question as unfinished. That status has been superseded by the completed
+[checkpoint move-quality analysis](reports/controlled_move_quality_combined.md),
+[dense three-control analysis](reports/cross_time_control_move_quality_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md),
+and [rating moderation analysis](reports/rating_clock_moderation_3plus0_5plus0_10plus0_2024_09_2024_10_v1.md).
+Sharpness moderation remains unresolved. Statements below calling cross-month
+validation “independent” are also historical: recurring players make the monthly
+samples dependent, and clustered checks do not establish a player-disjoint holdout.
+See the [current limitations](README.md#limitations-and-negative-findings) and
+[pipeline guide](PIPELINE_OVERVIEW.md). Original hypotheses, amendments, dates,
+and decision rules are preserved below.
+
 ## Status
 
 v1, refined by Ticket 11.1A (2026-06-12) from the 11.0B stub. This document locks the

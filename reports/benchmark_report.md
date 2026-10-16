@@ -1,5 +1,15 @@
 # Human Chess Under Clock Constraints: A Replication and Benchmark Study
 
+> **Status note, 2026-10-16:** The body below is a preserved historical narrative,
+> including its original results and presentation text. Its references to independent
+> monthly samples need qualification because players recur across months. The fitted
+> expected-score transform JSON is local-only, not included in the repository. Figure
+> generation reads the dense inputs but writes figures and a count table, so it is not
+> a read-only operation. “Full month” means accepted games within the cached archive
+> prefix, not the complete monthly archive. See the [current README](../README.md)
+> and [pipeline guide](../PIPELINE_OVERVIEW.md) for current scope, limitations, and
+> reproduction instructions.
+
 A repository-native benchmark report (not a formal paper). All results are **predictive and
 descriptive, not causal**; Stockfish provides objective position context, not ground truth.
 
